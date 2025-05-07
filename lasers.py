@@ -321,10 +321,11 @@ class Laser:
             data (str): The data to be written.
         """
         logger.debug(f"W {data}")
-        
-        if ( cmd:= data.split(" ")[0] ) == self.previous_command:
-            data = data.replace(cmd, ";")
-        self.previous_command: str = cmd
+
+        # ToDo, WARNING: there is a bug in the following lines, it doesn't work properly!
+        # if ( cmd:= data.split(" ")[0] ) == self.previous_command:
+        #     data = data.replace(cmd, ";")
+        # self.previous_command: str = cmd
         self._ser.write(f"{data}\r\n".encode("ascii"))
 
     def _read(self) -> str:
