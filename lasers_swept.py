@@ -362,9 +362,7 @@ class SweptLaser(TLMLaser):
         """
         correct = idx_end > idx_start
         if not correct:
-            print(
-                f"Indices for span are not correct. Given start:{idx_start:d} end:{idx_end:d}.\nNeeded start < end."
-            )
+            print(f"Indices for span are not correct. Given start:{idx_start:d} end:{idx_end:d}.\nNeeded start < end.")
         return correct
 
     def _update_mode_number(self, idx: int | None = None):
@@ -416,9 +414,7 @@ class SweptLaser(TLMLaser):
             (int): the cycler entry index corresponding to where a mode hop happens,
                 given the mode number
         """
-        return np.argmax(
-            self._cycler_table[:, type(self).cycler_config.MODE_INDEX] == mode_number
-        )
+        return np.argmax(self._cycler_table[:, type(self).cycler_config.MODE_INDEX] == mode_number)
 
     @property
     def system_state(self) -> bool:
@@ -489,15 +485,11 @@ class SweptLaser(TLMLaser):
         wl_array = cycler_table_no_hops[:, type(self).cycler_config.WAVELENGTH]
         wl_min = np.min(wl_array)
         if wavelength < wl_min:
-            print(
-                f"Input wavelength {wavelength:.3f} smaller than minimum {wl_min:.3f}."
-            )
+            print(f"Input wavelength {wavelength:.3f} smaller than minimum {wl_min:.3f}.")
             wavelength = wl_min
         wl_max = np.max(wl_array)
         if wavelength > wl_max:
-            print(
-                f"Input wavelength {wavelength:.3f} larger than maximum {wl_max:.3f}."
-            )
+            print(f"Input wavelength {wavelength:.3f} larger than maximum {wl_max:.3f}.")
             wavelength = wl_max
         _idx_no_hops = np.argmin(np.abs(wl_array - wavelength))
         best_entry = cycler_table_no_hops[_idx_no_hops, :]
@@ -562,9 +554,8 @@ class SweptLaser(TLMLaser):
     def phase_anti_hyst(self):
         """Perform a phase anti-hysteresis function
 
-        This method instructs the driver to increase the voltage on the phase
-        section heater and gradually decrease it to the original voltage
-        started with.
+        This method instructs the driver to shortly increase the voltage on the phase
+        section heater and then decrease it to the original voltage started with.
 
         This functionality is used to mitigate hysteresis effects and to
         correctly tune the laser to a single mode state. To avoid multi-mode
@@ -572,33 +563,11 @@ class SweptLaser(TLMLaser):
         mode to another.
         """
         v_phase = self.get_driver_value(type(self).channel_config.PHASE_SECTION)
-        v_phase_hysteresis_1 = np.sqrt(
-            np.square(v_phase) + 30.0
-        )  # V^2, hysteresis function, step 1
-        v_phase_hysteresis_2 = np.sqrt(
-            np.square(v_phase) + 20.0
-        )  # V^2, hysteresis function, step 2
-        v_phase_hysteresis_3 = np.sqrt(
-            np.square(v_phase) + 10.0
-        )  # V^2, hysteresis function, step 3
-        v_phase_final = np.sqrt(
-            np.square(v_phase) + 0.0
-        )  # V^2, hysteresis function, step 3
-        print("Phase anti-hysteresis starting")
-        self.set_driver_value(
-            type(self).channel_config.PHASE_SECTION, v_phase_hysteresis_1
-        )
-        time.sleep(0.1)
-        self.set_driver_value(
-            type(self).channel_config.PHASE_SECTION, v_phase_hysteresis_2
-        )
-        time.sleep(0.1)
-        self.set_driver_value(
-            type(self).channel_config.PHASE_SECTION, v_phase_hysteresis_3
-        )
-        time.sleep(0.5)
+        v_phase_hysteresis = np.sqrt(np.square(v_phase) + 30.0)  # V^2, hysteresis function
+        v_phase_final = v_phase  # V^2, hysteresis function, step 3
+        self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_hysteresis)
+        time.sleep(0.02)
         self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_final)
-        print("Phase anti-hysteresis finished")
 
     def phase_change(self, v_squared_change: float):
         """Changes the phase section heater voltage using a delta in V^2 domain
@@ -616,7 +585,7 @@ class SweptLaser(TLMLaser):
         """Calculates and returns the estimated runtime of a sweep
 
         The runtime of a sweep operation is calculated based on the span of
-        the sweep, i.e., the start end end indices, the cycler time interval, and
+        the sweep, i.e., the start and end indices, the cycler time interval, and
         the amount of full cycles to perform.
 
         Args:
@@ -784,7 +753,7 @@ class SweptLaser(TLMLaser):
     def get_wavelength(self) -> float:
         """Gets and returns the current wavelength the laser is tuned to
 
-        Since the driver keeps track of the index of of the last applied cycler
+        Since the driver keeps track of the index of the last applied cycler
         table entry, this can be used to determine the corresponding wavelength
         the laser is at, based from the calibrated values in the cycler table.
 
