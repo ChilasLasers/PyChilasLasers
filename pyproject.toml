@@ -3,5 +3,23 @@ name = "pychilaslasers"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.10"
-dependencies = []
+requires-python = ">=3.13"
+dependencies = [
+    "numpy>=1.24.4",
+    "packaging>=25.0",
+    "pyserial>=3.5",
+]
+
+[dependency-groups]
+dev = [
+    "pychilaslasers",
+]
+
+[tool.uv.sources]
+pychilaslasers = { workspace = true }
+
+
+[tool.pyright]
+
+reportOptionalMemberAccess = "warning"
+reportAttributeAccessIssue = "warning"

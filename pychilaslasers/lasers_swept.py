@@ -9,7 +9,7 @@ from enum import IntEnum
 
 import numpy as np
 
-from lasers_tlm import TLMLaser
+from pychilaslasers import TLMLaser
 
 DEFAULT_TEC_TARGET_SWEEP = 25.0
 DEFAULT_TEC_TARGET_STEADY = DEFAULT_TEC_TARGET_SWEEP

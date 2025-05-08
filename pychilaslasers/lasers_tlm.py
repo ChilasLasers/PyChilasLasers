@@ -11,7 +11,7 @@ from packaging.version import Version
 import csv
 from enum import IntEnum
 import numpy as np
-from lasers import Laser
+from pychilaslasers import Laser
 
 # Constants
 TLM_FEEDBACK_SOURCES = {

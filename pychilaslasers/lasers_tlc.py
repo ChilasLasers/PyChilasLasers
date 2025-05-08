@@ -5,7 +5,7 @@ TLCLaser class to communicate with TLC.
 
 from enum import IntEnum
 
-from lasers import Laser
+from pychilaslasers import Laser
 
 
 class HeaterChannelTLC(IntEnum):
