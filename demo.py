@@ -26,6 +26,10 @@ if __name__ == "__main__":
 
     # Open connection
     laser.open_connection()
+
+    # Increase the baud rate from 57600 to 460800 for 8x faster communication.
+    # The connection will be closed and re-opened at the new baud rate.
+    laser.baudrate = 460800
     try:
         # Check connection state
         print(f"Connection state {laser.is_connected=}")
@@ -70,9 +74,7 @@ if __name__ == "__main__":
         # Get current index
         print(f"Current cycler index is {laser.get_cycler_index()=}")
         # Get wavelength corresponding to certain index
-        print(
-            f"Wavelength corresponding to index 2123 is {laser.get_wavelength_idx(2123)=}"
-        )
+        print(f"Wavelength corresponding to index 2123 is {laser.get_wavelength_idx(2123)=}")
 
         # Set wavelength in relative manner (apply step/offset), e.g. increase wavelength by 0.004nm
         print(f"New wavelength is {laser.set_wavelength_rel(wl_delta=0.004)=}")
@@ -87,4 +89,5 @@ if __name__ == "__main__":
         # Turn off the laser
         laser.system_state = False
     finally:
+        # Close the connection, which also resets the baudrate to its default value (57600)
         laser.close_connection()
