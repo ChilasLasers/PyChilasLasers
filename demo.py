@@ -7,7 +7,7 @@ Date: 2025-03-26
 import time
 
 from pathlib import Path
-from instruments.lasers_swept import SweptLaser, OperatingMode
+from lasers_swept import SweptLaser, OperatingMode
 
 # Settings for COMET
 address = "COM5"
@@ -31,12 +31,12 @@ if __name__ == "__main__":
         print(f"Connection state {laser.is_connected=}")
 
         # Load calibration file
-        laser.load_file_cycler_table(fp_lut)
+        laser.open_file_cycler_table(fp_lut)
 
         # Turn on COMET system
         laser.system_state = True
 
-        ####### Sweeping functionality
+        # Sweeping functionality
         laser.operation_mode = OperatingMode.SWEEP
 
         # Start a sweep, where the laser will cycle between 1560.0 and 1550.0nm, for 10x cycles
@@ -46,7 +46,7 @@ if __name__ == "__main__":
         # Wait for sweep to finish
         time.sleep(runtime + 1)
 
-        # Start a sweep, where the laser will cycle between the edgepoints of the calibration file, indefinitely (0x)
+        # Start a sweep, where the laser will cycle through the full LookUpTable, indefinitely (0x)
         wavelengths, runtime = laser.sweep_full(num_sweeps=0)
         print(f"Runtime for infinite running sweeps is {runtime=}")
         time.sleep(5)
@@ -56,11 +56,11 @@ if __name__ == "__main__":
         # Get wavelength after
         print(f"Wavelength after aborting sweep, {laser.get_wavelength()=}")
 
-        ####### Steady tuning functionality
+        # Steady tuning functionality
         laser.operation_mode = OperatingMode.STEADY
 
         # Set wavelength, e.g. 1550.000nm
-        _ = laser.set_wavelength_abs(wl=1550.000)
+        wavelength = laser.set_wavelength_abs(wl=1550.000)
         # Set wavelength, based on index from calibration file, e.g. 2123
         wavelength = laser.set_wavelength_abs_idx(2123)
         print(f"Corresponding {wavelength=:.3f}nm")
