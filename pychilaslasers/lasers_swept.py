@@ -6,6 +6,8 @@ Authors: RLK
 
 import time
 from enum import IntEnum
+import logging
+from pathlib import Path
 
 import numpy as np
 
@@ -29,6 +31,8 @@ class OperatingMode(IntEnum):
     SWEEP = 0
     STEADY = 1
 
+    
+logger = logging.getLogger(__name__)
 
 class SweptLaser(TLMLaser):
     """Representation and control of COMET lasers
@@ -56,6 +60,7 @@ class SweptLaser(TLMLaser):
         self._cycler_fp = path_lut_file
         if self._cycler_fp is not None:
             self.open_file_cycler_table(self._cycler_fp)
+            self._prepare_lut(force=True)
 
     # Different operating modes
     @property
@@ -73,6 +78,9 @@ class SweptLaser(TLMLaser):
          Returns:
              (OperatingMode): the operating mode of the laser
         """
+        """Returns operation mode of the laser."""
+        if not self.system_state:
+            logger.info("System is off")
         return self._operation_mode
 
     @operation_mode.setter
@@ -221,8 +229,10 @@ class SweptLaser(TLMLaser):
             (bool): whether internal cycler table has correct number of columns
         """
         return (self._cycler_table is not None) and (
+            self._cycler_table is not []
+        ) and (
             self._cycler_table.shape[-1] == len(type(self).cycler_config)
-        )
+        ) 
 
     def _prepare_lut(self, force=False):
         """Updates PC loaded cycler table to be functional for operation
@@ -237,7 +247,7 @@ class SweptLaser(TLMLaser):
             5 mode hop, where a 1 is to indicate presence and 0 absence of mode hop
 
         For correct sweeping operation, extra information is needed, which is added
-        to the internal _cycler_table by addition of two new columns:
+        to the interal _cycler_table by addition of two new columns:
             6 index, the original 0-based index of the entries
             7 mode index, an index number representing the mode number
 
@@ -254,23 +264,23 @@ class SweptLaser(TLMLaser):
         """
         # Exit out early if current cycler table already has all columns
         if self._is_lut_prepared:
-            print("Cycler table already has added columns.")
+            logger.info("Cycler table already has added columns.")
             if not force:
                 return
 
         # Copy of original cycler table
-        org_cycler_table = self._cycler_table
+        org_cycler_table = self._cycler_table.copy()
         # Preallocate new cycler table with size corresponding to new columns
         new_cycler_table = np.zeros(
             (self._cycler_table_length, len(type(self).cycler_config))
         )
 
-        # Add original index numbers
+        # Add index numbers. Creates list of integers from 0 to the length of the cycler table
         idx_array = np.arange(self._cycler_table_length)
 
         # Determine mode numbers
         # Determine differences in tc voltages
-        mh_array = org_cycler_table[:, type(self).cycler_config.MODE_HOPS]
+        mh_array = org_cycler_table[:, type(self).cycler_config.MODE_HOPS] # type: ignore
         mh_diff = np.diff(mh_array, prepend=mh_array[0])
         # Boolean array of look-up table where mode hops occur
         mode_hops = mh_diff == 1.0
@@ -284,8 +294,8 @@ class SweptLaser(TLMLaser):
         # Compose new cycler table with added columns
         # First 5 columns are original cycler table
         new_cycler_table[:, : type(self).cycler_config.ENTRY_INDEX] = org_cycler_table[
-            :, : type(self).cycler_config.ENTRY_INDEX
-        ]
+            :, :int(type(self).cycler_config.ENTRY_INDEX)
+        ] # type: ignore
         # Add index for entry numbers
         new_cycler_table[:, type(self).cycler_config.ENTRY_INDEX] = idx_array
         # Add mode number index
@@ -295,13 +305,74 @@ class SweptLaser(TLMLaser):
         self._min_wavelength = new_cycler_table[-1, type(self).cycler_config.WAVELENGTH]
         self._max_wavelength = new_cycler_table[0, type(self).cycler_config.WAVELENGTH]
         # Update step size/wavelength resolution number
+        # Array of booleans where it's true if the entry of the cycler table is 0 at the same index as the boolean
         wvl_mask = new_cycler_table[:, type(self).cycler_config.MODE_HOPS] == 0
+        # Array the wavelengths of the entries where the boolean was true 
         wvl_array = new_cycler_table[wvl_mask, type(self).cycler_config.WAVELENGTH]
         wvl_diff = np.diff(wvl_array)
         self._sweep_step_size = np.around(np.abs(wvl_diff[0]), decimals=4)
 
         # Save new table to private attribute
         self._cycler_table = new_cycler_table
+
+
+
+    def load_cycler_table(self) -> None:
+        """
+        Loads the cycler table from the laser driver entry by entry
+
+        Raises:
+            ValueError: if an entry has an invalid format or if the cycler table is not initialized
+        """
+
+        # Save the cycler table to WC value to be reset after operation
+        
+        wc = self.query("DRV:CYC:WC?")
+        self.write("DRV:CYC:WC 1") # Set write count to 1 
+        
+        logger.info("Loading cycler table from laser driver")
+        table = []
+        index = 0
+        start_time: float = time.time()
+        while True:
+            # Get heater values from laser and store in cycler table
+
+            response: str = self.query(f"DRV:CYC:GET? {index:d}") # get values from cycler table
+            
+            if "0.0000 0.0000 0.0000 0.0000" in response: # check if this entry had a heater value
+                self._cycler_table_length = index # set the length of the cycler table
+                break
+
+            # Parse the response string to extract the values
+            entry: list[float]  = [float(value) for value in response.split()]
+
+            # Check if the entry has the correct number of values
+            if len(entry) != 4:
+                raise ValueError(f"Invalid entry format: {entry}") 
+            
+            # Add the wavelength to the entry
+            entry.append(float(self.query(f"DRV:CYC:GW? {index:d}").strip())) # get wavelength from laser
+
+            # Add Mode hop flag to entry
+            entry.append(bool(int(self.query(f"DRV:CYC:GETT? {index:d}").strip())))
+            index += 1
+
+            # Add the entry to the cycler table
+            table.append(entry)
+
+        # Cycler table is a np.array in previous version, so convert to np.array
+        # idk if this is necessary, but it is in the original code
+        self._cycler_table = np.array(table)
+
+
+        end_time: float = time.time()
+
+        self.write("DRV:CYC:WC " + wc) # Reset write count to original value
+
+        logger.info(f"Loaded cycler table with {self._cycler_table_length:d} entries in {end_time - start_time:.4f} seconds")
+    
+
+
 
     @property
     def min_wavelength(self) -> float:
@@ -362,7 +433,7 @@ class SweptLaser(TLMLaser):
         """
         correct = idx_end > idx_start
         if not correct:
-            print(
+            logger.error(
                 f"Indices for span are not correct. Given start:{idx_start:d} end:{idx_end:d}.\nNeeded start < end."
             )
         return correct
@@ -416,8 +487,10 @@ class SweptLaser(TLMLaser):
             (int): the cycler entry index corresponding to where a mode hop happens,
                 given the mode number
         """
-        return np.argmax(
-            self._cycler_table[:, type(self).cycler_config.MODE_INDEX] == mode_number
+        return int(
+            np.argmax(
+                self._cycler_table[:, type(self).cycler_config.MODE_INDEX] == mode_number
+            )
         )
 
     @property
@@ -442,7 +515,7 @@ class SweptLaser(TLMLaser):
             value (bool): The system state to be set.
         """
         if type(value) is not bool:
-            print("ERROR: given value is not a boolean")
+            logger.error("Given value is not a boolean")
             return
         if not value:
             self._operation_mode = None
@@ -489,13 +562,13 @@ class SweptLaser(TLMLaser):
         wl_array = cycler_table_no_hops[:, type(self).cycler_config.WAVELENGTH]
         wl_min = np.min(wl_array)
         if wavelength < wl_min:
-            print(
+            logger.info(
                 f"Input wavelength {wavelength:.3f} smaller than minimum {wl_min:.3f}."
             )
             wavelength = wl_min
         wl_max = np.max(wl_array)
         if wavelength > wl_max:
-            print(
+            logger.info(
                 f"Input wavelength {wavelength:.3f} larger than maximum {wl_max:.3f}."
             )
             wavelength = wl_max
@@ -566,7 +639,7 @@ class SweptLaser(TLMLaser):
         section heater and gradually decrease it to the original voltage
         started with.
 
-        This functionality is used to mitigate hysteresis effects and to
+        This functionality is used to mitigate hysteresis effects and to to
         correctly tune the laser to a single mode state. To avoid multi-mode
         operation, this function should be called when switching from one laser
         mode to another.
@@ -584,7 +657,7 @@ class SweptLaser(TLMLaser):
         v_phase_final = np.sqrt(
             np.square(v_phase) + 0.0
         )  # V^2, hysteresis function, step 3
-        print("Phase anti-hysteresis starting")
+        logger.info("Phase anti-hysteresis starting")
         self.set_driver_value(
             type(self).channel_config.PHASE_SECTION, v_phase_hysteresis_1
         )
@@ -598,7 +671,7 @@ class SweptLaser(TLMLaser):
         )
         time.sleep(0.5)
         self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_final)
-        print("Phase anti-hysteresis finished")
+        logger.info("Phase anti-hysteresis finished")
 
     def phase_change(self, v_squared_change: float):
         """Changes the phase section heater voltage using a delta in V^2 domain
@@ -645,7 +718,7 @@ class SweptLaser(TLMLaser):
         If num_sweeps == 0, the laser will be instructed to keep sweeping indefinitely,
         only to be stopped by manual sweep abortion (see turn_off_cycler() method).
 
-        It will return the wavelengths that will be swept through in the form of a
+        It will return the wavelengths that will be sweeped through in the form of an
         numpy array, and the runtime in seconds, if not indefinitely.
 
         Optionally, it can be requested that the sweep will always start at the
@@ -682,9 +755,9 @@ class SweptLaser(TLMLaser):
             mode_number_to_set = self.get_mode_number_idx(idx_start)
             new_idx_start = self.get_idx_mode_hop(mode_number_to_set)
             if new_idx_start != idx_start:
-                print("Optimize sweep by selecting starting wavelength at mode hop.")
-                print(f"Index start: {idx_start=:d}, {new_idx_start=:d}.")
-                print(
+                logger.info("Optimize sweep by selecting starting wavelength at mode hop.")
+                logger.info(f"Index start: {idx_start=:d}, {new_idx_start=:d}.")
+                logger.info(
                     f"Wavelength start: original {self.get_wavelength_idx(idx_start):.3f}, new {self.get_wavelength_idx(new_idx_start):.3f}."
                 )
             idx_start = new_idx_start
@@ -704,7 +777,7 @@ class SweptLaser(TLMLaser):
         # Return what is swept through, and runtime
         return (
             self._cycler_table[
-                idx_start: (idx_end + 1), type(self).cycler_config.WAVELENGTH
+                idx_start : (idx_end + 1), type(self).cycler_config.WAVELENGTH
             ],
             runtime,
         )
@@ -824,7 +897,7 @@ class SweptLaser(TLMLaser):
         # Perform a phase anti-hysteresis function when the set mode number is different from the previously set one.
         mode_number_new = self.get_mode_number_idx(idx)
         if mode_number_new != self._mode_number:
-            print(
+            logger.warning(
                 f"Phase anti-hysteresis required due to switching to mode number {mode_number_new:d}"
             )
             self.phase_anti_hyst()

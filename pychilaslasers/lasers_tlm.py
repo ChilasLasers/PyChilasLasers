@@ -13,6 +13,11 @@ from enum import IntEnum
 import numpy as np
 from pychilaslasers import Laser
 
+import logging
+
+from pychilaslasers.FileFormatError import InvalidFileFormatError
+logger = logging.getLogger(__name__)
+
 # Constants
 TLM_FEEDBACK_SOURCES = {
     1: "PD 0 -- MEAS:M? 0",
@@ -53,7 +58,7 @@ class TLMLaser(Laser):
         # Cycler private attributes
         self._eeprom_size = None
         self._cycler_fp = None
-        self._cycler_table = None
+        self._cycler_table:list[list[float,float,float,float,float,bool]] = [] # type: ignore # List of cycler table entries
         self._cycler_table_length = None
         self._cycler_interval = None
 
@@ -209,12 +214,12 @@ class TLMLaser(Laser):
             num_sweeps (int): the number
         """
         if num_sweeps < 0:
-            print("Error, number of sweeps needs to be 0 or positive integer.")
+            logger.error("Number of sweeps needs to be 0 or positive integer.")
             raise ValueError
         if num_sweeps == 0:
-            print("Turning on cycler, running infinite times")
+            logger.info("Turning on cycler, running infinite times")
         if num_sweeps > 0:
-            print(f"Turning on cycler, running {num_sweeps:d} times")
+            logger.info(f"Turning on cycler, running {num_sweeps:d} times")
         self.write(f"DRV:CYC:RUN {num_sweeps:d}")
 
     def turn_off_cycler(self):
@@ -223,7 +228,7 @@ class TLMLaser(Laser):
         Calling this method the driver is instructed to stop cycling operation if this were the case.
         If the driver is not cycling, this method does nothing.
         """
-        print("Turning off cycler")
+        logger.info("Turning off cycler")
         self.write("DRV:CYC:ABRT")
 
     @property
@@ -323,28 +328,42 @@ class TLMLaser(Laser):
         Args:
             path_cycler_table(str | Path): filepath of cycler table / LUT file to load
         """
-        print("Loading cycler table from file")
+        logger.info("Loading cycler table from file")
+
         try:
             with open(path_cycler_table, "r") as file:
-                dialect = csv.Sniffer().sniff(file.read())
-                file.seek(0)
-                reader = csv.reader(file, dialect)
-                cycler_table = np.array(list(reader)).astype(float)
-        except Exception as e:
-            print("Non-standard lookup table - ", e)
+                dialect = csv.Sniffer().sniff(file.read()) # Detect dialect is used to figure out the rules of the csv file, such as delimiter (comma, tab, etc.)
+                file.seek(0) # Reset file pointer to the beginning after sniffing
+                # Read the file using the detected dialect
+                reader = csv.reader(file, dialect)  
+                cycler_table = np.array(list(reader)).astype(dtype=float)
+                if cycler_table is None:
+                    raise Exception("Error: cycler table is could not be read")
+        except ValueError as e:
+            raise InvalidFileFormatError(
+                message="Failed to read the cycler table. The file contains unexpected or invalid values.",
+                file_path=str(path_cycler_table),
+                upstream_error=e
+            )
 
         # Clip length of table if larger than EEPROM
         table_length = len(cycler_table)
         if table_length > CYCLER_SIZELIMIT_TLM:
-            print("Warning: loaded cycler table is longer than what is max holdable!")
-            print(
+            logger.warning("Loaded cycler table is longer than what is max holdable!")
+            logger.warning(
                 f"\tOpened table length {table_length:d}, clipping up to {CYCLER_SIZELIMIT_TLM:d}"
             )
-            cycler_table = cycler_table[:CYCLER_SIZELIMIT_TLM, :]
-            table_length = len(cycler_table)
+            cycler_table: np.ndarray[tuple[int, ...], np.dtype[csv.Any]] = cycler_table[:CYCLER_SIZELIMIT_TLM, :]
+            table_length: int = len(cycler_table)
 
-        self._cycler_table = cycler_table
-        self._cycler_table_length = table_length
+        self._cycler_table: list[list[float,float,float,float,float,bool]]= cycler_table # type: ignore
+        self._cycler_table_length: int = table_length
+
+
+
+        
+
+
 
     def save_file_cycler_table(self, path_cycler_table: Path):
         """Saves currently loaded cycler table to an external csv file.
@@ -353,7 +372,7 @@ class TLMLaser(Laser):
         Args:
             path_cycler_table(Path): path to file to write out to
         """
-        print("Saving cycler table to file")
+        logger.info("Saving cycler table to file")
         try:
             np.savetxt(
                 fname=path_cycler_table,
@@ -362,7 +381,7 @@ class TLMLaser(Laser):
                 delimiter=";",
             )
         except Exception as e:
-            print("Error ", e)
+            logger.error( e.__str__())
 
     def put_cycler_entry(self, entry: int, value1: float, value2: float, value3: float, value4: float, repetition: bool = False):
         """Sets all heater voltages of a cycler entry
@@ -386,6 +405,7 @@ class TLMLaser(Laser):
             self.write(f"; {entry:d} {value1:.4f} {value2:.4f} {value3:.4f} {value4:.4f}")
         else:
             self.write(f"DRV:CYC:PUT {entry:d} {value1:.4f} {value2:.4f} {value3:.4f} {value4:.4f}")
+
 
     def get_cycler_entry(self, entry: int) -> tuple[float, float, float, float]:
         """Gets all heater voltages of a cycler entry in driver memory
@@ -484,7 +504,7 @@ class TLMLaser(Laser):
         else:
             wavelength = None
         return wavelength
-
+    
     def store_cycler(self) -> None:
         """Stores modified entries to the cycler table in memory to persistent storage
 
@@ -493,7 +513,7 @@ class TLMLaser(Laser):
 
         NOTE: The cycler cannot be running when calling this method.
         """
-        print("Storing cycler entries to persistent storage")
+        logger.info("Storing cycler entries to persistent storage")
         self.write("DRV:CYC:STOR")
 
     # Run settings
@@ -552,40 +572,43 @@ class TLMLaser(Laser):
         """Loads all cycler entries from PC into volatile driver memory
 
         This method will set the entire opened cycler table into driver memory
-        to use. It will first turn of the cycler, if running.
+        to use. It will first turn off the cycler, if running.
         All entries of the loaded cycler table, (with method open_file_cycler_table),
         will be set to driver memory for direct use. It has an option to
         fill all subsequent entries not in the opened cycler table to 0V.
 
+        The entry directly after the cycler table, that is with index last+1,
+        will be set to the average V^2 value of the heaters of the entire cycler table.
+
         Args:
+            add_zeros(bool): whether to fill other entries (indices outside of the
+                cycler table size) with 0s
         """
-        print("Initializing cycler table")
+        logger.info("Initializing cycler table")
         # Ensure cycler is not running
         if self.cycler_running:
             self.turn_off_cycler()
-        # Clear cycler, all values are set to 0
-        self.clear_cycler_table()
-        # Turn off status codes to speed up communication
-        self.prefix_mode = False
+
         # Update per entry/row heater values into RAM
-        repetition = False
-        for cycler_entry in range(self._cycler_table_length):
+        if self._cycler_table is None:
+            raise ValueError("Cycler table is not initialized. Please load a cycler table before initializing.")
+        
+        for ii in range(self._cycler_table_length):
             self.put_cycler_entry(
-                entry=cycler_entry,
-                value1=float(self._cycler_table[cycler_entry, self.cycler_config.PHASE_SECTION]),
-                value2=float(self._cycler_table[cycler_entry, self.cycler_config.RING_LARGE]),
-                value3=float(self._cycler_table[cycler_entry, self.cycler_config.RING_SMALL]),
-                value4=float(self._cycler_table[cycler_entry, self.cycler_config.TUNABLE_COUPLER]),
-                repetition=repetition,
+                ii,
+                float(self._cycler_table[ii, type(self).channel_config.PHASE_SECTION]),
+                float(self._cycler_table[ii, type(self).channel_config.RING_LARGE]),
+                float(self._cycler_table[ii, type(self).channel_config.RING_SMALL]),
+                float(self._cycler_table[ii, type(self).channel_config.TUNABLE_COUPLER]),
             )
             # Update user with print statement every 100 entries
             if (cycler_entry + 1) % 1000 == 0:
-                print(f"{(cycler_entry + 1):d}/{self._cycler_table_length:d}")
+                logger.info(f"{(cycler_entry + 1):d}/{self._cycler_table_length:d}")
             repetition = True
 
         # Adding mode hops is only supported from firmware version 1.3.7 and higher.
         if add_mode_hops and Version(self.fwv) >= Version("1.3.7"):
-            print("Adding mode hops")
+            logger.info("Adding mode hops")
             repetition = False
             for cycler_entry in range(self._cycler_table_length):
                 self.set_cycler_entry_mode_hop(
@@ -595,7 +618,7 @@ class TLMLaser(Laser):
                 )
                 # Update user with print statement every 100 entries
                 if (cycler_entry + 1) % 1000 == 0:
-                    print(f"{(cycler_entry + 1):d}/{self._cycler_table_length:d}")
+                    logger.info(f"{(cycler_entry + 1):d}/{self._cycler_table_length:d}")
                 repetition = True
 
         # Turn status codes on as default communication mode
@@ -603,7 +626,7 @@ class TLMLaser(Laser):
 
         # Adding wavelengths is only supported from firmware version 1.3.8 and higher.
         if add_wavelengths and Version(self.fwv) >= Version("1.3.8"):
-            print("Adding wavelengths")
+            logger.info("Adding wavelengths")
             # Set number of wavelengths to be queried and stored back to 5, to increase spead
             self.set_cycler_wavelength_count(4)
             repetition = False
@@ -619,15 +642,16 @@ class TLMLaser(Laser):
                         repetition=repetition,
                     )
                 if (cycler_entry + 1) % 1000 == 0:
-                    print(f"{(cycler_entry + 1):d}/{self._cycler_table_length:d}")
+                    logger.info(f"{(cycler_entry + 1):d}/{self._cycler_table_length:d}")
             # Set number of wavelengths to be queried and stored back to 1
             self.set_cycler_wavelength_count(1)
-        print("Initializing cycler table Done!")
+        logger.info("Initializing cycler table Done!")
 
     def turn_off_system(self) -> None:
         if self.cycler_running:
             self.turn_off_cycler()
         super().turn_off_system()
+
 
     # Storage of user and calibration data to the EEPROM
     def set_user_data_bool(self, address: int, data: bool) -> None:
@@ -730,7 +754,7 @@ class TLMLaser(Laser):
         gain_type = gain_type.upper()
         gains = ("P", "I", "D")
         if gain_type not in gains:
-            print("Error: gain_type can only be P, I, or D")
+            logger.error(f"gain_type can only be P, I, or D. Was {gain_type}")
             return 0.0
         return float(self.query(f"FB:K{gain_type}?"))
 
@@ -738,7 +762,7 @@ class TLMLaser(Laser):
         gain_type = gain_type.upper()
         gains = ("P", "I", "D")
         if gain_type not in gains:
-            print("Error: gain_type can only be P, I, or D")
+            logger.info(f"Error: gain_type can only be P, I, or D. Was {gain_type}")
             return
         self.write(f"FB:K{gain_type} {proportional_gain:.6f}")
 
@@ -772,7 +796,8 @@ class TLMLaser(Laser):
         i_gain = self.get_fb_gain("I")
         d_gain = self.get_fb_gain("D")
         enabled = self.get_fb_state()
-        print(f"FB settings, #{ii_fb}\nSource: {src_fb}\nDestination: {dest_fb}")
-        print(f"Setpoint: {setpoint_fb}\nInterval: {tick_interval} ms")
-        print(f"Gains:\nP: {p_gain}, I: {i_gain}, D: {d_gain}")
-        print(f"FB enabled? {enabled}")
+        logger.info(f"FB settings, #{ii_fb}\nSource: {src_fb}\nDestination: {dest_fb}")
+        logger.info(f"Setpoint: {setpoint_fb}\nInterval: {tick_interval} ms")
+        logger.info(f"Gains:\nP: {p_gain}, I: {i_gain}, D: {d_gain}")
+        logger.info(f"FB enabled? {enabled}")
+

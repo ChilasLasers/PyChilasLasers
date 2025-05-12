@@ -17,8 +17,10 @@ from serial.tools.list_ports import comports
 DEFAULT_BAUDRATE = 57600
 
 # Setup logging
-logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
+
+# ERROR CODES THAT SHOULD TRIGGER A ERROR DIALOG (errors 14 to 23) 
+CRITICAL_ERRORS = ["E0" + str(x) for x in range(14,24)] + ["E0" + str(x) for x in range(30,51)] 
 
 
 # Constants
@@ -94,9 +96,10 @@ class Laser:
             stopbits=serial.STOPBITS_ONE,
             timeout=timeout,
         )
-
+        
         # Previous command is logged to aid in replacing consecutive commands with semicolon
         self.previous_command: str = "None"
+
 
 
         # Device attributes (static)
@@ -107,6 +110,7 @@ class Laser:
         self._fwv = None
         self._admin = None
         self._prefix_mode = True
+
 
         # Device attributes, settable and managed, no internal state
         # Communication protocol
@@ -322,7 +326,7 @@ class Laser:
         """
         logger.debug(f"W {data}")
 
-        # ToDo, WARNING: there is a bug in the following lines, it doesn't work properly!
+        # TODO, WARNING: there is a bug in the following lines, it doesn't work properly!
         # if ( cmd:= data.split(" ")[0] ) == self.previous_command:
         #     data = data.replace(cmd, ";")
         # self.previous_command: str = cmd
@@ -358,8 +362,35 @@ class Laser:
         Returns:
             (str): The response from the device.
         """
+        logger.debug(msg=f"WRITE {cmd}")
         self._write(cmd)
-        return self._read()
+        reply = self._read()
+        logger.debug(f"READ {reply}")
+        return reply
+
+
+    #TODO this might not be needed, as the _query does the same
+    def _query_rc_check(self, cmd: str) -> str:
+        """Sends a command to the device and checks the return code.
+
+        Args:
+            cmd (str): The command to be sent.
+
+        Returns:
+            str: The response from the device.
+        """
+        
+        reply = self._query(cmd)
+        
+        if reply[0] != "0":  # Check if the first character is not "0" as this indicates an error
+            if any(reply[2:].startswith(error) for error in CRITICAL_ERRORS):  # Cjeck for critical errors
+                if reply[2:].startswith("E0" + "23"):
+                    reply += "  SHUTDOWN_REASON = " + self.shutdown_reason
+                logger.critical(f"Critical error: {reply[2:]}", extra={"cmd": cmd, "reply": reply})
+            else:  # Check for non-critical errors
+                logger.error(f"Nonzero return code: {reply[2:]}", extra={"cmd": cmd, "reply": reply})
+        
+        return reply
 
     def query(self, cmd: str) -> str:
         """Sends a command to the device and returns the response without the return code.
@@ -370,8 +401,7 @@ class Laser:
         Returns:
             str: The response from the device without the return code.
         """
-        reply = self._query(cmd)
-        return reply[2:] if self._prefix_mode else reply
+        return self._query_rc_check(cmd)[2:]
 
     def write(self, cmd: str) -> None:
         """Sends a command to the device.
@@ -379,10 +409,7 @@ class Laser:
         Args:
             cmd (str): The command to be sent.
         """
-        if self._prefix_mode:
-            _ = self.query(cmd)
-        else:
-            self._write(cmd)
+        self._query_rc_check(cmd)
 
     @property
     def idn(self) -> str | None:
@@ -427,6 +454,12 @@ class Laser:
         if self._fwv is None and self._ser.is_open:
             self._fwv = self.query("SYST:FWV?")
         return self._fwv
+
+
+    @property
+    def shutdown_reason(self) -> str:
+        return self.query("SYST:SDRN?")
+
 
     @property
     def cpu(self) -> str | None:
