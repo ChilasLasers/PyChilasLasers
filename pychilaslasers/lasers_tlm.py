@@ -474,10 +474,13 @@ class TLMLaser(Laser):
             print(write_string)
             self.write(write_string)
 
-    def get_cycler_entry_wavelength(self, entry: int) -> float:
-        """Get a single wavelength value from EEPROM."""
+    def get_cycler_entry_wavelength(self, entry: int, repetition: bool = False) -> float:
+        """Get a wc wavelengths value from EEPROM."""
         if Version(self.fwv) >= Version("1.3.8"):
-            wavelength = float(self.query(f"DRV:CYC:GW? {entry:d}"))
+            if repetition:
+                wavelength = float(self.query(f"; {entry:d}"))
+            else: 
+                wavelength = float(self.query(f"DRV:CYC:GW? {entry:d}"))
         else:
             wavelength = None
         return wavelength
