@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Laser base object to communicate with Chilas Lasers.
-Authors: RLK
+Authors: RLK, AVR, SDU
 """
 
 import logging
@@ -17,7 +17,7 @@ from serial.tools.list_ports import comports
 DEFAULT_BAUDRATE = 57600
 
 # Setup logging
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

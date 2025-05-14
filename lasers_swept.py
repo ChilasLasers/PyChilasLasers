@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 SweptLaser class to communicate with COMET lasers.
-Authors: RLK
+Authors: RLK, AVR, SDU
 """
 
 import time
