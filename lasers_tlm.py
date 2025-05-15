@@ -356,7 +356,7 @@ class TLMLaser(Laser):
         try:
             np.savetxt(
                 fname=path_cycler_table,
-                X=self._cycler_table[:, : type(self).cycler_config.WAVELENGTH + 1],
+                X=self._cycler_table[:, :],
                 fmt="%.4f",
                 delimiter=";",
             )
