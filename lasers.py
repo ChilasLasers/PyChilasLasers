@@ -15,6 +15,7 @@ from serial.tools.list_ports import comports
 
 # Constants
 DEFAULT_BAUDRATE = 57600
+SUPPORTED_BAUDRATES = {9600, 14400, 19200, 28800, 38400, 57600, 115200, 230400, 460800, 912600}
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -32,9 +33,6 @@ class CyclerColumn(IntEnum):
     CAL_RESULT = 6
     ENTRY_INDEX = 7
     MODE_INDEX = 8
-
-
-SUPPORTED_BAUDRATES = {9600, 14400, 19200, 28800, 38400, 57600, 115200, 230400, 460800, 912600}
 
 
 class Laser:
