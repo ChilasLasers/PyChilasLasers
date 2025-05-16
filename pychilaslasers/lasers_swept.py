@@ -7,11 +7,14 @@ Authors: RLK
 import time
 from enum import IntEnum
 import logging
-from pathlib import Path
 
 import numpy as np
 
-from pychilaslasers import TLMLaser
+try:
+    from pychilaslasers import TLMLaser
+except ImportError:
+    from lasers_tlm import TLMLaser
+
 
 DEFAULT_TEC_TARGET_SWEEP = 25.0
 DEFAULT_TEC_TARGET_STEADY = DEFAULT_TEC_TARGET_SWEEP
@@ -328,7 +331,7 @@ class SweptLaser(TLMLaser):
         # Save the cycler table to WC value to be reset after operation
         
         wc = self.query("DRV:CYC:WC?")
-        self.write("DRV:CYC:WC 1") # Set write count to 1 
+        self.write("DRV:CYC:WC 10") # Set write count to 1 
         
         logger.info("Loading cycler table from laser driver")
         table = []
@@ -350,8 +353,8 @@ class SweptLaser(TLMLaser):
             if len(entry) != 4:
                 raise ValueError(f"Invalid entry format: {entry}") 
             
-            # Add the wavelength to the entry
-            entry.append(float(self.query(f"DRV:CYC:GW? {index:d}").strip())) # get wavelength from laser
+            # Add the wavelength space to the entry 
+            entry.append(0) 
 
             # Add Mode hop flag to entry
             entry.append(bool(int(self.query(f"DRV:CYC:GETT? {index:d}").strip())))
@@ -359,6 +362,22 @@ class SweptLaser(TLMLaser):
 
             # Add the entry to the cycler table
             table.append(entry)
+
+        # Multiple wavelengths can be requested at once speeding up the process
+        # because of that they're requested separately
+        # The first 10 entries are added outside the loop as they don't use the 
+        # repetition flag
+
+        wavelengths = []
+        wavelengths.extend(self.get_cycler_entry_wavelength(0))  # type: ignore
+        
+        for i in range(10, len(table), 10):
+            wavelengths.extend(self.get_cycler_entry_wavelength(entry=i,repetition=True))  # type: ignore
+        
+        # Add the wavelengths to the cycler table
+        wavelengths = wavelengths[:len(table)]
+        for i, entry in enumerate(wavelengths):
+            table[i][4] = entry
 
         # Cycler table is a np.array in previous version, so convert to np.array
         # idk if this is necessary, but it is in the original code
@@ -977,3 +996,13 @@ class SweptLaser(TLMLaser):
         idx_actual = self.get_cycler_index()
         idx_new = idx_actual + idx_delta
         return self.set_wavelength_abs_idx(idx_new, trigger_pulse)
+
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
+    laser = SweptLaser()
+    laser.port = "COM7"
+    laser.open_connection()
+    laser.load_cycler_table()
+    

@@ -11,11 +11,14 @@ from packaging.version import Version
 import csv
 from enum import IntEnum
 import numpy as np
-from pychilaslasers import Laser
 
 import logging
-
-from pychilaslasers.FileFormatError import InvalidFileFormatError
+try:
+    from pychilaslasers import Laser
+    from pychilaslasers.FileFormatError import InvalidFileFormatError
+except ImportError:
+    from lasers import Laser
+    from FileFormatError import InvalidFileFormatError
 logger = logging.getLogger(__name__)
 
 # Constants
@@ -494,16 +497,33 @@ class TLMLaser(Laser):
             print(write_string)
             self.write(write_string)
 
-    def get_cycler_entry_wavelength(self, entry: int, repetition: bool = False) -> float:
-        """Get a wc wavelengths value from EEPROM."""
+    def get_cycler_entry_wavelength(self, entry: int, repetition: bool = False) -> float|list[float]|None:
+        """
+        Retrieve wc no of wavelength(s) starting from a given cycler entry from the EEPROM.
+
+        Parameters:
+            entry (int): The index of the cycler entry to query.
+            repetition (bool, optional): If True, use a different query command. Defaults to False.
+
+        Returns:
+            float | list[float] | None: The wavelength value(s) as a float if a single value is returned,
+            a list of floats if multiple values are returned, or None if the firmware version is unsupported.
+
+        Firmware:
+            Requires firmware version >= 1.3.8.
+
+        Notes:
+            - If the firmware version is below 1.3.8, the function returns None.
+            - The command used for querying depends on the 'repetition' flag.
+        """
         if Version(self.fwv) >= Version("1.3.8"):
             if repetition:
-                wavelength = float(self.query(f"; {entry:d}"))
+                wavelength = self.query(f"; {entry:d}")
             else: 
-                wavelength = float(self.query(f"DRV:CYC:GW? {entry:d}"))
+                wavelength = self.query(f"DRV:CYC:GW? {entry:d}")
         else:
-            wavelength = None
-        return wavelength
+            return None
+        return float(wavelength) if len(wavelength.split(" ")) == 1 else [float(wl) for wl in wavelength.split(" ")]
     
     def store_cycler(self) -> None:
         """Stores modified entries to the cycler table in memory to persistent storage
@@ -800,4 +820,5 @@ class TLMLaser(Laser):
         logger.info(f"Setpoint: {setpoint_fb}\nInterval: {tick_interval} ms")
         logger.info(f"Gains:\nP: {p_gain}, I: {i_gain}, D: {d_gain}")
         logger.info(f"FB enabled? {enabled}")
+
 
