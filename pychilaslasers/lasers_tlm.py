@@ -410,7 +410,7 @@ class TLMLaser(Laser):
             self.write(f"DRV:CYC:PUT {entry:d} {value1:.4f} {value2:.4f} {value3:.4f} {value4:.4f}")
 
 
-    def get_cycler_entry(self, entry: int) -> tuple[float, float, float, float]:
+    def get_cycler_entry(self, entry: int, repetition: bool = False) -> tuple[float, float, float, float]:
         """Gets all heater voltages of a cycler entry in driver memory
 
         Returns all heater voltages of a specific cycler entry as currently
@@ -423,7 +423,10 @@ class TLMLaser(Laser):
             (tuple[float,float,float,float]): a tuple of size four with
             the heater voltages for respective heater channels 1 to 4
         """
-        resp = self.query(f"DRV:CYC:GET? {entry:d}")
+        if not repetition:
+            resp = self.query(f"DRV:CYC:GET? {entry:d}")
+        else:
+            resp = self.query(f"DRV:CYC:GET? {entry:d}")
         values_list = [float(value) for value in resp.split(" ")]
         return tuple(values_list)
 
@@ -464,10 +467,13 @@ class TLMLaser(Laser):
             else:
                 self.write(f"DRV:CYC:SETT {entry:d} {mode_hop:d}")
 
-    def get_cycler_entry_mode_hop(self, entry: int) -> bool:
+    def get_cycler_entry_mode_hop(self, entry: int, repetition: bool = False) -> bool:
         """Get one trigger setting for mode hop"""
         if Version(self.fwv) >= Version("1.3.7"):
-            mode_hop = bool(int(self.query(f"DRV:CYC:GETT? {entry:d}")))
+            if repetition
+                mode_hop = bool(int(self.query(f"; {entry:d}")))
+            else:
+                mode_hop = bool(int(self.query(f"DRV:CYC:GETT? {entry:d}")))
         else:
             mode_hop = None
         return mode_hop
