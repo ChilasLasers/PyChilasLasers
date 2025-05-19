@@ -4,6 +4,7 @@ SweptLaser class to communicate with COMET lasers.
 Authors: RLK
 """
 
+import re
 import time
 from enum import IntEnum
 import logging
@@ -334,54 +335,33 @@ class SweptLaser(TLMLaser):
         self.write("DRV:CYC:WC 10") # Set write count to 1 
         
         logger.info("Loading cycler table from laser driver")
-        table = []
-        index = 0
         start_time: float = time.time()
-        while True:
-            # Get heater values from laser and store in cycler table
 
-            response: str = self.query(f"DRV:CYC:GET? {index:d}") # get values from cycler table
-            
-            if "0.0000 0.0000 0.0000 0.0000" in response: # check if this entry had a heater value
-                self._cycler_table_length = index # set the length of the cycler table
-                break
-
-            # Parse the response string to extract the values
-            entry: list[float]  = [float(value) for value in response.split()]
-
-            # Check if the entry has the correct number of values
-            if len(entry) != 4:
-                raise ValueError(f"Invalid entry format: {entry}") 
-            
-            # Add the wavelength space to the entry 
-            entry.append(0) 
-
-            # Add Mode hop flag to entry
-            entry.append(bool(int(self.query(f"DRV:CYC:GETT? {index:d}").strip())))
-            index += 1
-
-            # Add the entry to the cycler table
-            table.append(entry)
-
-        # Multiple wavelengths can be requested at once speeding up the process
-        # because of that they're requested separately
-        # The first 10 entries are added outside the loop as they don't use the 
-        # repetition flag
-
-        wavelengths = []
-        wavelengths.extend(self.get_cycler_entry_wavelength(0))  # type: ignore
+        # Get the heater values from the driver        
+        cycler_table = self.get_all_cycler_entries()
+        self._cycler_table_length = cycler_table.shape[0]
         
-        for i in range(10, len(table), 10):
-            wavelengths.extend(self.get_cycler_entry_wavelength(entry=i,repetition=True))  # type: ignore
+        # Get the wavelengths from the driver in a separate list as they are 10 at a time
+        wavelengths = [] 
+        for i in range(0, self._cycler_table_length, 10):
+            wavelengths.extend(self.get_cycler_entry_wavelength(entry=i))  # type: ignore
         
         # Add the wavelengths to the cycler table
-        wavelengths = wavelengths[:len(table)]
-        for i, entry in enumerate(wavelengths):
-            table[i][4] = entry
+        wavelengths = wavelengths[:self._cycler_table_length]
+        cycler_table = np.insert(cycler_table,4,wavelengths,axis=1)
+ 
+
+        hops = []
+        for i in range(self._cycler_table_length):
+            # Add Mode hop flag to entry
+            hops.append(self.get_cycler_entry_mode_hop(i))  # type: ignore
+        cycler_table = np.insert(cycler_table,5,hops,axis=1)
+
+
 
         # Cycler table is a np.array in previous version, so convert to np.array
         # idk if this is necessary, but it is in the original code
-        self._cycler_table = np.array(table)
+        self._cycler_table = cycler_table
 
 
         end_time: float = time.time()
@@ -1004,5 +984,8 @@ if __name__ == "__main__":
     laser = SweptLaser()
     laser.port = "COM7"
     laser.open_connection()
-    laser.load_cycler_table()
-    
+    laser.baudrate = 460800
+    try:
+        laser.load_cycler_table()
+    finally:
+        laser.close_connection()

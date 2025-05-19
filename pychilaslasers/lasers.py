@@ -20,7 +20,13 @@ DEFAULT_BAUDRATE = 57600
 logger = logging.getLogger(__name__)
 
 # ERROR CODES THAT SHOULD TRIGGER A ERROR DIALOG (errors 14 to 23) 
-CRITICAL_ERRORS = ["E0" + str(x) for x in range(14,24)] + ["E0" + str(x) for x in range(30,51)] 
+CRITICAL_ERRORS: list[str] = ["E0" + str(x) for x in range(14,24)] + ["E0" + str(x) for x in range(30,51)] 
+SEMICOLON_COMMANDS: list[str] = [
+    "DRV:CYC:GW?",
+    "DRV:CYC:GET?",
+    "DRV:CYC:PUT",
+    "DRV:CYC:SETT",
+    "DRV:CYC:STRW"]
 
 
 # Constants
@@ -401,7 +407,12 @@ class Laser:
         Returns:
             str: The response from the device without the return code.
         """
-        return self._query_rc_check(cmd)[2:]
+        if cmd.split(" ")[0] == self.previous_command and self.previous_command in SEMICOLON_COMMANDS:
+            cmd = cmd.replace(cmd.split(" ")[0], ";")
+            return self._query_rc_check(cmd)[2:]
+        else:
+            self.previous_command = cmd.split(" ")[0]
+            return self._query_rc_check(cmd)[2:]
 
     def write(self, cmd: str) -> None:
         """Sends a command to the device.

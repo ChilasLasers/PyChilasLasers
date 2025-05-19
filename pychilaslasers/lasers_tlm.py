@@ -6,6 +6,8 @@ Authors: RLK, AVR
 Date: 2024-10-22
 """
 
+from math import e
+from operator import index
 from pathlib import Path
 from packaging.version import Version
 import csv
@@ -386,7 +388,7 @@ class TLMLaser(Laser):
         except Exception as e:
             logger.error( e.__str__())
 
-    def put_cycler_entry(self, entry: int, value1: float, value2: float, value3: float, value4: float, repetition: bool = False):
+    def put_cycler_entry(self, entry: int, value1: float, value2: float, value3: float, value4: float):
         """Sets all heater voltages of a cycler entry
 
         The cycler table entry referenced by the entry index integer will be
@@ -402,15 +404,11 @@ class TLMLaser(Laser):
             value2(float): second heater voltage
             value3(float): third heater voltage
             value4(float): fourth heater voltage
-            repetition: command text can be shortened when repeated
         """
-        if repetition:
-            self.write(f"; {entry:d} {value1:.4f} {value2:.4f} {value3:.4f} {value4:.4f}")
-        else:
-            self.write(f"DRV:CYC:PUT {entry:d} {value1:.4f} {value2:.4f} {value3:.4f} {value4:.4f}")
+        self.write(f"DRV:CYC:PUT {entry:d} {value1:.4f} {value2:.4f} {value3:.4f} {value4:.4f}")
 
 
-    def get_cycler_entry(self, entry: int, repetition: bool = False) -> tuple[float, float, float, float]:
+    def get_cycler_entry(self, entry: int) -> tuple[float, float, float, float]:
         """Gets all heater voltages of a cycler entry in driver memory
 
         Returns all heater voltages of a specific cycler entry as currently
@@ -423,10 +421,7 @@ class TLMLaser(Laser):
             (tuple[float,float,float,float]): a tuple of size four with
             the heater voltages for respective heater channels 1 to 4
         """
-        if not repetition:
-            resp = self.query(f"DRV:CYC:GET? {entry:d}")
-        else:
-            resp = self.query(f"DRV:CYC:GET? {entry:d}")
+        resp = self.query(f"DRV:CYC:GET? {entry:d}")
         values_list = [float(value) for value in resp.split(" ")]
         return tuple(values_list)
 
@@ -440,10 +435,13 @@ class TLMLaser(Laser):
         Returns:
             (np.array[size(EEPROM_SIZE, 4), dtype=float]):
         """
-        cycler_table = np.zeros((self._eeprom_size, 4))
-        for ii in range(self._eeprom_size):
-            cycler_table[ii, :] = self.get_cycler_entry(ii)
-        return cycler_table
+
+        entries = [self.get_cycler_entry(0)]
+        index = 1
+        while ( entry:= self.get_cycler_entry(index)) != (0.0,0.0,0.0,0.0):
+            entries.append(entry)
+            index += 1
+        return np.array(entries)
 
     def set_cycler_entry(self, entry: int, heater_number: int, heater_value: float):
         """Sets single specific heater voltage of a cycler entry in driver memory
@@ -459,21 +457,15 @@ class TLMLaser(Laser):
         """
         self.write(f"DRV:CYC:SET {entry:d} {heater_number:d} {heater_value:.4f}")
 
-    def set_cycler_entry_mode_hop(self, entry: int, mode_hop: bool, repetition: bool = False) -> None:
+    def set_cycler_entry_mode_hop(self, entry: int, mode_hop: bool) -> None:
         """Write one trigger setting for mode hop into RAM."""
         if Version(self.fwv) >= Version("1.3.7"):
-            if repetition:
-                self.write(f"; {entry:d} {mode_hop:d}")
-            else:
-                self.write(f"DRV:CYC:SETT {entry:d} {mode_hop:d}")
+            self.write(f"DRV:CYC:SETT {entry:d} {mode_hop:d}")
 
-    def get_cycler_entry_mode_hop(self, entry: int, repetition: bool = False) -> bool:
+    def get_cycler_entry_mode_hop(self, entry: int) -> bool:
         """Get one trigger setting for mode hop"""
         if Version(self.fwv) >= Version("1.3.7"):
-            if repetition
-                mode_hop = bool(int(self.query(f"; {entry:d}")))
-            else:
-                mode_hop = bool(int(self.query(f"DRV:CYC:GETT? {entry:d}")))
+            mode_hop = bool(int(self.query(f"DRV:CYC:GETT? {entry:d}")))
         else:
             mode_hop = None
         return mode_hop
@@ -491,25 +483,21 @@ class TLMLaser(Laser):
             wavelength_count = None
         return wavelength_count
 
-    def set_cycler_entry_wavelengths(self, entry: int, wavelengths, repetition: bool = False):
+    def set_cycler_entry_wavelengths(self, entry: int, wavelengths):
         """Write wavelength values of multiply entries (up to 10) into EEPROM."""
         if Version(self.fwv) >= Version("1.3.8"):
-            if repetition:
-                write_string = f"; {entry:d}"
-            else:
-                write_string = f"DRV:CYC:STRW {entry:d}"
+            write_string = f"DRV:CYC:STRW {entry:d}"
             for wavelength in wavelengths:
                 write_string = write_string + f" {wavelength:.4f}"
             print(write_string)
             self.write(write_string)
 
-    def get_cycler_entry_wavelength(self, entry: int, repetition: bool = False) -> float|list[float]|None:
+    def get_cycler_entry_wavelength(self, entry: int) -> float|list[float]|None:
         """
         Retrieve wc no of wavelength(s) starting from a given cycler entry from the EEPROM.
 
         Parameters:
             entry (int): The index of the cycler entry to query.
-            repetition (bool, optional): If True, use a different query command. Defaults to False.
 
         Returns:
             float | list[float] | None: The wavelength value(s) as a float if a single value is returned,
@@ -520,13 +508,9 @@ class TLMLaser(Laser):
 
         Notes:
             - If the firmware version is below 1.3.8, the function returns None.
-            - The command used for querying depends on the 'repetition' flag.
         """
         if Version(self.fwv) >= Version("1.3.8"):
-            if repetition:
-                wavelength = self.query(f"; {entry:d}")
-            else: 
-                wavelength = self.query(f"DRV:CYC:GW? {entry:d}")
+            wavelength = self.query(f"DRV:CYC:GW? {entry:d}")
         else:
             return None
         return float(wavelength) if len(wavelength.split(" ")) == 1 else [float(wl) for wl in wavelength.split(" ")]
@@ -630,22 +614,18 @@ class TLMLaser(Laser):
             # Update user with print statement every 100 entries
             if (cycler_entry + 1) % 1000 == 0:
                 logger.info(f"{(cycler_entry + 1):d}/{self._cycler_table_length:d}")
-            repetition = True
 
         # Adding mode hops is only supported from firmware version 1.3.7 and higher.
         if add_mode_hops and Version(self.fwv) >= Version("1.3.7"):
             logger.info("Adding mode hops")
-            repetition = False
             for cycler_entry in range(self._cycler_table_length):
                 self.set_cycler_entry_mode_hop(
                     entry=cycler_entry,
                     mode_hop=bool(self._cycler_table[cycler_entry, self.cycler_config.MODE_HOPS]),
-                    repetition=repetition,
                 )
                 # Update user with print statement every 100 entries
                 if (cycler_entry + 1) % 1000 == 0:
                     logger.info(f"{(cycler_entry + 1):d}/{self._cycler_table_length:d}")
-                repetition = True
 
         # Turn status codes on as default communication mode
         self.prefix_mode = True
@@ -655,7 +635,6 @@ class TLMLaser(Laser):
             logger.info("Adding wavelengths")
             # Set number of wavelengths to be queried and stored back to 5, to increase spead
             self.set_cycler_wavelength_count(4)
-            repetition = False
             for cycler_entry in range(self._cycler_table_length):
                 if cycler_entry % 4 == 0:
                     wavelengths = np.zeros(shape=4, dtype=float)
@@ -665,7 +644,6 @@ class TLMLaser(Laser):
                     self.set_cycler_entry_wavelengths(
                         entry=cycler_entry,
                         wavelengths=wavelengths,
-                        repetition=repetition,
                     )
                 if (cycler_entry + 1) % 1000 == 0:
                     logger.info(f"{(cycler_entry + 1):d}/{self._cycler_table_length:d}")
