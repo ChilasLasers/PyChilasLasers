@@ -30,9 +30,8 @@ class CyclerColumn(IntEnum):
     TUNABLE_COUPLER = 3
     WAVELENGTH = 4
     MODE_HOPS = 5
-    CAL_RESULT = 6
-    ENTRY_INDEX = 7
-    MODE_INDEX = 8
+    ENTRY_INDEX = 6
+    MODE_INDEX = 7
 
 
 class Laser:
