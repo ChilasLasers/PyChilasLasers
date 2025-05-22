@@ -204,9 +204,7 @@ class Laser:
         """
         driver_baudrate = int(self.query("SYST:SER:BAUD?"))
         if driver_baudrate != self._ser.baudrate:
-            logger.error(
-                "There seems to be a baudrate mismatch between driver and connection baudrate settings"
-            )
+            logger.error("There seems to be a baudrate mismatch between driver and connection baudrate settings")
         return driver_baudrate
 
     @baudrate.setter
@@ -259,7 +257,7 @@ class Laser:
         logger.info("Closing serial connection")
         self._ser.close()
         # 3. Change serial connection baudrate attribute
-        logger.info("Using new baudrate for pyserial attribute")
+        logger.info("Using new baudrate with pyserial")
         self._ser.baudrate = new_baudrate
         # 4. Reopen serial connection
         logger.info("Reopening serial connection with new baudrate")
@@ -308,6 +306,7 @@ class Laser:
         if self._ser.is_open:
             if self.baudrate != DEFAULT_BAUDRATE:
                 self.baudrate = DEFAULT_BAUDRATE
+            logger.info("Closing serial connection")
             self._ser.close()
 
     def _write(self, data: str) -> None:

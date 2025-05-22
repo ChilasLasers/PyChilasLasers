@@ -585,12 +585,12 @@ class SweptLaser(TLMLaser):
             v_ring_small = self._cycler_table[self._idx_active, type(self).cycler_config.RING_SMALL]
         v_squared_rings = np.square(v_ring_large) + np.square(v_ring_small)
         v_squared_phase = np.square(v_phase)
-        v_squared_phase_correction = - 23.40 + 3.0 + 0.227 * v_squared_rings  # for 100 ms cycler interval
+        v_squared_phase_correction = - 23.40 - 12.0 + 5.0 + 0.227 * v_squared_rings  # for 100 ms cycler interval
         v_squared_phase_new = v_squared_phase + v_squared_phase_correction
         if v_squared_phase_new < 0.0:
             v_squared_phase_new = 0.0
         v_phase_new = np.sqrt(v_squared_phase_new)
-        print(f"Phase correction sweep {v_phase:.4f} to steady {v_squared_phase_new:.4f}")
+        print(f"Phase correction sweep {v_phase:.4f} to steady {v_phase_new:.4f}")
 
         self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_new)
 
@@ -799,7 +799,7 @@ class SweptLaser(TLMLaser):
         """
         # Exit out early, if sweep is already running
         if self.cycler_running:
-            return 0.0
+           return 0.0
 
         # Apply the heater values from the requested cycler table index
         self.load_cycler_entry(idx)
