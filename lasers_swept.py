@@ -15,7 +15,7 @@ from lasers import logger
 DEFAULT_TEC_TARGET_SWEEP = 25.0
 DEFAULT_TEC_TARGET_STEADY = DEFAULT_TEC_TARGET_SWEEP
 DEFAULT_DIODE_CURRENT_SWEEP = 280.0
-DEFAULT_DIODE_CURRENT_STEADY = 280.0
+DEFAULT_DIODE_CURRENT_STEADY = 295.0
 DEFAULT_CYCLER_INTERVAL = 100
 DEFAULT_ANTI_HYST_V_PHASE_SQUARED = 30.0
 DEFAULT_ANTI_HYST_SLEEP = 0.02
@@ -555,7 +555,7 @@ class SweptLaser(TLMLaser):
         self.set_cycler_trigger(True)
         self.set_cycler_trigger(False)
 
-    def phase_anti_hyst(self):
+    def phase_anti_hyst(self, v_phase: float = None):
         """Perform a phase anti-hysteresis function
 
         This method instructs the driver to shortly increase the voltage on the phase
@@ -566,16 +566,23 @@ class SweptLaser(TLMLaser):
         operation, this function should be called when switching from one laser
         mode to another.
         """
-        if self._idx_active is None:
-            v_phase = self.get_driver_value(type(self).channel_config.PHASE_SECTION)
-        else:
-            v_phase = self._cycler_table[self._idx_active, type(self).cycler_config.PHASE_SECTION]
-        v_phase_anti_hyst = np.sqrt(np.square(v_phase) + DEFAULT_ANTI_HYST_V_PHASE_SQUARED)  # V^2, hysteresis function
+        if v_phase is None:
+            if self._idx_active is None:
+                v_phase = self.get_driver_value(type(self).channel_config.PHASE_SECTION)
+            else:
+                v_phase = self._cycler_table[self._idx_active, type(self).cycler_config.PHASE_SECTION]
+        v_phase_anti_hyst = np.sqrt(np.square(v_phase) + 30)  # V^2, hysteresis function
         self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_anti_hyst)
-        time.sleep(DEFAULT_ANTI_HYST_SLEEP)
+        time.sleep(0.1)
+        v_phase_anti_hyst = np.sqrt(np.square(v_phase) + 20)  # V^2, hysteresis function
+        self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_anti_hyst)
+        time.sleep(0.1)
+        v_phase_anti_hyst = np.sqrt(np.square(v_phase) + 10)  # V^2, hysteresis function
+        self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_anti_hyst)
+        time.sleep(0.1)
         self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase)
 
-    def phase_correction_sweep_to_steady(self):
+    def phase_correction_sweep_to_steady(self) -> float:
         if self._idx_active is None:
             v_phase = self.get_driver_value(type(self).channel_config.PHASE_SECTION)
             v_ring_large = self.get_driver_value(type(self).channel_config.RING_LARGE)
@@ -586,7 +593,7 @@ class SweptLaser(TLMLaser):
             v_ring_small = self._cycler_table[self._idx_active, type(self).cycler_config.RING_SMALL]
         v_squared_rings = np.square(v_ring_large) + np.square(v_ring_small)
         v_squared_phase = np.square(v_phase)
-        v_squared_phase_correction = - 23.40 - 12.0 + 5.0 + 0.227 * v_squared_rings  # for 100 ms cycler interval
+        v_squared_phase_correction = - 23.40 - 12.0 + 0.0 + 0.227 * v_squared_rings  # for 100 ms cycler interval
         v_squared_phase_new = v_squared_phase + v_squared_phase_correction
         if v_squared_phase_new < 0.0:
             v_squared_phase_new = 0.0
@@ -594,6 +601,7 @@ class SweptLaser(TLMLaser):
         logger.info(f"Correcting phase from sweep {v_phase:.4f} V to steady {v_phase_new:.4f} V")
 
         self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_new)
+        return v_phase_new
 
     def _calc_runtime(self, idx_start: int, idx_end: int, num_sweeps: int) -> float:
         """Calculates and returns the estimated runtime of a sweep
@@ -802,14 +810,15 @@ class SweptLaser(TLMLaser):
         self._idx_active = idx
 
         # Perform a phase correction for steady mode, since the phase is calibrated for sweep mode.
-        self.phase_correction_sweep_to_steady()
+        v_phase_after_correction = self.phase_correction_sweep_to_steady()
 
         # Perform a phase anti-hysteresis function when the set mode number is different from the previously set one.
         mode_number_new = self.get_mode_number_idx(idx)
         if mode_number_new != self._mode_number:
             logger.info(f"Phase anti-hysteresis required due to switching to mode number {mode_number_new:d}")
-            self.phase_anti_hyst()
+            self.phase_anti_hyst(v_phase=v_phase_after_correction)
         self._mode_number = mode_number_new
+
         # Provide a trigger signal to indicate that a new wavelength is set
         if trigger_pulse:
             self.trigger_pulse()
