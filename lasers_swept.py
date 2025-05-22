@@ -14,8 +14,10 @@ from lasers_tlm import TLMLaser
 DEFAULT_TEC_TARGET_SWEEP = 25.0
 DEFAULT_TEC_TARGET_STEADY = DEFAULT_TEC_TARGET_SWEEP
 DEFAULT_DIODE_CURRENT_SWEEP = 280.0
-DEFAULT_DIODE_CURRENT_STEADY = 295.0
+DEFAULT_DIODE_CURRENT_STEADY = 280.0
 DEFAULT_CYCLER_INTERVAL = 100
+DEFAULT_ANTI_HYST_V_PHASE_SQUARED = 30.0
+DEFAULT_ANTI_HYST_SLEEP = 0.02
 
 
 class OperatingMode(IntEnum):
@@ -42,6 +44,7 @@ class SweptLaser(TLMLaser):
 
         self._operation_mode = None
         self._mode_number = 0
+        self._idx_active = None
         self._min_wavelength = None
         self._max_wavelength = None
         self._sweep_step_size = None
@@ -562,12 +565,32 @@ class SweptLaser(TLMLaser):
         operation, this function should be called when switching from one laser
         mode to another.
         """
-        v_phase = self.get_driver_value(type(self).channel_config.PHASE_SECTION)
-        v_phase_hysteresis = np.sqrt(np.square(v_phase) + 30.0)  # V^2, hysteresis function
-        v_phase_final = v_phase  # V^2, hysteresis function, step 3
-        self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_hysteresis)
-        time.sleep(0.02)
-        self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_final)
+        if self._idx_active is None:
+            v_phase = self.get_driver_value(type(self).channel_config.PHASE_SECTION)
+        else:
+            v_phase = self._cycler_table[self._idx_active, type(self).cycler_config.PHASE_SECTION]
+        v_phase_anti_hyst = np.sqrt(np.square(v_phase) + DEFAULT_ANTI_HYST_V_PHASE_SQUARED)  # V^2, hysteresis function
+        self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_anti_hyst)
+        time.sleep(DEFAULT_ANTI_HYST_SLEEP)
+        self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase)
+
+    def phase_correction_sweep_to_steady(self):
+        if self._idx_active is None:
+            v_phase = self.get_driver_value(type(self).channel_config.PHASE_SECTION)
+            v_ring_large = self.get_driver_value(type(self).channel_config.RING_LARGE)
+            v_ring_small = self.get_driver_value(type(self).channel_config.RING_SMALL)
+        else:
+            v_phase = self._cycler_table[self._idx_active, type(self).cycler_config.PHASE_SECTION]
+            v_ring_large = self._cycler_table[self._idx_active, type(self).cycler_config.RING_LARGE]
+            v_ring_small = self._cycler_table[self._idx_active, type(self).cycler_config.RING_SMALL]
+        v_squared_rings = np.square(v_ring_large) + np.square(v_ring_small)
+        v_squared_phase = np.square(v_phase)
+        v_squared_phase_correction = - 23.40 + 3.0 + 0.227 * v_squared_rings  # for 100 ms cycler interval
+        v_squared_phase_new = v_squared_phase + v_squared_phase_correction
+        if v_squared_phase_new < 0.0:
+            v_squared_phase_new = 0.0
+        v_phase_new = np.sqrt(v_squared_phase_new)
+        self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_new)
 
     def _calc_runtime(self, idx_start: int, idx_end: int, num_sweeps: int) -> float:
         """Calculates and returns the estimated runtime of a sweep
@@ -659,12 +682,7 @@ class SweptLaser(TLMLaser):
         self._update_mode_number(idx_end)
 
         # Return what is swept through, and runtime
-        return (
-            self._cycler_table[
-                idx_start: (idx_end + 1), type(self).cycler_config.WAVELENGTH
-            ],
-            runtime,
-        )
+        return self._cycler_table[idx_start: (idx_end + 1), type(self).cycler_config.WAVELENGTH], runtime
 
     def sweep(
         self,
@@ -749,7 +767,11 @@ class SweptLaser(TLMLaser):
             (float): current wavelength in nm
         """
         idx = self.get_cycler_index()
-        return self.get_wavelength_idx(idx)
+        # Update the field to keep track of the active index
+        self._idx_active = idx
+        # Request the wavelength corresponding to the active index
+        wavelength = self.get_wavelength_idx(idx)
+        return wavelength
 
     def set_wavelength_abs_idx(self, idx: int, trigger_pulse: bool = True) -> float:
         """Instructs laser to tune to a given cycler table entry
@@ -777,7 +799,14 @@ class SweptLaser(TLMLaser):
         if self.cycler_running:
             return 0.0
 
+        # Apply the heater values from the requested cycler table index
         self.load_cycler_entry(idx)
+        # Update the field to keep track of the active index
+        self._idx_active = idx
+
+        # Perform a phase correction for static mode, since the phase is calibrated for sweep mode.
+        self.phase_correction_sweep_to_steady()
+
         # Perform a phase anti-hysteresis function when the set mode number is different from the previously set one.
         mode_number_new = self.get_mode_number_idx(idx)
         if mode_number_new != self._mode_number:
