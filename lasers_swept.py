@@ -590,6 +590,8 @@ class SweptLaser(TLMLaser):
         if v_squared_phase_new < 0.0:
             v_squared_phase_new = 0.0
         v_phase_new = np.sqrt(v_squared_phase_new)
+        print(f"Phase correction sweep {v_phase:.4f} to steady {v_squared_phase_new:.4f}")
+
         self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_new)
 
     def _calc_runtime(self, idx_start: int, idx_end: int, num_sweeps: int) -> float:
@@ -810,9 +812,7 @@ class SweptLaser(TLMLaser):
         # Perform a phase anti-hysteresis function when the set mode number is different from the previously set one.
         mode_number_new = self.get_mode_number_idx(idx)
         if mode_number_new != self._mode_number:
-            print(
-                f"Phase anti-hysteresis required due to switching to mode number {mode_number_new:d}"
-            )
+            print(f"Phase anti-hysteresis required due to switching to mode number {mode_number_new:d}")
             self.phase_anti_hyst()
         self._mode_number = mode_number_new
         # Provide a trigger signal to indicate that a new wavelength is set
