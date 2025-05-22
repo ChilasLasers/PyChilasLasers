@@ -794,12 +794,8 @@ class SweptLaser(TLMLaser):
                 tuning to the wavelength
 
         Returns:
-            (float): wavelength the laser will tune to in nm. If the cycler is
-            already running, it will return 0.0 instead
+            (float): wavelength the laser will tune to in nm.
         """
-        # Exit out early, if sweep is already running
-        if self.cycler_running:
-           return 0.0
 
         # Apply the heater values from the requested cycler table index
         self.load_cycler_entry(idx)
