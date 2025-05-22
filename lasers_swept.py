@@ -569,18 +569,6 @@ class SweptLaser(TLMLaser):
         time.sleep(0.02)
         self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_final)
 
-    def phase_change(self, v_squared_change: float):
-        """Changes the phase section heater voltage using a delta in V^2 domain
-
-        Args:
-            v_squared_change(float): delta voltage squared to
-                apply to phase section. Can be either negative or positive
-                signed to decrease or increase
-        """
-        v_phase = self.get_driver_value(type(self).channel_config.PHASE_SECTION)
-        v_phase_final = np.sqrt(np.square(v_phase) + v_squared_change)
-        self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_final)
-
     def _calc_runtime(self, idx_start: int, idx_end: int, num_sweeps: int) -> float:
         """Calculates and returns the estimated runtime of a sweep
 
