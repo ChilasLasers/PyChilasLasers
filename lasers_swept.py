@@ -10,6 +10,7 @@ from enum import IntEnum
 import numpy as np
 
 from lasers_tlm import TLMLaser
+from lasers import logger
 
 DEFAULT_TEC_TARGET_SWEEP = 25.0
 DEFAULT_TEC_TARGET_STEADY = DEFAULT_TEC_TARGET_SWEEP
@@ -257,7 +258,7 @@ class SweptLaser(TLMLaser):
         """
         # Exit out early if current cycler table already has all columns
         if self._is_lut_prepared:
-            print("Cycler table already has added columns.")
+            logger.warning("Cycler table already has added columns.")
             if not force:
                 return
 
@@ -365,7 +366,7 @@ class SweptLaser(TLMLaser):
         """
         correct = idx_end > idx_start
         if not correct:
-            print(f"Indices for span are not correct. Given start:{idx_start:d} end:{idx_end:d}.\nNeeded start < end.")
+            logger.warning(f"Indices for span are not correct. Given start:{idx_start:d} end:{idx_end:d}.\nNeeded start < end.")
         return correct
 
     def _update_mode_number(self, idx: int | None = None):
@@ -441,7 +442,7 @@ class SweptLaser(TLMLaser):
             value (bool): The system state to be set.
         """
         if type(value) is not bool:
-            print("ERROR: given value is not a boolean")
+            logger.error("ERROR: given value is not a boolean")
             return
         if not value:
             self._operation_mode = None
@@ -488,11 +489,11 @@ class SweptLaser(TLMLaser):
         wl_array = cycler_table_no_hops[:, type(self).cycler_config.WAVELENGTH]
         wl_min = np.min(wl_array)
         if wavelength < wl_min:
-            print(f"Input wavelength {wavelength:.3f} smaller than minimum {wl_min:.3f}.")
+            logger.warning(f"Input wavelength {wavelength:.3f} smaller than minimum {wl_min:.3f}.")
             wavelength = wl_min
         wl_max = np.max(wl_array)
         if wavelength > wl_max:
-            print(f"Input wavelength {wavelength:.3f} larger than maximum {wl_max:.3f}.")
+            logger.warning(f"Input wavelength {wavelength:.3f} larger than maximum {wl_max:.3f}.")
             wavelength = wl_max
         _idx_no_hops = np.argmin(np.abs(wl_array - wavelength))
         best_entry = cycler_table_no_hops[_idx_no_hops, :]
@@ -590,7 +591,7 @@ class SweptLaser(TLMLaser):
         if v_squared_phase_new < 0.0:
             v_squared_phase_new = 0.0
         v_phase_new = np.sqrt(v_squared_phase_new)
-        print(f"Phase correction sweep {v_phase:.4f} to steady {v_phase_new:.4f}")
+        logger.info(f"Correcting phase from sweep {v_phase:.4f} V to steady {v_phase_new:.4f} V")
 
         self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_new)
 
@@ -664,11 +665,9 @@ class SweptLaser(TLMLaser):
             mode_number_to_set = self.get_mode_number_idx(idx_start)
             new_idx_start = self.get_idx_mode_hop(mode_number_to_set)
             if new_idx_start != idx_start:
-                print("Optimize sweep by selecting starting wavelength at mode hop.")
-                print(f"Index start: {idx_start=:d}, {new_idx_start=:d}.")
-                print(
-                    f"Wavelength start: original {self.get_wavelength_idx(idx_start):.3f}, new {self.get_wavelength_idx(new_idx_start):.3f}."
-                )
+                logger.info("Optimize sweep by selecting starting wavelength at mode hop.")
+                logger.info(f"Index start: {idx_start=:d}, {new_idx_start=:d}.")
+                logger.info(f"Wavelength start: original {self.get_wavelength_idx(idx_start):.3f}, new {self.get_wavelength_idx(new_idx_start):.3f}.")
             idx_start = new_idx_start
 
         # Calculate runtime
@@ -802,13 +801,13 @@ class SweptLaser(TLMLaser):
         # Update the field to keep track of the active index
         self._idx_active = idx
 
-        # Perform a phase correction for static mode, since the phase is calibrated for sweep mode.
+        # Perform a phase correction for steady mode, since the phase is calibrated for sweep mode.
         self.phase_correction_sweep_to_steady()
 
         # Perform a phase anti-hysteresis function when the set mode number is different from the previously set one.
         mode_number_new = self.get_mode_number_idx(idx)
         if mode_number_new != self._mode_number:
-            print(f"Phase anti-hysteresis required due to switching to mode number {mode_number_new:d}")
+            logger.info(f"Phase anti-hysteresis required due to switching to mode number {mode_number_new:d}")
             self.phase_anti_hyst()
         self._mode_number = mode_number_new
         # Provide a trigger signal to indicate that a new wavelength is set
