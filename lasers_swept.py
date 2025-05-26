@@ -571,18 +571,32 @@ class SweptLaser(TLMLaser):
                 v_phase = self.get_driver_value(type(self).channel_config.PHASE_SECTION)
             else:
                 v_phase = self._cycler_table[self._idx_active, type(self).cycler_config.PHASE_SECTION]
-        v_phase_anti_hyst = np.sqrt(np.square(v_phase) + 30)  # V^2, hysteresis function
+
+        # The new optimized and quick phase anti-hysteresis procedure.
+        v_phase_anti_hyst = np.sqrt(np.square(v_phase) + DEFAULT_ANTI_HYST_V_PHASE_SQUARED)  # V^2, hysteresis function
         self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_anti_hyst)
-        time.sleep(0.1)
-        v_phase_anti_hyst = np.sqrt(np.square(v_phase) + 20)  # V^2, hysteresis function
-        self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_anti_hyst)
-        time.sleep(0.1)
-        v_phase_anti_hyst = np.sqrt(np.square(v_phase) + 10)  # V^2, hysteresis function
-        self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_anti_hyst)
-        time.sleep(0.1)
+        time.sleep(DEFAULT_ANTI_HYST_SLEEP)
+
+        # This was the original phase anti-hysteresis procedure.
+        # v_phase_anti_hyst = np.sqrt(np.square(v_phase) + 30)  # V^2, hysteresis function
+        # self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_anti_hyst)
+        # time.sleep(0.1)
+        # v_phase_anti_hyst = np.sqrt(np.square(v_phase) + 20)  # V^2, hysteresis function
+        # self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_anti_hyst)
+        # time.sleep(0.1)
+        # v_phase_anti_hyst = np.sqrt(np.square(v_phase) + 10)  # V^2, hysteresis function
+        # self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_anti_hyst)
+        # time.sleep(0.1)
+
         self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase)
 
     def phase_correction_sweep_to_steady(self) -> float:
+        """Perform a phase correction for steady mode, since the phase is calibrated for sweep mode.
+
+        This is part of a test, which is not successful yet.
+        It can be removed if the tests remains unsuccessful.
+        """
+
         if self._idx_active is None:
             v_phase = self.get_driver_value(type(self).channel_config.PHASE_SECTION)
             v_ring_large = self.get_driver_value(type(self).channel_config.RING_LARGE)
@@ -810,13 +824,13 @@ class SweptLaser(TLMLaser):
         self._idx_active = idx
 
         # Perform a phase correction for steady mode, since the phase is calibrated for sweep mode.
-        v_phase_after_correction = self.phase_correction_sweep_to_steady()
+        # v_phase_after_correction = self.phase_correction_sweep_to_steady()
 
         # Perform a phase anti-hysteresis function when the set mode number is different from the previously set one.
         mode_number_new = self.get_mode_number_idx(idx)
         if mode_number_new != self._mode_number:
             logger.info(f"Phase anti-hysteresis required due to switching to mode number {mode_number_new:d}")
-            self.phase_anti_hyst(v_phase=v_phase_after_correction)
+            self.phase_anti_hyst()
         self._mode_number = mode_number_new
 
         # Provide a trigger signal to indicate that a new wavelength is set
