@@ -20,8 +20,10 @@ except ImportError:
 DEFAULT_TEC_TARGET_SWEEP = 25.0
 DEFAULT_TEC_TARGET_STEADY = DEFAULT_TEC_TARGET_SWEEP
 DEFAULT_DIODE_CURRENT_SWEEP = 280.0
-DEFAULT_DIODE_CURRENT_STEADY = 295.0
+DEFAULT_DIODE_CURRENT_STEADY = 290.0
 DEFAULT_CYCLER_INTERVAL = 100
+DEFAULT_ANTI_HYST_V_PHASE_SQUARED = 30.0
+DEFAULT_ANTI_HYST_SLEEP = 0.02
 
 
 class OperatingMode(IntEnum):
@@ -631,58 +633,42 @@ class SweptLaser(TLMLaser):
         self.set_cycler_trigger(True)
         self.set_cycler_trigger(False)
 
-    def phase_anti_hyst(self):
+    def phase_anti_hyst(self, v_phase: float = None):
         """Perform a phase anti-hysteresis function
 
-        This method instructs the driver to increase the voltage on the phase
-        section heater and gradually decrease it to the original voltage
-        started with.
+        This method instructs the driver to shortly increase the voltage on the phase
+        section heater and then decrease it to the original voltage started with.
 
-        This functionality is used to mitigate hysteresis effects and to to
+        This functionality is used to mitigate hysteresis effects and to
         correctly tune the laser to a single mode state. To avoid multi-mode
         operation, this function should be called when switching from one laser
         mode to another.
         """
-        v_phase = self.get_driver_value(type(self).channel_config.PHASE_SECTION)
-        v_phase_hysteresis_1 = np.sqrt(
-            np.square(v_phase) + 30.0
-        )  # V^2, hysteresis function, step 1
-        v_phase_hysteresis_2 = np.sqrt(
-            np.square(v_phase) + 20.0
-        )  # V^2, hysteresis function, step 2
-        v_phase_hysteresis_3 = np.sqrt(
-            np.square(v_phase) + 10.0
-        )  # V^2, hysteresis function, step 3
-        v_phase_final = np.sqrt(
-            np.square(v_phase) + 0.0
-        )  # V^2, hysteresis function, step 3
+        if v_phase is None:
+            if self._idx_active is None:
+                v_phase = self.get_driver_value(type(self).channel_config.PHASE_SECTION)
+            else:
+                v_phase = self._cycler_table[self._idx_active, type(self).cycler_config.PHASE_SECTION]
+
+        # The new optimized and quick phase anti-hysteresis procedure.
+        v_phase_anti_hyst = np.sqrt(np.square(v_phase) + DEFAULT_ANTI_HYST_V_PHASE_SQUARED)  # V^2, hysteresis function
         logger.info("Phase anti-hysteresis starting")
-        self.set_driver_value(
-            type(self).channel_config.PHASE_SECTION, v_phase_hysteresis_1
-        )
-        time.sleep(0.1)
-        self.set_driver_value(
-            type(self).channel_config.PHASE_SECTION, v_phase_hysteresis_2
-        )
-        time.sleep(0.1)
-        self.set_driver_value(
-            type(self).channel_config.PHASE_SECTION, v_phase_hysteresis_3
-        )
-        time.sleep(0.5)
-        self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_final)
+        self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_anti_hyst)
+        time.sleep(DEFAULT_ANTI_HYST_SLEEP)
+
+        # This was the original phase anti-hysteresis procedure.
+        # v_phase_anti_hyst = np.sqrt(np.square(v_phase) + 30)  # V^2, hysteresis function
+        # self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_anti_hyst)
+        # time.sleep(0.1)
+        # v_phase_anti_hyst = np.sqrt(np.square(v_phase) + 20)  # V^2, hysteresis function
+        # self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_anti_hyst)
+        # time.sleep(0.1)
+        # v_phase_anti_hyst = np.sqrt(np.square(v_phase) + 10)  # V^2, hysteresis function
+        # self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_anti_hyst)
+        # time.sleep(0.1)
+
+        self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase)
         logger.info("Phase anti-hysteresis finished")
-
-    def phase_change(self, v_squared_change: float):
-        """Changes the phase section heater voltage using a delta in V^2 domain
-
-        Args:
-            v_squared_change(float): delta voltage squared to
-                apply to phase section. Can be either negative or positive
-                signed to decrease or increase
-        """
-        v_phase = self.get_driver_value(type(self).channel_config.PHASE_SECTION)
-        v_phase_final = np.sqrt(np.square(v_phase) + v_squared_change)
-        self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_final)
 
     def _calc_runtime(self, idx_start: int, idx_end: int, num_sweeps: int) -> float:
         """Calculates and returns the estimated runtime of a sweep
@@ -885,13 +871,8 @@ class SweptLaser(TLMLaser):
                 tuning to the wavelength
 
         Returns:
-            (float): wavelength the laser will tune to in nm. If the cycler is
-            already running, it will return 0.0 instead
+            (float): wavelength the laser will tune to in nm.
         """
-        # Exit out early, if sweep is already running
-        if self.cycler_running:
-            return 0.0
-
         self.load_cycler_entry(idx)
         # Perform a phase anti-hysteresis function when the set mode number is different from the previously set one.
         mode_number_new = self.get_mode_number_idx(idx)
