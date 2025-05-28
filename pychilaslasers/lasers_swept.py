@@ -52,6 +52,7 @@ class SweptLaser(TLMLaser):
 
         self._operation_mode = None
         self._mode_number = 0
+        self._idx_active = None
         self._min_wavelength = None
         self._max_wavelength = None
         self._sweep_step_size = None
@@ -850,7 +851,11 @@ class SweptLaser(TLMLaser):
             (float): current wavelength in nm
         """
         idx = self.get_cycler_index()
-        return self.get_wavelength_idx(idx)
+        # Update the field to keep track of the active index
+        self._idx_active = idx
+        # Request the wavelength corresponding to the active index
+        wavelength = self.get_wavelength_idx(idx)
+        return wavelength
 
     def set_wavelength_abs_idx(self, idx: int, trigger_pulse: bool = True) -> float:
         """Instructs laser to tune to a given cycler table entry
@@ -874,6 +879,8 @@ class SweptLaser(TLMLaser):
             (float): wavelength the laser will tune to in nm.
         """
         self.load_cycler_entry(idx)
+        # Update the field to keep track of the active index
+        self._idx_active = idx
         # Perform a phase anti-hysteresis function when the set mode number is different from the previously set one.
         mode_number_new = self.get_mode_number_idx(idx)
         if mode_number_new != self._mode_number:
