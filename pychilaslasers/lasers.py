@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Laser base object to communicate with Chilas Lasers.
-Authors: RLK
+Authors: RLK, AVR, SDU
 """
 
 import logging
@@ -15,9 +15,10 @@ from serial.tools.list_ports import comports
 
 # Constants
 DEFAULT_BAUDRATE = 57600
+SUPPORTED_BAUDRATES = {9600, 14400, 19200, 28800, 38400, 57600, 115200, 230400, 460800, 912600}
 
 # Setup logging
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -30,11 +31,8 @@ class CyclerColumn(IntEnum):
     WAVELENGTH = 4
     MODE_HOPS = 5
     CAL_RESULT = 6
-    ENTRY_INDEX = 7
-    MODE_INDEX = 8
-
-
-SUPPORTED_BAUDRATES = {9600, 14400, 19200, 28800, 38400, 57600, 115200, 230400, 460800, 912600}
+    ENTRY_INDEX = 6
+    MODE_INDEX = 7
 
 
 class Laser:
@@ -207,9 +205,7 @@ class Laser:
         """
         driver_baudrate = int(self.query("SYST:SER:BAUD?"))
         if driver_baudrate != self._ser.baudrate:
-            logger.error(
-                "There seems to be a baudrate mismatch between driver and connection baudrate settings"
-            )
+            logger.error("There seems to be a baudrate mismatch between driver and connection baudrate settings")
         return driver_baudrate
 
     @baudrate.setter
@@ -262,7 +258,7 @@ class Laser:
         logger.info("Closing serial connection")
         self._ser.close()
         # 3. Change serial connection baudrate attribute
-        logger.info("Using new baudrate for pyserial attribute")
+        logger.info("Using new baudrate with pyserial")
         self._ser.baudrate = new_baudrate
         # 4. Reopen serial connection
         logger.info("Reopening serial connection with new baudrate")
@@ -311,6 +307,7 @@ class Laser:
         if self._ser.is_open:
             if self.baudrate != DEFAULT_BAUDRATE:
                 self.baudrate = DEFAULT_BAUDRATE
+            logger.info("Closing serial connection")
             self._ser.close()
 
     def _write(self, data: str) -> None:

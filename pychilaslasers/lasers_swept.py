@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 SweptLaser class to communicate with COMET lasers.
-Authors: RLK
+Authors: RLK, AVR, SDU
 """
 
 import time
@@ -10,12 +10,15 @@ from enum import IntEnum
 import numpy as np
 
 from lasers_tlm import TLMLaser
+from lasers import logger
 
 DEFAULT_TEC_TARGET_SWEEP = 25.0
 DEFAULT_TEC_TARGET_STEADY = DEFAULT_TEC_TARGET_SWEEP
 DEFAULT_DIODE_CURRENT_SWEEP = 280.0
-DEFAULT_DIODE_CURRENT_STEADY = 295.0
+DEFAULT_DIODE_CURRENT_STEADY = 290.0
 DEFAULT_CYCLER_INTERVAL = 100
+DEFAULT_ANTI_HYST_V_PHASE_SQUARED = 30.0
+DEFAULT_ANTI_HYST_SLEEP = 0.02
 
 
 class OperatingMode(IntEnum):
@@ -42,6 +45,7 @@ class SweptLaser(TLMLaser):
 
         self._operation_mode = None
         self._mode_number = 0
+        self._idx_active = None
         self._min_wavelength = None
         self._max_wavelength = None
         self._sweep_step_size = None
@@ -254,7 +258,7 @@ class SweptLaser(TLMLaser):
         """
         # Exit out early if current cycler table already has all columns
         if self._is_lut_prepared:
-            print("Cycler table already has added columns.")
+            logger.warning("Cycler table already has added columns.")
             if not force:
                 return
 
@@ -362,9 +366,7 @@ class SweptLaser(TLMLaser):
         """
         correct = idx_end > idx_start
         if not correct:
-            print(
-                f"Indices for span are not correct. Given start:{idx_start:d} end:{idx_end:d}.\nNeeded start < end."
-            )
+            logger.warning(f"Indices for span are not correct. Given start:{idx_start:d} end:{idx_end:d}.\nNeeded start < end.")
         return correct
 
     def _update_mode_number(self, idx: int | None = None):
@@ -416,9 +418,7 @@ class SweptLaser(TLMLaser):
             (int): the cycler entry index corresponding to where a mode hop happens,
                 given the mode number
         """
-        return np.argmax(
-            self._cycler_table[:, type(self).cycler_config.MODE_INDEX] == mode_number
-        )
+        return np.argmax(self._cycler_table[:, type(self).cycler_config.MODE_INDEX] == mode_number)
 
     @property
     def system_state(self) -> bool:
@@ -442,7 +442,7 @@ class SweptLaser(TLMLaser):
             value (bool): The system state to be set.
         """
         if type(value) is not bool:
-            print("ERROR: given value is not a boolean")
+            logger.error("ERROR: given value is not a boolean")
             return
         if not value:
             self._operation_mode = None
@@ -489,15 +489,11 @@ class SweptLaser(TLMLaser):
         wl_array = cycler_table_no_hops[:, type(self).cycler_config.WAVELENGTH]
         wl_min = np.min(wl_array)
         if wavelength < wl_min:
-            print(
-                f"Input wavelength {wavelength:.3f} smaller than minimum {wl_min:.3f}."
-            )
+            logger.warning(f"Input wavelength {wavelength:.3f} smaller than minimum {wl_min:.3f}.")
             wavelength = wl_min
         wl_max = np.max(wl_array)
         if wavelength > wl_max:
-            print(
-                f"Input wavelength {wavelength:.3f} larger than maximum {wl_max:.3f}."
-            )
+            logger.warning(f"Input wavelength {wavelength:.3f} larger than maximum {wl_max:.3f}.")
             wavelength = wl_max
         _idx_no_hops = np.argmin(np.abs(wl_array - wavelength))
         best_entry = cycler_table_no_hops[_idx_no_hops, :]
@@ -559,64 +555,73 @@ class SweptLaser(TLMLaser):
         self.set_cycler_trigger(True)
         self.set_cycler_trigger(False)
 
-    def phase_anti_hyst(self):
+    def phase_anti_hyst(self, v_phase: float = None):
         """Perform a phase anti-hysteresis function
 
-        This method instructs the driver to increase the voltage on the phase
-        section heater and gradually decrease it to the original voltage
-        started with.
+        This method instructs the driver to shortly increase the voltage on the phase
+        section heater and then decrease it to the original voltage started with.
 
         This functionality is used to mitigate hysteresis effects and to
         correctly tune the laser to a single mode state. To avoid multi-mode
         operation, this function should be called when switching from one laser
         mode to another.
         """
-        v_phase = self.get_driver_value(type(self).channel_config.PHASE_SECTION)
-        v_phase_hysteresis_1 = np.sqrt(
-            np.square(v_phase) + 30.0
-        )  # V^2, hysteresis function, step 1
-        v_phase_hysteresis_2 = np.sqrt(
-            np.square(v_phase) + 20.0
-        )  # V^2, hysteresis function, step 2
-        v_phase_hysteresis_3 = np.sqrt(
-            np.square(v_phase) + 10.0
-        )  # V^2, hysteresis function, step 3
-        v_phase_final = np.sqrt(
-            np.square(v_phase) + 0.0
-        )  # V^2, hysteresis function, step 3
-        print("Phase anti-hysteresis starting")
-        self.set_driver_value(
-            type(self).channel_config.PHASE_SECTION, v_phase_hysteresis_1
-        )
-        time.sleep(0.1)
-        self.set_driver_value(
-            type(self).channel_config.PHASE_SECTION, v_phase_hysteresis_2
-        )
-        time.sleep(0.1)
-        self.set_driver_value(
-            type(self).channel_config.PHASE_SECTION, v_phase_hysteresis_3
-        )
-        time.sleep(0.5)
-        self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_final)
-        print("Phase anti-hysteresis finished")
+        if v_phase is None:
+            if self._idx_active is None:
+                v_phase = self.get_driver_value(type(self).channel_config.PHASE_SECTION)
+            else:
+                v_phase = self._cycler_table[self._idx_active, type(self).cycler_config.PHASE_SECTION]
 
-    def phase_change(self, v_squared_change: float):
-        """Changes the phase section heater voltage using a delta in V^2 domain
+        # The new optimized and quick phase anti-hysteresis procedure.
+        v_phase_anti_hyst = np.sqrt(np.square(v_phase) + DEFAULT_ANTI_HYST_V_PHASE_SQUARED)  # V^2, hysteresis function
+        self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_anti_hyst)
+        time.sleep(DEFAULT_ANTI_HYST_SLEEP)
 
-        Args:
-            v_squared_change(float): delta voltage squared to
-                apply to phase section. Can be either negative or positive
-                signed to decrease or increase
+        # This was the original phase anti-hysteresis procedure.
+        # v_phase_anti_hyst = np.sqrt(np.square(v_phase) + 30)  # V^2, hysteresis function
+        # self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_anti_hyst)
+        # time.sleep(0.1)
+        # v_phase_anti_hyst = np.sqrt(np.square(v_phase) + 20)  # V^2, hysteresis function
+        # self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_anti_hyst)
+        # time.sleep(0.1)
+        # v_phase_anti_hyst = np.sqrt(np.square(v_phase) + 10)  # V^2, hysteresis function
+        # self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_anti_hyst)
+        # time.sleep(0.1)
+
+        self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase)
+
+    def phase_correction_sweep_to_steady(self) -> float:
+        """Perform a phase correction for steady mode, since the phase is calibrated for sweep mode.
+
+        This is part of a test, which is not successful yet.
+        It can be removed if the tests remains unsuccessful.
         """
-        v_phase = self.get_driver_value(type(self).channel_config.PHASE_SECTION)
-        v_phase_final = np.sqrt(np.square(v_phase) + v_squared_change)
-        self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_final)
+
+        if self._idx_active is None:
+            v_phase = self.get_driver_value(type(self).channel_config.PHASE_SECTION)
+            v_ring_large = self.get_driver_value(type(self).channel_config.RING_LARGE)
+            v_ring_small = self.get_driver_value(type(self).channel_config.RING_SMALL)
+        else:
+            v_phase = self._cycler_table[self._idx_active, type(self).cycler_config.PHASE_SECTION]
+            v_ring_large = self._cycler_table[self._idx_active, type(self).cycler_config.RING_LARGE]
+            v_ring_small = self._cycler_table[self._idx_active, type(self).cycler_config.RING_SMALL]
+        v_squared_rings = np.square(v_ring_large) + np.square(v_ring_small)
+        v_squared_phase = np.square(v_phase)
+        v_squared_phase_correction = - 23.40 - 12.0 + 0.0 + 0.227 * v_squared_rings  # for 100 ms cycler interval
+        v_squared_phase_new = v_squared_phase + v_squared_phase_correction
+        if v_squared_phase_new < 0.0:
+            v_squared_phase_new = 0.0
+        v_phase_new = np.sqrt(v_squared_phase_new)
+        logger.info(f"Correcting phase from sweep {v_phase:.4f} V to steady {v_phase_new:.4f} V")
+
+        self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_new)
+        return v_phase_new
 
     def _calc_runtime(self, idx_start: int, idx_end: int, num_sweeps: int) -> float:
         """Calculates and returns the estimated runtime of a sweep
 
         The runtime of a sweep operation is calculated based on the span of
-        the sweep, i.e., the start end end indices, the cycler time interval, and
+        the sweep, i.e., the start and end indices, the cycler time interval, and
         the amount of full cycles to perform.
 
         Args:
@@ -682,11 +687,9 @@ class SweptLaser(TLMLaser):
             mode_number_to_set = self.get_mode_number_idx(idx_start)
             new_idx_start = self.get_idx_mode_hop(mode_number_to_set)
             if new_idx_start != idx_start:
-                print("Optimize sweep by selecting starting wavelength at mode hop.")
-                print(f"Index start: {idx_start=:d}, {new_idx_start=:d}.")
-                print(
-                    f"Wavelength start: original {self.get_wavelength_idx(idx_start):.3f}, new {self.get_wavelength_idx(new_idx_start):.3f}."
-                )
+                logger.info("Optimize sweep by selecting starting wavelength at mode hop.")
+                logger.info(f"Index start: {idx_start=:d}, {new_idx_start=:d}.")
+                logger.info(f"Wavelength start: original {self.get_wavelength_idx(idx_start):.3f}, new {self.get_wavelength_idx(new_idx_start):.3f}.")
             idx_start = new_idx_start
 
         # Calculate runtime
@@ -702,12 +705,7 @@ class SweptLaser(TLMLaser):
         self._update_mode_number(idx_end)
 
         # Return what is swept through, and runtime
-        return (
-            self._cycler_table[
-                idx_start: (idx_end + 1), type(self).cycler_config.WAVELENGTH
-            ],
-            runtime,
-        )
+        return self._cycler_table[idx_start: (idx_end + 1), type(self).cycler_config.WAVELENGTH], runtime
 
     def sweep(
         self,
@@ -784,7 +782,7 @@ class SweptLaser(TLMLaser):
     def get_wavelength(self) -> float:
         """Gets and returns the current wavelength the laser is tuned to
 
-        Since the driver keeps track of the index of of the last applied cycler
+        Since the driver keeps track of the index of the last applied cycler
         table entry, this can be used to determine the corresponding wavelength
         the laser is at, based from the calibrated values in the cycler table.
 
@@ -792,7 +790,11 @@ class SweptLaser(TLMLaser):
             (float): current wavelength in nm
         """
         idx = self.get_cycler_index()
-        return self.get_wavelength_idx(idx)
+        # Update the field to keep track of the active index
+        self._idx_active = idx
+        # Request the wavelength corresponding to the active index
+        wavelength = self.get_wavelength_idx(idx)
+        return wavelength
 
     def set_wavelength_abs_idx(self, idx: int, trigger_pulse: bool = True) -> float:
         """Instructs laser to tune to a given cycler table entry
@@ -813,22 +815,24 @@ class SweptLaser(TLMLaser):
                 tuning to the wavelength
 
         Returns:
-            (float): wavelength the laser will tune to in nm. If the cycler is
-            already running, it will return 0.0 instead
+            (float): wavelength the laser will tune to in nm.
         """
-        # Exit out early, if sweep is already running
-        if self.cycler_running:
-            return 0.0
 
+        # Apply the heater values from the requested cycler table index
         self.load_cycler_entry(idx)
+        # Update the field to keep track of the active index
+        self._idx_active = idx
+
+        # Perform a phase correction for steady mode, since the phase is calibrated for sweep mode.
+        # v_phase_after_correction = self.phase_correction_sweep_to_steady()
+
         # Perform a phase anti-hysteresis function when the set mode number is different from the previously set one.
         mode_number_new = self.get_mode_number_idx(idx)
         if mode_number_new != self._mode_number:
-            print(
-                f"Phase anti-hysteresis required due to switching to mode number {mode_number_new:d}"
-            )
+            logger.info(f"Phase anti-hysteresis required due to switching to mode number {mode_number_new:d}")
             self.phase_anti_hyst()
         self._mode_number = mode_number_new
+
         # Provide a trigger signal to indicate that a new wavelength is set
         if trigger_pulse:
             self.trigger_pulse()
