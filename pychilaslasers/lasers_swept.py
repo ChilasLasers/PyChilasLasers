@@ -871,14 +871,18 @@ class SweptLaser(TLMLaser):
         """
 
         # Apply the heater values from the requested cycler table index
-        # self.load_cycler_entry(idx)
+        self.load_cycler_entry(idx)
 
-        # Alternative approach: apply heater values directly from cycler table
-        self.preload_driver_value(type(self).cycler_config.PHASE_SECTION, float(self._cycler_table[idx, type(self).cycler_config.PHASE_SECTION]))
-        self.preload_driver_value(type(self).cycler_config.RING_LARGE, float(self._cycler_table[idx, type(self).cycler_config.RING_LARGE]))
-        self.preload_driver_value(type(self).cycler_config.RING_SMALL, float(self._cycler_table[idx, type(self).cycler_config.RING_SMALL]))
-        self.preload_driver_value(type(self).cycler_config.TUNABLE_COUPLER, float(self._cycler_table[idx, type(self).cycler_config.TUNABLE_COUPLER]))
-        self.apply_preload_values()
+        # Alternative approach 1: apply all heater values directly from cycler table
+        # self.preload_driver_value(type(self).cycler_config.PHASE_SECTION, float(self._cycler_table[idx, type(self).cycler_config.PHASE_SECTION]))
+        # self.preload_driver_value(type(self).cycler_config.RING_LARGE, float(self._cycler_table[idx, type(self).cycler_config.RING_LARGE]))
+        # self.preload_driver_value(type(self).cycler_config.RING_SMALL, float(self._cycler_table[idx, type(self).cycler_config.RING_SMALL]))
+        # self.preload_driver_value(type(self).cycler_config.TUNABLE_COUPLER, float(self._cycler_table[idx, type(self).cycler_config.TUNABLE_COUPLER]))
+        # self.apply_preload_values()
+
+        # Alternative approach 2: only update phase heater directly from cycler table
+        v_phase = float(self._cycler_table[idx, type(self).cycler_config.PHASE_SECTION])
+        self.set_driver_value(type(self).cycler_config.PHASE_SECTION, v_phase)
 
         # Update the field to keep track of the active index
         self._idx_active = idx
@@ -890,7 +894,7 @@ class SweptLaser(TLMLaser):
         mode_number_new = self.get_mode_number_idx(idx)
         if mode_number_new != self._mode_number:
             logger.info(f"Phase anti-hysteresis required due to switching to mode number {mode_number_new:d}")
-            self.phase_anti_hyst()
+            self.phase_anti_hyst(v_phase=v_phase)
         self._mode_number = mode_number_new
 
         # Provide a trigger signal to indicate that a new wavelength is set
@@ -963,7 +967,10 @@ class SweptLaser(TLMLaser):
             (float): absolute wavelength the laser will tune to in nm. If the
             cycler is already running, it will return 0.0 instead
         """
-        idx_actual = self.get_cycler_index()
+        if self._idx_active is None:
+            idx_actual = self.get_cycler_index()
+        else:
+            idx_actual = self._idx_active
         idx_new = idx_actual + idx_delta
         return self.set_wavelength_abs_idx(idx_new, trigger_pulse)
 
