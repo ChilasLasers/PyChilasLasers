@@ -18,7 +18,6 @@ DEFAULT_BAUDRATE = 57600
 SUPPORTED_BAUDRATES = {9600, 14400, 19200, 28800, 38400, 57600, 115200, 230400, 460800, 912600}
 
 # Setup logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # ERROR CODES THAT SHOULD TRIGGER A ERROR DIALOG (errors 14 to 23)
@@ -359,14 +358,11 @@ class Laser:
         Returns:
             (str): The response from the device.
         """
-        logger.debug(msg=f"WRITE {cmd}")
         self._write(cmd)
         reply = self._read()
-        logger.debug(f"READ {reply}")
         return reply
 
 
-    #TODO this might not be needed, as the _query does the same
     def _query_rc_check(self, cmd: str) -> str:
         """Sends a command to the device and checks the return code.
 
@@ -389,6 +385,22 @@ class Laser:
 
         return reply
 
+    def _query_replace_semicolon(self, cmd: str) -> str:
+        """To speed up communication, a repeating command can be replaced with a semicolon.
+        Check if the command was previously sent to the device. In that case, replace it with a semicolon.
+
+        Args:
+            cmd (str): The command to be replaced with semicolon.
+
+        Returns:
+            str: The command with semicolon inserted
+        """
+        if cmd.split(" ")[0] == self.previous_command and self.previous_command in SEMICOLON_COMMANDS:
+            cmd = cmd.replace(cmd.split(" ")[0], ";")
+        else:
+            self.previous_command = cmd.split(" ")[0]
+        return cmd
+
     def query(self, cmd: str) -> str:
         """Sends a command to the device and returns the response without the return code.
 
@@ -398,12 +410,8 @@ class Laser:
         Returns:
             str: The response from the device without the return code.
         """
-        if cmd.split(" ")[0] == self.previous_command and self.previous_command in SEMICOLON_COMMANDS:
-            cmd = cmd.replace(cmd.split(" ")[0], ";")
-            return self._query_rc_check(cmd)[2:]
-        else:
-            self.previous_command = cmd.split(" ")[0]
-            return self._query_rc_check(cmd)[2:]
+        cmd = self._query_replace_semicolon(cmd)
+        return self._query_rc_check(cmd)[2:]
 
     def write(self, cmd: str) -> None:
         """Sends a command to the device.
@@ -411,6 +419,7 @@ class Laser:
         Args:
             cmd (str): The command to be sent.
         """
+        cmd = self._query_replace_semicolon(cmd)
         if self._prefix_mode:
             self._query_rc_check(cmd)
         else:

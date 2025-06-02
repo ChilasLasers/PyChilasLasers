@@ -18,6 +18,8 @@ try:
 except ImportError:
     from lasers import Laser
     from FileFormatError import InvalidFileFormatError
+
+# Setup logging
 logger = logging.getLogger(__name__)
 
 # Constants
@@ -597,9 +599,9 @@ class TLMLaser(Laser):
                 value3=float(self._cycler_table[cycler_entry, self.cycler_config.RING_SMALL]),
                 value4=float(self._cycler_table[cycler_entry, self.cycler_config.TUNABLE_COUPLER]),
             )
-            # Update user with print statement every 100 entries
+            # Update user with print statement every 1000 entries
             if (cycler_entry + 1) % 1000 == 0:
-                logger.info(f"{(cycler_entry + 1):d}/{self._cycler_table_length:d}")
+                logger.info(f"Entry {(cycler_entry + 1):d}/{self._cycler_table_length:d}")
 
         # Adding mode hops is only supported from firmware version 1.3.7 and higher.
         if add_mode_hops and Version(self.fwv) >= Version("1.3.7"):
@@ -609,9 +611,9 @@ class TLMLaser(Laser):
                     entry=cycler_entry,
                     mode_hop=bool(self._cycler_table[cycler_entry, self.cycler_config.MODE_HOPS]),
                 )
-                # Update user with print statement every 100 entries
+                # Update user with print statement every 1000 entries
                 if (cycler_entry + 1) % 1000 == 0:
-                    logger.info(f"{(cycler_entry + 1):d}/{self._cycler_table_length:d}")
+                    logger.info(f"Entry {(cycler_entry + 1):d}/{self._cycler_table_length:d}")
 
         # Turn status codes on as default communication mode
         self.prefix_mode = True
@@ -632,7 +634,7 @@ class TLMLaser(Laser):
                         wavelengths=wavelengths,
                     )
                 if (cycler_entry + 1) % 1000 == 0:
-                    logger.info(f"{(cycler_entry + 1):d}/{self._cycler_table_length:d}")
+                    logger.info(f"Entry {(cycler_entry + 1):d}/{self._cycler_table_length:d}")
             # Set number of wavelengths to be queried and stored back to 1
             self.set_cycler_wavelength_count(1)
         logger.info("Initializing cycler table Done!")
