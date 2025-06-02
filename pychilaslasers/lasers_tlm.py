@@ -6,13 +6,21 @@ Authors: RLK, AVR, SDU
 Date: 2024-10-22
 """
 
+from math import e
+from operator import index
 from pathlib import Path
 from packaging.version import Version
 import csv
 from enum import IntEnum
 import numpy as np
-from lasers import Laser
-from lasers import logger
+import logging
+try:
+    from pychilaslasers import Laser
+    from pychilaslasers.FileFormatError import InvalidFileFormatError
+except ImportError:
+    from lasers import Laser
+    from FileFormatError import InvalidFileFormatError
+logger = logging.getLogger(__name__)
 
 # Constants
 TLM_FEEDBACK_SOURCES = {
@@ -54,7 +62,7 @@ class TLMLaser(Laser):
         # Cycler private attributes
         self._eeprom_size = None
         self._cycler_fp = None
-        self._cycler_table = None
+        self._cycler_table:list[list[float,float,float,float,float,bool,float,float]] = [] # type: ignore # List of cycler table entries
         self._cycler_table_length = None
         self._cycler_interval = None
 
@@ -210,7 +218,7 @@ class TLMLaser(Laser):
             num_sweeps (int): the number
         """
         if num_sweeps < 0:
-            logger.error("Error, number of sweeps needs to be 0 or positive integer.")
+            logger.error("Number of sweeps needs to be 0 or positive integer.")
             raise ValueError
         if num_sweeps == 0:
             logger.info("Turning on cycler, running infinite times")
@@ -325,25 +333,35 @@ class TLMLaser(Laser):
             path_cycler_table(str | Path): filepath of cycler table / LUT file to load
         """
         logger.info("Loading cycler table from file")
+
         try:
             with open(path_cycler_table, "r") as file:
-                dialect = csv.Sniffer().sniff(file.read())
-                file.seek(0)
+                dialect = csv.Sniffer().sniff(file.read()) # Detect dialect is used to figure out the rules of the csv file, such as delimiter (comma, tab, etc.)
+                file.seek(0) # Reset file pointer to the beginning after sniffing
+                # Read the file using the detected dialect
                 reader = csv.reader(file, dialect)
-                cycler_table = np.array(list(reader)).astype(float)
-        except Exception as e:
-            logger.error("Non-standard lookup table - ", e)
+                cycler_table = np.array(list(reader)).astype(dtype=float)
+                if cycler_table is None:
+                    raise Exception("Error: cycler table could not be read")
+        except ValueError as e:
+            raise InvalidFileFormatError(
+                message="Failed to read the cycler table. The file contains unexpected or invalid values.",
+                file_path=str(path_cycler_table),
+                upstream_error=e
+            )
 
         # Clip length of table if larger than EEPROM
         table_length = len(cycler_table)
         if table_length > CYCLER_SIZELIMIT_TLM:
-            logger.warning("Warning: loaded cycler table is longer than what is max holdable!")
-            logger.warning(f"\tOpened table length {table_length:d}, clipping up to {CYCLER_SIZELIMIT_TLM:d}")
-            cycler_table = cycler_table[:CYCLER_SIZELIMIT_TLM, :]
-            table_length = len(cycler_table)
+            logger.warning("Loaded cycler table is longer than what is max holdable!")
+            logger.warning(
+                f"\tOpened table length {table_length:d}, clipping up to {CYCLER_SIZELIMIT_TLM:d}"
+            )
+            cycler_table: np.ndarray[tuple[int, ...], np.dtype[csv.Any]] = cycler_table[:CYCLER_SIZELIMIT_TLM, :]
+            table_length: int = len(cycler_table)
 
-        self._cycler_table = cycler_table
-        self._cycler_table_length = table_length
+        self._cycler_table: list[list[float,float,float,float,float,bool,float,float]]= cycler_table # type: ignore
+        self._cycler_table_length: int = table_length
 
     def save_file_cycler_table(self, path_cycler_table: Path):
         """Saves currently loaded cycler table to an external csv file.
@@ -361,9 +379,9 @@ class TLMLaser(Laser):
                 delimiter=";",
             )
         except Exception as e:
-            logger.error("Error ", e)
+            logger.error( e.__str__())
 
-    def put_cycler_entry(self, entry: int, value1: float, value2: float, value3: float, value4: float, repetition: bool = False):
+    def put_cycler_entry(self, entry: int, value1: float, value2: float, value3: float, value4: float):
         """Sets all heater voltages of a cycler entry
 
         The cycler table entry referenced by the entry index integer will be
@@ -379,12 +397,8 @@ class TLMLaser(Laser):
             value2(float): second heater voltage
             value3(float): third heater voltage
             value4(float): fourth heater voltage
-            repetition: command text can be shortened when repeated
         """
-        if repetition:
-            self.write(f"; {entry:d} {value1:.4f} {value2:.4f} {value3:.4f} {value4:.4f}")
-        else:
-            self.write(f"DRV:CYC:PUT {entry:d} {value1:.4f} {value2:.4f} {value3:.4f} {value4:.4f}")
+        self.write(f"DRV:CYC:PUT {entry:d} {value1:.4f} {value2:.4f} {value3:.4f} {value4:.4f}")
 
     def get_cycler_entry(self, entry: int) -> tuple[float, float, float, float]:
         """Gets all heater voltages of a cycler entry in driver memory
@@ -413,10 +427,13 @@ class TLMLaser(Laser):
         Returns:
             (np.array[size(EEPROM_SIZE, 4), dtype=float]):
         """
-        cycler_table = np.zeros((self._eeprom_size, 4))
-        for ii in range(self._eeprom_size):
-            cycler_table[ii, :] = self.get_cycler_entry(ii)
-        return cycler_table
+
+        entries = [self.get_cycler_entry(0)]
+        index = 1
+        while ( entry:= self.get_cycler_entry(index)) != (0.0,0.0,0.0,0.0):
+            entries.append(entry)
+            index += 1
+        return np.array(entries)
 
     def set_cycler_entry(self, entry: int, heater_number: int, heater_value: float):
         """Sets single specific heater voltage of a cycler entry in driver memory
@@ -432,13 +449,10 @@ class TLMLaser(Laser):
         """
         self.write(f"DRV:CYC:SET {entry:d} {heater_number:d} {heater_value:.4f}")
 
-    def set_cycler_entry_mode_hop(self, entry: int, mode_hop: bool, repetition: bool = False) -> None:
+    def set_cycler_entry_mode_hop(self, entry: int, mode_hop: bool) -> None:
         """Write one trigger setting for mode hop into RAM."""
         if Version(self.fwv) >= Version("1.3.7"):
-            if repetition:
-                self.write(f"; {entry:d} {mode_hop:d}")
-            else:
-                self.write(f"DRV:CYC:SETT {entry:d} {mode_hop:d}")
+            self.write(f"DRV:CYC:SETT {entry:d} {mode_hop:d}")
 
     def get_cycler_entry_mode_hop(self, entry: int) -> bool:
         """Get one trigger setting for mode hop"""
@@ -461,24 +475,36 @@ class TLMLaser(Laser):
             wavelength_count = None
         return wavelength_count
 
-    def set_cycler_entry_wavelengths(self, entry: int, wavelengths, repetition: bool = False):
+    def set_cycler_entry_wavelengths(self, entry: int, wavelengths):
         """Write wavelength values of multiply entries (up to 10) into EEPROM."""
         if Version(self.fwv) >= Version("1.3.8"):
-            if repetition:
-                write_string = f"; {entry:d}"
-            else:
-                write_string = f"DRV:CYC:STRW {entry:d}"
+            write_string = f"DRV:CYC:STRW {entry:d}"
             for wavelength in wavelengths:
                 write_string = write_string + f" {wavelength:.4f}"
             self.write(write_string)
 
-    def get_cycler_entry_wavelength(self, entry: int) -> float:
-        """Get a single wavelength value from EEPROM."""
+    def get_cycler_entry_wavelength(self, entry: int) -> float|list[float]|None:
+        """
+        Retrieve wc no of wavelength(s) starting from a given cycler entry from the EEPROM.
+
+        Parameters:
+            entry (int): The index of the cycler entry to query.
+
+        Returns:
+            float | list[float] | None: The wavelength value(s) as a float if a single value is returned,
+            a list of floats if multiple values are returned, or None if the firmware version is unsupported.
+
+        Firmware:
+            Requires firmware version >= 1.3.8.
+
+        Notes:
+            - If the firmware version is below 1.3.8, the function returns None.
+        """
         if Version(self.fwv) >= Version("1.3.8"):
-            wavelength = float(self.query(f"DRV:CYC:GW? {entry:d}"))
+            wavelength = self.query(f"DRV:CYC:GW? {entry:d}")
         else:
-            wavelength = None
-        return wavelength
+            return None
+        return float(wavelength) if len(wavelength.split(" ")) == 1 else [float(wl) for wl in wavelength.split(" ")]
 
     def store_cycler(self) -> None:
         """Stores modified entries to the cycler table in memory to persistent storage
@@ -547,7 +573,7 @@ class TLMLaser(Laser):
         """Loads all cycler entries from PC into volatile driver memory
 
         This method will set the entire opened cycler table into driver memory
-        to use. It will first turn of the cycler, if running.
+        to use. It will first turn off the cycler, if running.
         All entries of the loaded cycler table, (with method open_file_cycler_table),
         will be set to driver memory for direct use. It has an option to
         fill all subsequent entries not in the opened cycler table to 0V.
@@ -555,6 +581,8 @@ class TLMLaser(Laser):
         Args:
         """
         logger.info("Initializing cycler table")
+        if self._cycler_table is None:
+            raise ValueError("Cycler table is not initialized. Please load a cycler table before initializing.")
         # Ensure cycler is not running
         if self.cycler_running:
             self.turn_off_cycler()
@@ -563,7 +591,6 @@ class TLMLaser(Laser):
         # Turn off status codes to speed up communication
         self.prefix_mode = False
         # Update per entry/row heater values into RAM
-        repetition = False
         for cycler_entry in range(self._cycler_table_length):
             self.put_cycler_entry(
                 entry=cycler_entry,
@@ -571,27 +598,22 @@ class TLMLaser(Laser):
                 value2=float(self._cycler_table[cycler_entry, self.cycler_config.RING_LARGE]),
                 value3=float(self._cycler_table[cycler_entry, self.cycler_config.RING_SMALL]),
                 value4=float(self._cycler_table[cycler_entry, self.cycler_config.TUNABLE_COUPLER]),
-                repetition=repetition,
             )
             # Update user with print statement every 100 entries
             if (cycler_entry + 1) % 1000 == 0:
                 logger.info(f"{(cycler_entry + 1):d}/{self._cycler_table_length:d}")
-            repetition = True
 
         # Adding mode hops is only supported from firmware version 1.3.7 and higher.
         if add_mode_hops and Version(self.fwv) >= Version("1.3.7"):
             logger.info("Adding mode hops")
-            repetition = False
             for cycler_entry in range(self._cycler_table_length):
                 self.set_cycler_entry_mode_hop(
                     entry=cycler_entry,
                     mode_hop=bool(self._cycler_table[cycler_entry, self.cycler_config.MODE_HOPS]),
-                    repetition=repetition,
                 )
                 # Update user with print statement every 100 entries
                 if (cycler_entry + 1) % 1000 == 0:
                     logger.info(f"{(cycler_entry + 1):d}/{self._cycler_table_length:d}")
-                repetition = True
 
         # Turn status codes on as default communication mode
         self.prefix_mode = True
@@ -601,7 +623,6 @@ class TLMLaser(Laser):
             logger.info("Adding wavelengths")
             # Set number of wavelengths to be queried and stored back to 4, to increase spead
             self.set_cycler_wavelength_count(4)
-            repetition = False
             for cycler_entry in range(self._cycler_table_length):
                 if cycler_entry % 4 == 0:
                     wavelengths = np.zeros(shape=4, dtype=float)
@@ -611,7 +632,6 @@ class TLMLaser(Laser):
                     self.set_cycler_entry_wavelengths(
                         entry=cycler_entry,
                         wavelengths=wavelengths,
-                        repetition=repetition,
                     )
                 if (cycler_entry + 1) % 1000 == 0:
                     logger.info(f"{(cycler_entry + 1):d}/{self._cycler_table_length:d}")
@@ -726,7 +746,7 @@ class TLMLaser(Laser):
         gain_type = gain_type.upper()
         gains = ("P", "I", "D")
         if gain_type not in gains:
-            logger.error("Error: gain_type can only be P, I, or D")
+            logger.error(f"gain_type can only be P, I, or D. Was {gain_type}")
             return 0.0
         return float(self.query(f"FB:K{gain_type}?"))
 
@@ -734,7 +754,7 @@ class TLMLaser(Laser):
         gain_type = gain_type.upper()
         gains = ("P", "I", "D")
         if gain_type not in gains:
-            logger.error("Error: gain_type can only be P, I, or D")
+            logger.error("gain_type can only be P, I, or D")
             return
         self.write(f"FB:K{gain_type} {proportional_gain:.6f}")
 

@@ -4,8 +4,9 @@ TLCLaser class to communicate with TLC.
 """
 
 from enum import IntEnum
+import logging
 
-from lasers import Laser
+from pychilaslasers import Laser
 
 
 class HeaterChannelTLC(IntEnum):
@@ -14,6 +15,7 @@ class HeaterChannelTLC(IntEnum):
     RING_SMALL = 4
     TUNABLE_COUPLER = 0
 
+logger = logging.getLogger(__name__)
 
 class TLCLaser(Laser):
     """TLC Laser class for Chilas lasers."""
@@ -50,11 +52,11 @@ class TLCLaser(Laser):
     # Initialize cycler table for TLC
     def initialize_cycler_table(self):
         self.set_cycler_count(self.cycler_table_length)
-        print("Initializing cycler table")
+        logger.info("Initializing cycler table")
         for i in range(self.cycler_table_length):
             self.initialize_cycler_row(i)
-            print(str(i + 1) + "/" + str(self.cycler_table_length))
-        print("Initializing cycler table Done!")
+            logger.info(str(i + 1) + "/" + str(self.cycler_table_length))
+        logger.info("Initializing cycler table Done!")
 
     # Initialize cycler row for TLC
     def initialize_cycler_row(self, row: int):

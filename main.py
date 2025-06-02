@@ -1,3 +1,6 @@
+from pychilaslasers import Laser
+
+
 def main():
     print("Hello from pychilaslasers!")
 
