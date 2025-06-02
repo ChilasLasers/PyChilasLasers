@@ -6,8 +6,6 @@ Authors: RLK, AVR, SDU
 Date: 2024-10-22
 """
 
-from math import e
-from operator import index
 from pathlib import Path
 from packaging.version import Version
 import csv
@@ -62,7 +60,7 @@ class TLMLaser(Laser):
         # Cycler private attributes
         self._eeprom_size = None
         self._cycler_fp = None
-        self._cycler_table:list[list[float,float,float,float,float,bool,float,float]] = [] # type: ignore # List of cycler table entries
+        self._cycler_table: list[list[float, float, float, float, float, bool, float, float]] = []  # type: ignore # List of cycler table entries
         self._cycler_table_length = None
         self._cycler_interval = None
 
@@ -336,8 +334,8 @@ class TLMLaser(Laser):
 
         try:
             with open(path_cycler_table, "r") as file:
-                dialect = csv.Sniffer().sniff(file.read()) # Detect dialect is used to figure out the rules of the csv file, such as delimiter (comma, tab, etc.)
-                file.seek(0) # Reset file pointer to the beginning after sniffing
+                dialect = csv.Sniffer().sniff(file.read())  # Detect dialect is used to figure out the rules of the csv file, such as delimiter (comma, tab, etc.)
+                file.seek(0)  # Reset file pointer to the beginning after sniffing
                 # Read the file using the detected dialect
                 reader = csv.reader(file, dialect)
                 cycler_table = np.array(list(reader)).astype(dtype=float)
@@ -360,7 +358,7 @@ class TLMLaser(Laser):
             cycler_table: np.ndarray[tuple[int, ...], np.dtype[csv.Any]] = cycler_table[:CYCLER_SIZELIMIT_TLM, :]
             table_length: int = len(cycler_table)
 
-        self._cycler_table: list[list[float,float,float,float,float,bool,float,float]]= cycler_table # type: ignore
+        self._cycler_table: list[list[float, float, float, float, float, bool, float, float]] = cycler_table  # type: ignore
         self._cycler_table_length: int = table_length
 
     def save_file_cycler_table(self, path_cycler_table: Path):
@@ -379,7 +377,7 @@ class TLMLaser(Laser):
                 delimiter=";",
             )
         except Exception as e:
-            logger.error( e.__str__())
+            logger.error(e.__str__())
 
     def put_cycler_entry(self, entry: int, value1: float, value2: float, value3: float, value4: float):
         """Sets all heater voltages of a cycler entry
@@ -430,7 +428,7 @@ class TLMLaser(Laser):
 
         entries = [self.get_cycler_entry(0)]
         index = 1
-        while ( entry:= self.get_cycler_entry(index)) != (0.0,0.0,0.0,0.0):
+        while (entry := self.get_cycler_entry(index)) != (0.0, 0.0, 0.0, 0.0):
             entries.append(entry)
             index += 1
         return np.array(entries)
@@ -483,7 +481,7 @@ class TLMLaser(Laser):
                 write_string = write_string + f" {wavelength:.4f}"
             self.write(write_string)
 
-    def get_cycler_entry_wavelength(self, entry: int) -> float|list[float]|None:
+    def get_cycler_entry_wavelength(self, entry: int) -> float | list[float] | None:
         """
         Retrieve wc no of wavelength(s) starting from a given cycler entry from the EEPROM.
 
