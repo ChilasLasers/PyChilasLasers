@@ -40,6 +40,7 @@ class OperatingMode(IntEnum):
 
 logger = logging.getLogger(__name__)
 
+
 class SweptLaser(TLMLaser):
     """Representation and control of COMET lasers
 
@@ -327,7 +328,7 @@ class SweptLaser(TLMLaser):
 
         # Save the cycler table to WC value to be reset after operation
         wc = self.query("DRV:CYC:WC?")
-        self.write("DRV:CYC:WC 10") # Set write count to 1
+        self.write("DRV:CYC:WC 10")  # Set write count to 1
 
         logger.info("Loading cycler table from laser driver")
         start_time: float = time.time()
@@ -343,19 +344,19 @@ class SweptLaser(TLMLaser):
 
         # Add the wavelengths to the cycler table
         wavelengths = wavelengths[:self._cycler_table_length]
-        cycler_table = np.insert(cycler_table,4,wavelengths,axis=1)
+        cycler_table = np.insert(cycler_table, 4, wavelengths, axis=1)
 
         hops = []
         for i in range(self._cycler_table_length):
             # Add Mode hop flag to entry
             hops.append(self.get_cycler_entry_mode_hop(i))  # type: ignore
-        cycler_table = np.insert(cycler_table,5,hops,axis=1)
+        cycler_table = np.insert(cycler_table, 5, hops, axis=1)
 
         # Cycler table is a np.array in previous version, so convert to np.array
-        # idk if this is necessary, but it is in the original code
+        # I don't know if this is necessary, but it is in the original code
         self._cycler_table = cycler_table
         end_time: float = time.time()
-        self.write("DRV:CYC:WC " + wc) # Reset write count to original value
+        self.write("DRV:CYC:WC " + wc)  # Reset write count to original value
         logger.info(f"Loaded cycler table with {self._cycler_table_length:d} entries in {end_time - start_time:.4f} seconds")
 
     @property
@@ -870,7 +871,15 @@ class SweptLaser(TLMLaser):
         """
 
         # Apply the heater values from the requested cycler table index
-        self.load_cycler_entry(idx)
+        # self.load_cycler_entry(idx)
+
+        # Alternative approach: apply heater values directly from cycler table
+        self.preload_driver_value(type(self).cycler_config.PHASE_SECTION, float(self._cycler_table[idx, type(self).cycler_config.PHASE_SECTION]))
+        self.preload_driver_value(type(self).cycler_config.RING_LARGE, float(self._cycler_table[idx, type(self).cycler_config.RING_LARGE]))
+        self.preload_driver_value(type(self).cycler_config.RING_SMALL, float(self._cycler_table[idx, type(self).cycler_config.RING_SMALL]))
+        self.preload_driver_value(type(self).cycler_config.TUNABLE_COUPLER, float(self._cycler_table[idx, type(self).cycler_config.TUNABLE_COUPLER]))
+        self.apply_preload_values()
+
         # Update the field to keep track of the active index
         self._idx_active = idx
 
@@ -957,7 +966,6 @@ class SweptLaser(TLMLaser):
         idx_actual = self.get_cycler_index()
         idx_new = idx_actual + idx_delta
         return self.set_wavelength_abs_idx(idx_new, trigger_pulse)
-
 
 
 if __name__ == "__main__":
