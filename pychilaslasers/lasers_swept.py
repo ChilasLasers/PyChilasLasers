@@ -847,7 +847,7 @@ class SweptLaser(TLMLaser):
         wavelength = self.get_wavelength_idx(idx)
         return wavelength
 
-    def set_wavelength_abs_idx(self, idx: int, trigger_pulse: bool = True) -> float:
+    def set_wavelength_abs_idx(self, idx: int, trigger_pulse: bool = False) -> float:
         """Instructs laser to tune to a given cycler table entry
 
         Given a cycler table index, instructs the laser to tune the
@@ -889,7 +889,7 @@ class SweptLaser(TLMLaser):
             self.trigger_pulse()
         return self.get_wavelength_idx(idx)
 
-    def set_wavelength_abs(self, wl: float, trigger_pulse: bool = True) -> float:
+    def set_wavelength_abs(self, wl: float, trigger_pulse: bool = False) -> float:
         """Instructs laser to tune to a given wavelength
 
         Given a wavelength in nm, instructs the laser to tune to this
@@ -909,7 +909,7 @@ class SweptLaser(TLMLaser):
         idx = self.get_idx_wavelength(wl)
         return self.set_wavelength_abs_idx(idx, trigger_pulse)
 
-    def set_wavelength_rel(self, wl_delta: float, trigger_pulse: bool = True) -> float:
+    def set_wavelength_rel(self, wl_delta: float, trigger_pulse: bool = False) -> float:
         """Instructs laser to tune to a new wavelength using a delta wavelength
         w.r.t current wavelength
 
@@ -934,9 +934,7 @@ class SweptLaser(TLMLaser):
         wl_new = wl_actual + wl_delta
         return self.set_wavelength_abs(wl_new, trigger_pulse)
 
-    def set_wavelength_rel_idx(
-        self, idx_delta: int, trigger_pulse: bool = True
-    ) -> float:
+    def set_wavelength_rel_idx(self, idx_delta: int, trigger_pulse: bool = False) -> float:
         """Instructs laser to tune to a new wavelength using a delta cycler
         index w.r.t current cycler table index loaded
 
