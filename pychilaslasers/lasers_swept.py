@@ -642,33 +642,6 @@ class SweptLaser(TLMLaser):
 
         self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase)
 
-    def phase_correction_sweep_to_steady(self) -> float:
-        """Perform a phase correction for steady mode, since the phase is calibrated for sweep mode.
-
-        This is part of a test, which is not successful yet.
-        It can be removed if the tests remains unsuccessful.
-        """
-
-        if self._idx_active is None:
-            v_phase = self.get_driver_value(type(self).channel_config.PHASE_SECTION)
-            v_ring_large = self.get_driver_value(type(self).channel_config.RING_LARGE)
-            v_ring_small = self.get_driver_value(type(self).channel_config.RING_SMALL)
-        else:
-            v_phase = self._cycler_table[self._idx_active, type(self).cycler_config.PHASE_SECTION]
-            v_ring_large = self._cycler_table[self._idx_active, type(self).cycler_config.RING_LARGE]
-            v_ring_small = self._cycler_table[self._idx_active, type(self).cycler_config.RING_SMALL]
-        v_squared_rings = np.square(v_ring_large) + np.square(v_ring_small)
-        v_squared_phase = np.square(v_phase)
-        v_squared_phase_correction = - 23.40 - 12.0 + 0.0 + 0.227 * v_squared_rings  # for 100 ms cycler interval
-        v_squared_phase_new = v_squared_phase + v_squared_phase_correction
-        if v_squared_phase_new < 0.0:
-            v_squared_phase_new = 0.0
-        v_phase_new = np.sqrt(v_squared_phase_new)
-        logger.info(f"Correcting phase from sweep {v_phase:.4f} V to steady {v_phase_new:.4f} V")
-
-        self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_new)
-        return v_phase_new
-
     def _calc_runtime(self, idx_start: int, idx_end: int, num_sweeps: int) -> float:
         """Calculates and returns the estimated runtime of a sweep
 
@@ -886,9 +859,6 @@ class SweptLaser(TLMLaser):
 
         # Update the field to keep track of the active index
         self._idx_active = idx
-
-        # Perform a phase correction for steady mode, since the phase is calibrated for sweep mode.
-        # v_phase_after_correction = self.phase_correction_sweep_to_steady()
 
         # Perform a phase anti-hysteresis function when the set mode number is different from the previously set one.
         mode_number_new = self.get_mode_number_idx(idx)
