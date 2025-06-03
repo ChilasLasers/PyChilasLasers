@@ -844,6 +844,8 @@ class SweptLaser(TLMLaser):
         if mode_number_new != self._mode_number:
             logger.info(f"Phase anti-hysteresis required due to switching to mode number {mode_number_new:d}")
             self.phase_anti_hyst(v_phase=v_phase)
+        else:
+            logger.info(f"Mode number {mode_number_new:d}")
         self._mode_number = mode_number_new
 
         # Provide a trigger signal to indicate that a new wavelength is set
