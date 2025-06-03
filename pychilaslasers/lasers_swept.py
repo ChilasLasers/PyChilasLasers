@@ -8,7 +8,6 @@ import re
 import time
 from enum import IntEnum
 import logging
-
 import numpy as np
 
 try:
@@ -25,6 +24,8 @@ DEFAULT_CYCLER_INTERVAL = 100
 DEFAULT_ANTI_HYST_V_PHASE_SQUARED = 30.0
 DEFAULT_ANTI_HYST_SLEEP = 0.02
 
+logger = logging.getLogger(__name__)
+
 
 class OperatingMode(IntEnum):
     """Different operating modes for the COMET
@@ -36,9 +37,6 @@ class OperatingMode(IntEnum):
 
     SWEEP = 0
     STEADY = 1
-
-
-logger = logging.getLogger(__name__)
 
 
 class SweptLaser(TLMLaser):
@@ -559,9 +557,6 @@ class SweptLaser(TLMLaser):
             - the diode current, saved in _diode_current_sweep_mode
             - the cycler interval, saved in cycler_interval or otherwise,
               when not set before the DEFAULT_CYCLER_INTERVAL
-            - finally it will set the laser to tune to a wavelength in the
-              middle of the cycler table (to come to a thermal state more
-              akin to when during sweeping operation).
 
         The SweptLaser object's internal operating mode will also be updated
         to be in OperatingMode.SWEEP.
@@ -574,9 +569,6 @@ class SweptLaser(TLMLaser):
             self.cycler_interval = DEFAULT_CYCLER_INTERVAL
         # Update internal state
         self._operation_mode = OperatingMode.SWEEP
-
-        # Pick an entry in the middle of the cycler table
-        # self.set_wavelength_abs((self.max_wavelength + self.min_wavelength) / 2)
 
     def prepare_steady_mode(self):
         """Prepares the laser for steady tuning operation
@@ -624,22 +616,9 @@ class SweptLaser(TLMLaser):
             else:
                 v_phase = self._cycler_table[self._idx_active, type(self).cycler_config.PHASE_SECTION]
 
-        # The new optimized and quick phase anti-hysteresis procedure.
-        v_phase_anti_hyst = np.sqrt(np.square(v_phase) + DEFAULT_ANTI_HYST_V_PHASE_SQUARED)  # V^2, hysteresis function
+        v_phase_anti_hyst = np.sqrt(np.square(v_phase) + DEFAULT_ANTI_HYST_V_PHASE_SQUARED)  # V^2
         self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_anti_hyst)
         time.sleep(DEFAULT_ANTI_HYST_SLEEP)
-
-        # This was the original phase anti-hysteresis procedure.
-        # v_phase_anti_hyst = np.sqrt(np.square(v_phase) + 30)  # V^2, hysteresis function
-        # self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_anti_hyst)
-        # time.sleep(0.1)
-        # v_phase_anti_hyst = np.sqrt(np.square(v_phase) + 20)  # V^2, hysteresis function
-        # self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_anti_hyst)
-        # time.sleep(0.1)
-        # v_phase_anti_hyst = np.sqrt(np.square(v_phase) + 10)  # V^2, hysteresis function
-        # self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase_anti_hyst)
-        # time.sleep(0.1)
-
         self.set_driver_value(type(self).channel_config.PHASE_SECTION, v_phase)
 
     def _calc_runtime(self, idx_start: int, idx_end: int, num_sweeps: int) -> float:
