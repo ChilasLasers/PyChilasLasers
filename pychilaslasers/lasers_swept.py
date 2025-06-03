@@ -576,7 +576,7 @@ class SweptLaser(TLMLaser):
         self._operation_mode = OperatingMode.SWEEP
 
         # Pick an entry in the middle of the cycler table
-        self.set_wavelength_abs((self.max_wavelength + self.min_wavelength) / 2)
+        # self.set_wavelength_abs((self.max_wavelength + self.min_wavelength) / 2)
 
     def prepare_steady_mode(self):
         """Prepares the laser for steady tuning operation
