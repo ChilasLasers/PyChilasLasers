@@ -793,9 +793,12 @@ class SweptLaser(TLMLaser):
         Returns:
             (float): current wavelength in nm
         """
-        idx = self.get_cycler_index()
-        # Update the field to keep track of the active index
-        self._idx_active = idx
+        if self._idx_active is None:
+            idx = self.get_cycler_index()
+            # Update the field to keep track of the active index
+            self._idx_active = idx
+        else:
+            idx = self._idx_active
         # Request the wavelength corresponding to the active index
         wavelength = self.get_wavelength_idx(idx)
         return wavelength
@@ -823,18 +826,19 @@ class SweptLaser(TLMLaser):
         """
 
         # Apply the heater values from the requested cycler table index
-        self.load_cycler_entry(idx)
+        # self.load_cycler_entry(idx)
 
         # Alternative approach 1: apply all heater values directly from cycler table
-        # self.preload_driver_value(type(self).cycler_config.PHASE_SECTION, float(self._cycler_table[idx, type(self).cycler_config.PHASE_SECTION]))
-        # self.preload_driver_value(type(self).cycler_config.RING_LARGE, float(self._cycler_table[idx, type(self).cycler_config.RING_LARGE]))
-        # self.preload_driver_value(type(self).cycler_config.RING_SMALL, float(self._cycler_table[idx, type(self).cycler_config.RING_SMALL]))
-        # self.preload_driver_value(type(self).cycler_config.TUNABLE_COUPLER, float(self._cycler_table[idx, type(self).cycler_config.TUNABLE_COUPLER]))
-        # self.apply_preload_values()
+        v_phase = float(self._cycler_table[idx, type(self).cycler_config.PHASE_SECTION])
+        self.preload_driver_value(type(self).cycler_config.PHASE_SECTION, v_phase)
+        self.preload_driver_value(type(self).cycler_config.RING_LARGE, float(self._cycler_table[idx, type(self).cycler_config.RING_LARGE]))
+        self.preload_driver_value(type(self).cycler_config.RING_SMALL, float(self._cycler_table[idx, type(self).cycler_config.RING_SMALL]))
+        self.preload_driver_value(type(self).cycler_config.TUNABLE_COUPLER, float(self._cycler_table[idx, type(self).cycler_config.TUNABLE_COUPLER]))
+        self.apply_preload_values()
 
         # Alternative approach 2: only update phase heater directly from cycler table
-        v_phase = float(self._cycler_table[idx, type(self).cycler_config.PHASE_SECTION])
-        self.set_driver_value(type(self).cycler_config.PHASE_SECTION, v_phase)
+        # v_phase = float(self._cycler_table[idx, type(self).cycler_config.PHASE_SECTION])
+        # self.set_driver_value(type(self).cycler_config.PHASE_SECTION, v_phase)
 
         # Update the field to keep track of the active index
         self._idx_active = idx
