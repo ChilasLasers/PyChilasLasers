@@ -33,12 +33,12 @@ class OperatingMode(IntEnum):
         SWEEP: For sweeping operation
         STEADY: For steady tuning operation
     """
-
     SWEEP = 0
     STEADY = 1
 
 
 logger = logging.getLogger(__name__)
+
 
 class SweptLaser(TLMLaser):
     """Representation and control of COMET lasers
@@ -708,9 +708,7 @@ class SweptLaser(TLMLaser):
         beginning of a mode, using the align_start_with_hop flag.
 
         NOTE: Sweeps will always be performed in the direction from longer wavelengths
-        to shorter wavelengths.
-
-        Args:
+        to shorter wavelengths.        Args:
             idx_start(int): start index for sweep operation
             idx_end(int): stop index for sweep operation
             num_sweeps(int): number of full sweeps/cycles to perform. If 0, will
@@ -722,9 +720,9 @@ class SweptLaser(TLMLaser):
             - If cycler is already running: None, None
             - If given indices are not a correct span: None, None
             - If sweep is indefinite (num_sweeps=0):
-                array of wavelengths to sweep over in nm, runtime=None
+              array of wavelengths to sweep over in nm, runtime=None
             - If numbered sweeps is given (num_sweeps!=0):
-                array of wavelengths to sweep over in nm, runtime in seconds
+              array of wavelengths to sweep over in nm, runtime in seconds
         """
         # Exit out early, if sweep is already running
         if self.cycler_running:
@@ -772,9 +770,7 @@ class SweptLaser(TLMLaser):
         sweeps/cycles to make.
 
         Makes use of sweep_idx() method, reference it for more detailed
-        documentation.
-
-        Args:
+        documentation.        Args:
             wl_start(float): starting wavelength for a cycle/sweep in nm, must
                 be greater than stopping wavelength wl_end
             wl_end(float): stopping wavelength for a cycle/sweep in nm, must
@@ -788,9 +784,9 @@ class SweptLaser(TLMLaser):
             - If cycler is already running: None, None
             - If given indices are not a correct span: None, None
             - If sweep is indefinite (num_sweeps=0):
-                array of wavelengths to sweep over in nm, runtime=None
+              array of wavelengths to sweep over in nm, runtime=None
             - If numbered sweeps is given (num_sweeps!=0):
-                array of wavelengths to sweep over in nm, runtime in seconds
+              array of wavelengths to sweep over in nm, runtime in seconds
         """
         idx_start = self.get_idx_wavelength(wl_start)
         idx_end = self.get_idx_wavelength(wl_end)
@@ -806,18 +802,16 @@ class SweptLaser(TLMLaser):
         calibrated wavelengths
 
         This method makes use of the sweep_idx() method, see it for detailed
-        documentation.
-
-        Args:
+        documentation.        Args:
             num_sweeps(int): number of sweeps/cycles to perform. If 0, will
                 sweep indefinitely
 
         Returns:
             - If cycler is already running: None, None
             - If sweep is indefinite (num_sweeps=0):
-                full array of wavelengths to sweep over in nm, runtime=None
+              full array of wavelengths to sweep over in nm, runtime=None
             - If numbered sweeps is given (num_sweeps!=0):
-                full array of wavelengths to sweep over in nm, runtime in seconds
+              full array of wavelengths to sweep over in nm, runtime in seconds
         """
         wls, runtime = self.sweep_idx(0, self._cycler_table_length - 1, num_sweeps)
         return wls, runtime
