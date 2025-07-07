@@ -27,6 +27,8 @@ extensions = [
     'myst_parser',
     'sphinx_design',
     'sphinx_togglebutton',
+    "sphinx_needs",
+    "sphinx_pyreverse"
 ]
 
 templates_path = ['_templates']
@@ -57,3 +59,31 @@ autodoc_class_signature = "separated"
 
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
+
+
+
+import subprocess
+
+def safe_pyreverse():
+
+
+    print()
+    print()
+    print()
+    print("[sphinx_pyreverse] Generating UML diagrams with Pyreverse...")
+    print(f"[sphinx_pyreverse] Current working directory: {os.getcwd()}")
+    print()
+    print()
+    print()
+  
+  
+    # Ensure pyreverse is installed and available in the environment
+    try:
+        subprocess.run(
+            ['pyreverse', '--output', 'png', '-d' , './uml_images', "--no-standalone",  '../pychilaslasers'],
+            check=False  # Don't raise CalledProcessError
+        )
+    except Exception as e:
+        print(f"[sphinx_pyreverse] Pyreverse generation failed: {e}")
+
+safe_pyreverse()

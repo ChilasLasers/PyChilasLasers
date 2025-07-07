@@ -18,6 +18,7 @@ dev = [
     "sphinx>=8.2.3",
     "sphinx-autobuild>=2024.10.3",
     "sphinx-design>=0.6.1",
+    "sphinx-pyreverse>=0.0.18",
     "sphinx-rtd-theme>=3.0.2",
     "sphinx-togglebutton>=0.3.2",
 ]

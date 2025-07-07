@@ -1,5 +1,18 @@
 {{ fullname | escape | underline}}
 
+
+
+Class inheritance-diagram
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. inheritance-diagram::
+   {{ module }}.{{ name }}
+   :include-subclasses:
+|
+
+Module Overview
+~~~~~~~~~~~~~~~~~~~~~~~
+
 .. currentmodule:: {{ module }}
    
 
@@ -49,4 +62,4 @@
    ..  autoattribute:: {{ item }}
    {%- endfor %}
 
-   
+

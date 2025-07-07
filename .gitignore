@@ -172,3 +172,13 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+
+
+
+# Documentation
+
+docs/_build/*
+docs/generated/
+docs/uml_images/
+

@@ -6,6 +6,7 @@
 PyChilasLasers documentation
 ============================
 
+
 Class inheritance-diagram
 --------------------------
 
@@ -24,3 +25,12 @@ Module Overview
    pychilaslasers.lasers_swept
    pychilaslasers.lasers_tlc
    pychilaslasers.lasers_tlm
+
+
+Complete Class Diagram
+--------------------------
+
+.. image:: /uml_images/classes.png
+    :alt: Class diagram
+    :align: center
+
