@@ -790,7 +790,23 @@ class Laser:
             heater_ch (int): The heater channel number.
             heater_value (float): The value to be set.
         """
-        self.write(f"DRV:D {heater_ch:d} {heater_value:.3f}")
+        self.write(f"DRV:D {heater_ch:d} {heater_value:.4f}")
+
+    def preload_driver_value(self, heater_ch: int, heater_value: float) -> None:
+        """Preload the value of the driver channel.
+        Does not immediately change the physical output value.
+
+        Args:
+            heater_ch (int): The heater channel number.
+            heater_value (float): The value to be preloaded.
+        """
+        self.write(f"DRV:DP {heater_ch:d} {heater_value:.4f}")
+
+    def apply_preload_values(self) -> None:
+        """Update all driver channels with the preload values.
+
+        """
+        self.write("DRV:U")
 
     def set_driver_value_with_antihyst(
         self,
