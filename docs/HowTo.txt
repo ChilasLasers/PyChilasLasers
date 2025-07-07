@@ -1,0 +1,11 @@
+This file shows how to build the documentation
+
+```
+sphinx-autobuild.exe docs .\docs\_build\html\
+```
+This command autobuilds the documentation on a change and hosts it at http://127.0.0.1:8000/
+
+
+Use ``` .\docs\make.bat html ``` to build the documentation once. The output will be in /docs/_build
+
+

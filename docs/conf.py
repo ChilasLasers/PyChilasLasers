@@ -27,7 +27,6 @@ extensions = [
     'myst_parser',
     'sphinx_design',
     'sphinx_togglebutton',
-    "sphinx_needs",
     "sphinx_pyreverse"
 ]
 
