@@ -12,6 +12,8 @@ DEFAULT_ANTI_HYST_V_PHASE_SQUARED = 20.0
 DEFAULT_ANTI_HYST_SLEEP = 0.01 # 1ms
 
 
+DEFAULT_TEC_TARGET = 25.0
+DEFAULT_DIODE_CURRENT = 280.0
 
 
 class OperatingMode(IntEnum):
@@ -358,19 +360,16 @@ class AtlasLaser(TLMLaser):
         In manual mode, the values of the heaters can be manually changed
         without using the cycler table entries.
         """
-        logger.info("Preparing laser for manual operation mode")
+        logger.info("Manual mode enabled")
         # Any specific setup for manual mode can be added here
         pass
 
     def prepare_steady_mode(self):
         """Prepare the laser for steady operation mode.
-        
-        In steady mode, the laser uses cycler table entries to control
-        wavelength tuning.
         """
-        logger.info("Preparing laser for steady operation mode")
-        # Any specific setup for steady mode can be added here
-        pass
+        logger.info("Steady mode enabled")
+        self.diode_current = DEFAULT_DIODE_CURRENT  # Set default diode current
+        self.tec_target = DEFAULT_TEC_TARGET  # Set default TEC target for steady mode
 
     def set_heater_manual(self, heater_channel, voltage: float):
         """Set heater voltage manually in manual operating mode.
@@ -380,7 +379,7 @@ class AtlasLaser(TLMLaser):
         allows for fine-tuned control of laser parameters.
         
         Args:
-            heater_channel: The heater channel to control (from channel_config)
+            heater_channel: The heater channel to control 
             voltage (float): The voltage to set on the heater
             
         Raises:
