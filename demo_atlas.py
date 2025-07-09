@@ -1,74 +1,83 @@
 #!/usr/bin/env python
 """
-Demo script for COMET lasers.
-Date: 2025-03-26
+Demo script for ATLAS lasers.
+Date: 2025-07-09
 """
 
-import time
-
+import logging
 from pathlib import Path
-from pychilaslasers.lasers_swept import OperatingMode
+from pychilaslasers.atlas_laser import OperatingMode
 from pychilaslasers.atlas_laser import AtlasLaser
 
-# Settings for COMET
-address = "COM7"
-# Path to calibration file/LookUpTable (lut)
-fp_lut = Path(r"C:\\Users\\Sebastian\\Documents\\calibrationATLAS.csv")
 
-if __name__ == "__main__":
-    # Initiate object for COMET interaction
-    laser = AtlasLaser()
+# Change logging level to change the verbosity of the terminal output.
+# Debug will print all the serial commands and responses sent to the laser.
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
-    # Optionally, print COM ports
-    # print(laser.list_comports())
 
-    # Specify address to use
-    laser.port = address
+# Optionally, print COM ports
+# print(laser.list_comports())
 
-    # Open connection
-    laser.open_connection()
+# Settings for ATLAS
+address = "COM5"   # Specify the COM port for the ATLAS laser
 
-    # Increase the baud rate from 57600 to 460800 for 8x faster communication.
-    # The connection will be closed and re-opened at the new baud rate.
-    laser.baudrate = 460800
-    try:
-        # Check connection state
-        print(f"Connection state {laser.is_connected=}")
+#  Path to calibration file/LookUpTable (lut)
+fp_lut = Path(r"C:\\Users\\Sebastian\\Documents\\MAC078_settings.csv")
 
-        # Load calibration file
-        laser.open_file_cycler_table(fp_lut)
+# Initiate object for ATLAS interaction
+laser = AtlasLaser()
 
-        # Turn on COMET system
-        laser.system_state = True
 
-        # Steady tuning functionality
-        laser.operation_mode = OperatingMode.STEADY
 
-        # Set wavelength, e.g. 1550.000nm
-        wavelength = laser.set_wavelength_abs(wl=1550.000)
-        # Set wavelength, based on index from calibration file, e.g. 2123
-        wavelength = laser.set_wavelength_abs_idx(2123)
-        print(f"Corresponding {wavelength=:.3f}nm")
+# Specify address to use
+laser.port = address
 
-        # Get current wavelength
-        print(f"Current wavelength is {laser.get_wavelength()=}")
-        # Get current index
-        print(f"Current cycler index is {laser.get_cycler_index()=}")
-        # Get wavelength corresponding to certain index
-        print(f"Wavelength corresponding to index 2123 is {laser.get_wavelength_idx(2123)=}")
+# Open connection
+laser.open_connection()
 
-        # Set wavelength in relative manner (apply step/offset), e.g. increase wavelength by 0.004nm
-        print(f"New wavelength is {laser.set_wavelength_rel(wl_delta=0.004)=}")
-        # ... or decrease wavelength with negative step, e.g. -1.000nm
-        print(f"New wavelength is {laser.set_wavelength_rel(wl_delta=-1.000)=}")
-        # Set wavelength in relative manner, by applying step/offset in index units, e.g. one unit later
-        print(f"New wavelength is {laser.set_wavelength_rel_idx(1)=}")
+# Increase the baud rate from 57600 to 460800 for 8x faster communication.
+# The connection will be closed and re-opened at the new baud rate.
+laser.baudrate = 460800
+try:
+    # Check connection state
+    print(f"Connection state {laser.is_connected=}")
 
-        # Manually give a trigger pulse
-        laser.trigger_pulse()
+    # Load calibration file
+    laser.open_file_cycler_table(fp_lut)
 
-        # Turn off the laser
-        laser.system_state = False
-    finally:
-        # Close the connection, which also resets the baudrate to its default value (57600)
-        laser.close_connection()
+    # Turn on ATLAS system
+    laser.system_state = True
+
+    # Steady tuning functionality
+    laser.operation_mode = OperatingMode.STEADY
+
+    # Set wavelength, e.g. 1550.000nm
+    wavelength = laser.set_wavelength_abs(wl=1545.000)
+
+    
+    input("Press Enter to continue...")
+
+    # Set wavelength, based on index from calibration file, e.g. 2123
+    wavelength = laser.set_wavelength_abs_idx(2123)
+    print(f"Corresponding {wavelength=:.3f}nm")
+
+    # Get current wavelength
+    print(f"Current wavelength is {laser.get_wavelength()=}")
+    
+    # Get wavelength corresponding to certain index
+    print(f"Wavelength corresponding to index 2123 is {laser.get_wavelength_idx(2123)=}")
+
+    # Set wavelength in relative manner (apply step/offset), e.g. increase wavelength by 0.004nm
+    print(f"New wavelength is {laser.set_wavelength_rel(wl_delta=0.004)=}")
+
+    # ... or decrease wavelength with negative step, e.g. -1.000nm
+    print(f"New wavelength is {laser.set_wavelength_rel(wl_delta=-1.000)=}")
+
+    input("Press Enter to continue...")
+    # Turn off the laser
+    laser.system_state = False
+
+finally:
+    # Close the connection, which also resets the baudrate to its default value (57600)
+    laser.close_connection()
