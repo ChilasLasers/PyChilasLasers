@@ -379,9 +379,9 @@ class Laser:
             if any(reply[2:].startswith(error) for error in CRITICAL_ERRORS):  # Check for critical errors
                 if reply[2:].startswith("E0" + "23"):
                     reply += "  SHUTDOWN_REASON = " + self.shutdown_reason
-                logger.critical(f"Critical error: {reply[2:]}", extra={"cmd": cmd, "reply": reply})
+                logger.critical(f"Critical error: {reply[2:]} in response to {cmd}", extra={"cmd": cmd, "reply": reply})
             else:  # Check for non-critical errors
-                logger.error(f"Nonzero return code: {reply[2:]}", extra={"cmd": cmd, "reply": reply})
+                logger.error(f"Nonzero return code: {reply[2:]} in response to {cmd}", extra={"cmd": cmd, "reply": reply})
 
         return reply
 
