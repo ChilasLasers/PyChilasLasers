@@ -33,7 +33,7 @@ Module Overview
 
       .. autosummary::
 
-      {% for item in methods %}
+      {% for item in methods if not item.startswith('_')%}
          ~{{ name }}.{{ item }}
       {%- endfor %}
 
@@ -47,18 +47,17 @@ Module Overview
    .. dropdown:: {{ _('Attributes') }}
 
       .. autosummary::
-      {% for item in attributes %}
+      {% for item in attributes if not item.startswith('_') %}
          ~{{ name }}.{{ item }}
       {%- endfor %}
    {% endif %}
    {% endblock %}
 
  
-   
-   {% for item in methods %}
+   {% for item in methods if not item.startswith('_') %}
    .. automethod:: {{ item }}
    {%- endfor %}
-   {% for item in attributes %}
+   {% for item in attributes if not item.startswith('_') %}
    ..  autoattribute:: {{ item }}
    {%- endfor %}
 

@@ -4,7 +4,6 @@ SweptLaser class to communicate with COMET lasers.
 Authors: RLK, AVR, SDU
 """
 
-import re
 import time
 from enum import IntEnum
 import logging

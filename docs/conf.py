@@ -59,9 +59,36 @@ autodoc_class_signature = "separated"
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
+autodoc_default_options = {
+    'members': True,
+    'undoc-members': True,
+    'show-inheritance': True,
+    'private-members': False,
+    'special-members': False,
+    'inherited-members': False
+}
+
 
 
 import subprocess
+
+
+def skip_member(app, what, name, obj, skip, options):
+    # Skip private members
+    if name.startswith('_'):
+        return True
+    # Skip inherited members
+    if hasattr(obj, '__objclass__'):
+        if obj.__objclass__.__name__ != options.get('objname', ''):
+            return True
+    return skip
+
+def setup(app):
+    app.connect("autodoc-skip-member", skip_member)
+
+
+
+
 
 def safe_pyreverse():
 

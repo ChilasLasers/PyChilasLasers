@@ -7,7 +7,7 @@
    .. dropdown:: {{ _('Module Attributes') }}
 
       .. autosummary::
-      {% for item in attributes %}
+      {% for item in attributes if not item.startswith('_') %}
          {{ item }}
       {%- endfor %}
    {% endif %}
@@ -18,7 +18,7 @@
    .. dropdown:: {{ _('Functions') }}
 
       .. autosummary::
-      {% for item in functions %}
+      {% for item in functions if not item.startswith('_') %}
          {{ item }}
       {%- endfor %}
    {% endif %}
@@ -29,12 +29,7 @@
    .. rubric:: Classes
 
    .. autosummary::
-      :toctree:
-   {% for item in classes %}
-      {{ item }}
-   {%- endfor %}
-   {% else %}
-   {% for item in classes %}
+   {% for item in classes if not item.startswith('_') %}
       {{ item }}
    {%- endfor %}
    {% endif %}
@@ -45,11 +40,13 @@
    .. dropdown:: {{ _('Exceptions') }}
 
       .. autosummary::
-      {% for item in exceptions %}
+      {% for item in exceptions if not item.startswith('_') %}
          {{ item }}
       {%- endfor %}
    {% endif %}
    {%- endblock %}
+
+
 
 {%- block modules %}
 {%- if modules %}
@@ -58,7 +55,7 @@
    .. autosummary::
       :toctree:
       :recursive:
-   {% for item in modules %}
+   {% for item in modules if not item.startswith('_') %}
       {{ item }}
    {%- endfor %}
 {% endif %}
