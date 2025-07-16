@@ -52,6 +52,9 @@ class AtlasLaser(TLMLaser):
     def __init__(self, address=None, timeout=10):
         super().__init__(address, timeout)
         self._operation_mode = None
+        self._idx_active = 0
+
+
 
 
     
@@ -262,7 +265,7 @@ class AtlasLaser(TLMLaser):
         # v_phase = float(self._cycler_table[idx, type(self).cycler_config.PHASE_SECTION])
         # self.set_driver_value(type(self).cycler_config.PHASE_SECTION, v_phase)
 
-        self.phase_anti_hyst(v_phase=v_phase)
+        self.phase_anti_hyst()
 
         # Update the field to keep track of the active index
         self._idx_active = idx

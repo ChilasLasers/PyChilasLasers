@@ -10,25 +10,23 @@ from pychilaslasers.atlas_laser import OperatingMode
 from pychilaslasers.atlas_laser import AtlasLaser
 
 
+
+# Optionally, print COM ports
+# print(laser.list_comports())
+
+# Settings for ATLAS
+address = "COM31"
+# Path to calibration file/LookUpTable (lut)
+fp_lut = Path(r"G:\9500-9999 Laboratory workspace (PUBLIC)\Calibration files\MAC078\MAC078_settings.csv")
+
 # Change logging level to change the verbosity of the terminal output.
 # Debug will print all the serial commands and responses sent to the laser.
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
-# Optionally, print COM ports
-# print(laser.list_comports())
-
-# Settings for ATLAS
-address = "COM5"   # Specify the COM port for the ATLAS laser
-
-#  Path to calibration file/LookUpTable (lut)
-fp_lut = Path(r"C:\\Users\\Sebastian\\Documents\\MAC078_settings.csv")
-
 # Initiate object for ATLAS interaction
 laser = AtlasLaser()
-
-
 
 # Specify address to use
 laser.port = address
@@ -55,8 +53,8 @@ try:
     # Set wavelength, e.g. 1550.000nm
     wavelength = laser.set_wavelength_abs(wl=1545.000)
 
-    
-    input("Press Enter to continue...")
+
+    #input("Press enter to continue...")
 
     # Set wavelength, based on index from calibration file, e.g. 2123
     wavelength = laser.set_wavelength_abs_idx(2123)
@@ -64,7 +62,7 @@ try:
 
     # Get current wavelength
     print(f"Current wavelength is {laser.get_wavelength()=}")
-    
+
     # Get wavelength corresponding to certain index
     print(f"Wavelength corresponding to index 2123 is {laser.get_wavelength_idx(2123)=}")
 
