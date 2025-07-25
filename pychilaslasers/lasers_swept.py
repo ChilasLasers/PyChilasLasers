@@ -566,6 +566,8 @@ class SweptLaser(TLMLaser):
         # use default cycler interval
         if not self.cycler_interval:
             self.cycler_interval = DEFAULT_CYCLER_INTERVAL
+        # Apply phase anti-hysteresis to ensure correct wavelength setting
+        self.phase_anti_hyst()
         # Update internal state
         self._operation_mode = OperatingMode.SWEEP
 
@@ -584,6 +586,8 @@ class SweptLaser(TLMLaser):
         """
         self.tec_target = self._tec_target_steady_mode
         self.diode_current = self._diode_current_steady_mode
+        # Apply phase anti-hysteresis to ensure correct wavelength setting
+        self.phase_anti_hyst()
         # Update internal state
         self._operation_mode = OperatingMode.STEADY
 
