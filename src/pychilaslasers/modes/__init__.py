@@ -16,6 +16,7 @@ Classes:
     - CyclerIndex: Cycler index-based wavelength change method
 """
 
+
 # Core mode classes
 from .mode import LaserMode, Mode
 
@@ -36,9 +37,4 @@ __all__ = [
     "ManualMode",
     "SteadyMode", 
     "SweepMode",
-    
-    # Wavelength change methods
-    "WLChangeMethod",
-    "PreLoad",
-    "CyclerIndex",
 ]

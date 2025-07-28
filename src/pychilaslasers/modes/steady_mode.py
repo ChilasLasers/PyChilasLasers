@@ -1,3 +1,9 @@
+"""Steady mode operation for laser wavelength control.
+
+This module implements steady mode operation of the laser which allows for tuning to
+wavelengths from the calibration table.
+"""
+
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from time import sleep
@@ -13,8 +19,30 @@ if TYPE_CHECKING:
 
 
 class SteadyMode(__Calibrated):
+    """Steady operation mode of the laser.
+
+    SteadyMode provides wavelength control using the provided calibration data.
+    
+    The mode supports anti-hysteresis correction to improve wavelength stability
+    and provides convenient methods for wavelength setting and control.
+    
+    Args:
+        laser: The laser instance to control.
+        calibration: Calibration data dictionary containing steady mode parameters.
+    
+    Attributes:
+        wavelength: Current wavelength setting in nanometers.
+        antihyst: Anti-hysteresis correction enable/disable state.
+        mode: Returns LaserMode.STEADY.
+    """
 
     def __init__(self, laser: Laser, calibration: dict) -> None:
+        """Initialize steady mode with laser and calibration data.
+        
+        Args:
+            laser: The laser instance to control.
+            calibration: Calibration data dictionary containing steady mode parameters.
+        """
         super().__init__(laser)
         
         self._laser = laser
@@ -28,6 +56,7 @@ class SteadyMode(__Calibrated):
         
         self._wl: float = self._min_wl  # Default to minimum wavelength
 
+        # Initialize wavelength change method based on laser model
         antihyst_parameters = calibration["steady"]["anti-hyst"]
         if calibration["model"] == "COMET":
             self._change_method: _WLChangeMethod = _PreLoad(
@@ -45,53 +74,106 @@ class SteadyMode(__Calibrated):
                 anti_hyst_parameters=antihyst_parameters
             )
 
+    ########## Main Methods ##########
 
     def apply_defaults(self) -> None:
-        """Apply default settings for the mode."""
+        """Apply default settings for steady mode operation.
+        
+        Sets the TEC temperature and diode current to their default values
+        as specified in the calibration data.
+        """
         self._laser.tec.target = self._default_TEC
         self._laser.diode.current = self._default_current
 
-
+    ########## Properties (Getters/Setters) ##########
 
     @property
     def wavelength(self) -> float:
-        """Get the current wavelength setting."""
+        """Get the current wavelength setting.
+        
+        Returns:
+            Current wavelength in nanometers.
+        """
         return self._wl
-    def get_wl(self) -> float:
-        """Get the current wavelength setting."""
-        return self.wavelength
+
     @wavelength.setter
     def wavelength(self, value: float) -> None:
-        """Set the current wavelength setting."""
+        """Set the laser wavelength.
+        
+        Args:
+            value: Target wavelength in nanometers.
+            
+        Raises:
+            ValueError: If wavelength is outside the valid calibration range.
+        """
         if value < self._min_wl or value > self._max_wl:
             raise ValueError(f"Wavelength must be between {self._min_wl} and {self._max_wl}.")
 
         self._change_method.set_wl(value)
-
         self._wl = value
-
-        self._laser.trigger_pulse() if self._autoTrig else None
-
-
-       
-
-    def set_wl_relative(self, value: float) -> None:
-        """in nm, relative to the current wavelength
-
-        Args:
-            value (float): _description_
-        """
-        self.wavelength = self.get_wl() + value
+        
+        # Trigger pulse if auto-trigger is enabled (inherited from parent)
+        if self._autoTrig:
+            self._laser.trigger_pulse()
 
     @property
     def antihyst(self) -> bool:
-        """Get the antihysteresis setting."""
+        """Get the anti-hysteresis correction state.
+        
+        Returns:
+            True if anti-hysteresis correction is enabled, False otherwise.
+        """
         return self._change_method.anti_hyst_enabled
+
     @antihyst.setter
     def antihyst(self, value: bool) -> None:
-            self._change_method.anti_hyst_enabled = value
+        """Set the anti-hysteresis correction state.
+        
+        Args:
+            value: Enable (True) or disable (False) anti-hysteresis correction.
+        """
+        self._change_method.anti_hyst_enabled = value
+
+    @property
+    def mode(self) -> LaserMode:
+        """Get the laser operation mode.
+        
+        Returns:
+            LaserMode.STEADY indicating steady mode operation.
+        """
+        return LaserMode.STEADY
+
+    ########## Method Overloads/Aliases ##########
+
+    def get_wl(self) -> float:
+        """Get the current wavelength setting.
+        
+        Alias for the wavelength property getter.
+        
+        Returns:
+            Current wavelength in nanometers.
+        """
+        return self.wavelength
+
+    def set_wl_relative(self, value: float) -> None:
+        """Set wavelength relative to current position.
+        
+        Args:
+            value: Wavelength change in nanometers, relative to current wavelength.
+                  Positive values increase wavelength, negative values decrease it.
+        
+        Raises:
+            ValueError: If the resulting wavelength is outside the valid range.
+        """
+        self.wavelength = self.get_wl() + value
+
     def toggle_antihyst(self, value: bool | None = None) -> None:
-        """Toggle the antihysteresis setting."""
+        """Toggle the anti-hysteresis correction state.
+        
+        Args:
+            value: Optional explicit state to set. If None, toggles current state.
+                  True enables anti-hysteresis, False disables it.
+        """
         if value is not None:
             self._change_method.anti_hyst_enabled = value
         else:
@@ -99,36 +181,52 @@ class SteadyMode(__Calibrated):
             self._change_method.anti_hyst_enabled = not self._change_method.anti_hyst_enabled
 
 
-    @property
-    def mode(self) -> LaserMode:
-        """Get the mode type."""
-        return LaserMode.STEADY
-
-
-
-
+########## Private Classes ##########
 
 
 class _WLChangeMethod(ABC):
-    """Abstract base class for wavelength change methods."""
+    """Abstract base class for wavelength change methods.
+    
+    Defines the interface for different wavelength change strategies used by
+    different laser models. Each implementation handles the specific hardware
+    commands and anti-hysteresis procedures.
+
+    Args:
+        steady_mode: Reference to the parent SteadyMode instance.
+        laser: The laser hardware interface.
+        calibration_table: Wavelength to calibration entry mapping.
+        anti_hyst_parameters: Tuple of (voltage_list, time_steps_list) for anti-hysteresis.
+    
+    Attributes:
+        anti_hyst_enabled: Enable/disable anti-hysteresis correction.
+    """
 
     def __init__(self,
                 steady_mode: SteadyMode,
                 laser: Laser,
                 calibration_table: dict[float, CalibrationEntry],
                 anti_hyst_parameters: tuple[list[float], list[float]]) -> None:
+        """Initialize wavelength change method.
+        
+        Args:
+            steady_mode: Reference to the parent SteadyMode instance.
+            laser: The laser hardware interface.
+            calibration_table: Wavelength to calibration entry mapping.
+            anti_hyst_parameters: Tuple containing voltage steps and timing for anti-hysteresis.
+        """
 
         self._laser: Laser = laser
         self._steady_mode: SteadyMode = steady_mode
         self._calibration_table: dict[float, CalibrationEntry] = calibration_table
         self._antihyst_parameters: tuple[list[float], list[float]] = anti_hyst_parameters
         
-
         self.anti_hyst_enabled: bool = True  # Default to enabled
 
+    ########## Private Methods ##########
 
     def _antihyst(self) -> None:
-        """Apply antihysteresis correction."""
+        """ Apply anti-hysteresis correction to the laser."""
+
         initial_phase = float(self._calibration_table[self._wavelength].phase_section)
 
         offset: float = self._antihyst_parameters[0][0]
@@ -142,59 +240,107 @@ class _WLChangeMethod(ABC):
 
         self._laser.query(f"DRV:D {HeaterChannel.PHASE_SECTION.value:d} {v_phase_anti_hyst:.4f}")
 
+    ########## Properties (Getters/Setters) ##########
+
     @property
     def _wavelength(self) -> float:
-        """Get the current wavelength."""
+        """Get the current wavelength from the parent steady mode.
+        
+        Returns:
+            Current wavelength setting in nanometers.
+        """
         return self._steady_mode.wavelength
+
+    ########## Abstract Methods ##########
 
     @abstractmethod
     def set_wl(self, value: float) -> None:
+        """Set the laser wavelength using the specific method implementation.
+        
+        This method must be implemented by subclasses to handle the wavelength
+        change procedure specific to each laser model.
+        
+        Args:
+            value: Target wavelength in nanometers.
+            
+        Raises:
+            ValueError: If wavelength is not found in calibration table.
         """
-            Assumes that the wavelength getter of steady mode is set to the current wavelength not value.
-            throws error if value is not in the calibration table.
-            This method should set the wavelength of the laser to the specified value.
-        """
-
         pass
 
 
 class _PreLoad(_WLChangeMethod):
-    """Preload-based wavelength change method.
-       Only for COMET model, uses preloaded values for wavelength change.
+    """Preload-based wavelength change method for COMET model.
+    
+    Uses preloaded calibration values to set heater voltages directly.
+    This method loads all heater values simultaneously and applies anti-hysteresis
+    correction only when mode hops occur.
+    
+    Note:
+        This method is specifically designed for COMET laser models.
     """
 
     def set_wl(self, value: float) -> None:
-        """Set the wavelength using a preloaded calibration entry.
-       """
-       
+        """Set wavelength using preloaded calibration values.
+        
+        Loads heater values from calibration table and applies them to the laser.
+        Anti-hysteresis correction is applied only when a mode hop is detected.
+
+        This method assumes self._wavelength is NOT already set to the current wavelength.
+        This is important for mode checking and anti-hysteresis application.
+        
+        Args:
+            value: Target wavelength in nanometers.
+            
+        Raises:
+            ValueError: If wavelength is not found in calibration table.
+        """
         if value not in self._calibration_table.keys():
             raise ValueError(f"Wavelength {value} not found in calibration table.")
 
         entry: CalibrationEntry = self._calibration_table[value]
+        
         # Preload the laser with the calibration entry values
         self._laser.query(f"DRV:DP 0 {entry.phase_section:.4f}")
         self._laser.query(f"DRV:DP 1 {entry.large_ring:.4f}")
         self._laser.query(f"DRV:DP 2 {entry.small_ring:.4f}")
         self._laser.query(f"DRV:DP 3 {entry.coupler:.4f}")
 
-        # apply the heater values
+        # Apply the heater values
         self._laser.query("DRV:U")
 
-        # Check for mode hop
-        if self._calibration_table[self._wavelength].mode_index is not entry.mode_index:
-            # apply antihysteresis if enabled
-            self._antihyst() if self.anti_hyst_enabled else None
-
+        # Check for mode hop and apply anti-hysteresis if needed
+        if self._calibration_table[self._wavelength].mode_index != entry.mode_index:
+            if self.anti_hyst_enabled:
+                self._antihyst()
 
 
 class _CyclerIndex(_WLChangeMethod):
-    """Cycler index-based wavelength change method."""
+    """Cycler index-based wavelength change method for ATLAS model.
+    
+    Uses the laser's internal cycler functionality to change wavelengths.
+    This method always applies anti-hysteresis correction when enabled.
+    
+    Note:
+        This method is the default for ATLAS laser models.
+    """
 
     def set_wl(self, value: float) -> None:
-        """Set the wavelength using a cycler index."""
+        """Set wavelength using the laser's cycler index.
+        
+        Loads a pre-configured cycler index from the calibration table and
+        applies anti-hysteresis correction if enabled.
+        
+        Args:
+            value: Target wavelength in nanometers.
+            
+        Raises:
+            ValueError: If wavelength is not found in calibration table.
+        """
         if value not in self._calibration_table.keys():
             raise ValueError(f"Wavelength {value} not found in calibration table.")
 
         self._laser.query(f"DRV:CYC:LOAD {self._calibration_table[value].cycler_index}")
 
-        self._antihyst() if self.anti_hyst_enabled else None
+        if self.anti_hyst_enabled:
+            self._antihyst()
