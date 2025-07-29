@@ -97,8 +97,9 @@ class SteadyMode(__Calibrated):
         return self._wl
 
     @wavelength.setter
-    def wavelength(self, value: float) -> None:
-        """Set the laser wavelength.
+    def wavelength(self, value: float) -> float:
+        """Set the laser wavelength. If the value is not in the calibration table,
+        it will find the closest available wavelength.
         
         Args:
             value: Target wavelength in nanometers.
@@ -108,6 +109,8 @@ class SteadyMode(__Calibrated):
         """
         if value < self._min_wl or value > self._max_wl:
             raise ValueError(f"Wavelength must be between {self._min_wl} and {self._max_wl}.")
+        if value not in self._calibration.keys():
+            value = min(self._calibration.keys(), key=lambda x: abs(x - value))
 
         self._change_method.set_wl(value)
         self._wl = value
@@ -115,6 +118,8 @@ class SteadyMode(__Calibrated):
         # Trigger pulse if auto-trigger is enabled (inherited from parent)
         if self._autoTrig:
             self._laser.trigger_pulse()
+
+        return self._wl
 
     @property
     def antihyst(self) -> bool:
@@ -155,7 +160,7 @@ class SteadyMode(__Calibrated):
         """
         return self.wavelength
 
-    def set_wl_relative(self, value: float) -> None:
+    def set_wl_relative(self, value: float) -> float:
         """Set wavelength relative to current position.
         
         Args:
@@ -167,6 +172,10 @@ class SteadyMode(__Calibrated):
         """
         self.wavelength = self.get_wl() + value
 
+        return self.wavelength
+    
+
+    
     def toggle_antihyst(self, value: bool | None = None) -> None:
         """Toggle the anti-hysteresis correction state.
         

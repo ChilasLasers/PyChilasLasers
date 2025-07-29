@@ -44,7 +44,10 @@ class SweepMode(__Calibrated):
         self._default_current: float = calibration["sweep"]["current"]
         self._default_cycler_interval: int = calibration["sweep"]["cycler_interval"]
         self._wavelengths: list[float] = calibration["sweep"]["wavelengths"]
-        self._wavelengths.sort()
+        if self._wavelengths[0] > self._wavelengths[-1]:
+            self._sweep_up = False
+        else:
+            self._sweep_up = True
 
         self._min_wl: float = min(self._wavelengths)
         self._max_wl: float = max(self._wavelengths)
@@ -105,6 +108,10 @@ class SweepMode(__Calibrated):
             raise ValueError(f"Lower bound {lower_wl} must be less than upper bound {upper_wl}.")
         if lower_wl not in self._wavelengths or upper_wl not in self._wavelengths:
             raise ValueError(f"Both bounds must be in the cycler table: {self._wavelengths}.")
+
+        if not self._sweep_up:
+            # If the sweep is downwards, we need to reverse the order of the bounds
+            lower_wl, upper_wl = upper_wl, lower_wl
 
         index_lower: int = self._wavelengths.index(lower_wl) # Get the index of the first occurrence of the lower bound wavelength
         index_upper: int = self._wavelengths.index(upper_wl)
@@ -240,17 +247,17 @@ class SweepMode(__Calibrated):
 
     @cycler_interval.setter
     def cycler_interval(self, value: int) -> None:
-        """Set the cycler interval.
+        """Set the cycler interval in microseconds (us).
         
         Args:
-            value: Time interval between wavelength steps in milliseconds.
-                Must be a positive integer.
+            value: Time interval between wavelength steps in microseconds.
+                Must be a positive integer between 20 and 50 000.
                 
         Raises:
             ValueError: If value is not a positive integer.
         """
-        if value <= 0 or not isinstance(value, int):
-            raise ValueError("Cycler interval must be a positive integer.")
+        if 20 > value or value > 50000 or not isinstance(value, int):
+            raise ValueError("Cycler interval must be a positive integer between 20 and 50 000.")
         self._laser.query(data=f"DRV:CYC:INT {value}")
 
     @property
@@ -289,6 +296,27 @@ class SweepMode(__Calibrated):
         """
         return self.wavelength
 
+    @property
+    def start_wavelength(self) -> float:
+        """Get the start wavelength of the sweep.
+        
+        Returns:
+            The lower bound wavelength of the current sweep range.
+        """
+        return self.lower_bound
+    @start_wavelength.setter
+    def start_wavelength(self, value: float) -> None:
+        self.lower_bound = value
 
-    
+    @property
+    def end_wavelength(self) -> float:
+        """Get the end wavelength of the sweep.
 
+        Returns:
+            The upper bound wavelength of the current sweep range.
+        """
+        return self.upper_bound
+
+    @end_wavelength.setter
+    def end_wavelength(self, value: float) -> None:
+        self.upper_bound = value

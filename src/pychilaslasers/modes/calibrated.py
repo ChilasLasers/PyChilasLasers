@@ -33,19 +33,15 @@ class __Calibrated(Mode):
     
     @property
     def min_wavelength(self) -> float:
-        """Get the minimum wavelength."""
+        """Get the minimum that the laser can be calibrated to.
+        Trying to set a wavelength below this value will raise an error.
+        """
         return self._min_wl
     
     @property
     def max_wavelength(self) -> float:
-        """Get the maximum wavelength."""
+        """Get the maximum that the laser can be calibrated to.
+        Trying to set a wavelength above this value will raise an error.
+        """
         return self._max_wl
-    @property
-    def min_wavelength(self) -> float:
-        """Get the minimum wavelength."""
-        return self._min_wl
     
-    @property
-    def max_wavelength(self) -> float:
-        """Get the maximum wavelength."""
-        return self._max_wl
