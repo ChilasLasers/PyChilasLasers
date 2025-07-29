@@ -1,4 +1,5 @@
 from csv import reader
+from pathlib import Path
 
 
 class Constants:
@@ -19,14 +20,14 @@ class Constants:
     HARD_CODED_LASER_MODEL: str = "COMET"
     
     # Steady mode default values
-    HARD_CODED_STEADY_CURRENT: float = 100.0
+    HARD_CODED_STEADY_CURRENT: float = 295.0
     HARD_CODED_STEADY_TEC_TEMP: float = 25.0
     HARD_CODED_STEADY_ANTI_HYST: tuple = ([1.0, 2.0, 3.0], [0.1, 0.2, 0.3])
     
     # Sweep mode default values (for COMET model)
-    HARD_CODED_SWEEP_CURRENT: float = 150.0
-    HARD_CODED_SWEEP_TEC_TEMP: float = 30.0
-    HARD_CODED_CYCLER_INTERVAL: int = 1000
+    HARD_CODED_SWEEP_CURRENT: float = 280.0
+    HARD_CODED_SWEEP_TEC_TEMP: float = 25.0
+    HARD_CODED_CYCLER_INTERVAL: int = 100
 
 
 from dataclasses import dataclass
@@ -45,7 +46,7 @@ class CalibrationEntry:
     cycler_index: int 
 
 
-def read_calibration_file(file_path: str) -> dict:
+def read_calibration_file(file_path: str | Path) -> dict:
     """ Utility function to read a calibration file of a laser.
 
     Returns a calibration object which is a dictionary with the following structure:
@@ -145,3 +146,20 @@ def read_calibration_file(file_path: str) -> dict:
             cycler_index += 1  # Increment cycler index 
 
     return calibration
+
+
+
+from serial.tools.list_ports import comports
+
+
+@staticmethod
+def list_comports() -> list[str]:
+    """Lists all available COM ports on the system.
+    :py:func:`serial.tools.list_ports.comports` is used to list all available
+    ports. In that regard this method is but a wrapper for it.
+
+    Returns:
+        list[str]: List of available COM ports as strings sorted
+        alphabetically in ascending order.
+    """
+    return sorted([port.device for port in comports()])
