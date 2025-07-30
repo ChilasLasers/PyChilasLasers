@@ -35,7 +35,7 @@ class SweepMode(__Calibrated):
         lower_bound: Lower bound of the sweep range in nanometers.
         upper_bound: Upper bound of the sweep range in nanometers.
         cycler_interval: Time interval between wavelength steps in microseconds.
-        no_sweeps: Number of sweep cycles to perform (0 for infinite).
+        number_sweeps: Number of sweep cycles to perform (0 for infinite).
         mode: Returns LaserMode.SWEEP.
         
     Raises:
@@ -68,10 +68,7 @@ class SweepMode(__Calibrated):
         self._default_current: float = calibration["sweep"]["current"]
         self._default_cycler_interval: int = calibration["sweep"]["cycler_interval"]
         self._wavelengths: list[float] = calibration["sweep"]["wavelengths"]
-        if self._wavelengths[0] > self._wavelengths[-1]:
-            self._sweep_up = False
-        else:
-            self._sweep_up = True
+
 
         self._min_wl: float = min(self._wavelengths)
         self._max_wl: float = max(self._wavelengths)
@@ -88,17 +85,20 @@ class SweepMode(__Calibrated):
         """
         self._laser.tec.target = self._default_TEC
         self._laser.diode.current = self._default_current
-        self.set_bounds(lower_wl=self._min_wl, upper_wl=self._max_wl)
+        self.set_bounds(start_wl=self._max_wl, end_wl=self._min_wl)
         self.cycler_interval = self._default_cycler_interval
 
-    def start(self) -> None:
+    def start(self, number_sweeps: int | None = None) -> None:
         """Start the wavelength sweep operation.
         <p> 
         Initiates the sweep operation with the configured number of cycles.
         The laser will begin cycling through the wavelength range according
         to the current bounds and interval settings.
         """
-        self._laser.query(data=f"DRV:CYC:RUN {self.no_sweeps}")
+        if number_sweeps is not None:
+            self.number_sweeps = number_sweeps
+
+        self._laser.query(data=f"DRV:CYC:RUN {self.number_sweeps:d}")
 
     def stop(self) -> None:
         """Stop the current wavelength sweep operation.
@@ -119,45 +119,41 @@ class SweepMode(__Calibrated):
         """
         self._laser.query(data="DRV:CYC:CONT")
 
-    def set_bounds(self, lower_wl: float, upper_wl: float) -> None:
+    def set_bounds(self, start_wl: float, end_wl: float) -> None:
         """Set the wavelength sweep range bounds.
         <p>
-        Configures the lower and upper wavelength limits for the sweep operation.
-        When setting bounds, the lower bound is set to the first occurrence of 
-        a wavelength in the cycler table and the upper bound is set to the last 
+        Configures the start and end wavelength limits for the sweep operation.
+        When setting bounds, the start bound is set to the first occurrence of
+        a wavelength in the cycler table and the end bound is set to the last
         occurrence. This ensures proper indexing within the calibration table.
         <p>
         If the specified wavelengths are not exact matches in the calibration table,
         the closest available wavelengths will be used instead.
 
         Args:
-            lower_wl: Lower bound wavelength in nanometers.
-            upper_wl: Upper bound wavelength in nanometers.
-            
+            start_wl: Start bound wavelength in nanometers.
+            end_wl: End bound wavelength in nanometers.
+
         Raises:
-            ValueError: If bounds are outside the calibrated range or if lower >= upper.
+            ValueError: If bounds are outside the calibrated range or if start >= end.
         """
-        if lower_wl < self._min_wl or upper_wl > self._max_wl:
+        if end_wl < self._min_wl or start_wl > self._max_wl:
             raise ValueError(f"Bounds must be between {self._min_wl} and {self._max_wl}.")
-        if lower_wl >= upper_wl:
-            raise ValueError(f"Lower bound {lower_wl} must be less than upper bound {upper_wl}.")
-        if lower_wl not in self._wavelengths:
-            lower_wl = self._find_closest_wavelength(lower_wl)
-        if upper_wl not in self._wavelengths:
-            upper_wl = self._find_closest_wavelength(upper_wl)
+        if start_wl <= end_wl:
+            raise ValueError(f"Start wavelength {start_wl} cannot be less than end wavelength {end_wl}.")
+        if start_wl not in self._wavelengths:
+            start_wl = self._find_closest_wavelength(start_wl)
+        if end_wl not in self._wavelengths:
+            end_wl = self._find_closest_wavelength(end_wl)
 
-        if not self._sweep_up:
-            # If the sweep is downwards, we need to reverse the order of the bounds
-            lower_wl, upper_wl = upper_wl, lower_wl
-
-        # Get the index of the first occurrence of the lower bound wavelength
-        index_lower: int = self._wavelengths.index(lower_wl) 
-        # Get the index of the first occurrence of the upper bound wavelength
-        index_upper: int = self._wavelengths.index(upper_wl)
-        # Get the index of the last occurrence of the upper bound wavelength
-        index_upper += self._wavelengths.count(upper_wl) - 1
+        # Get the index of the first occurrence of the start bound wavelength
+        index_start: int = self._wavelengths.index(start_wl) 
+        # Get the index of the first occurrence of the end bound wavelength
+        index_end: int = self._wavelengths.index(end_wl)
+        # Get the index of the last occurrence of the end bound wavelength
+        index_end += self._wavelengths.count(end_wl) - 1
         
-        self._laser.query(data=f"DRV:CYC:SPAN {index_lower} {index_upper}")
+        self._laser.query(data=f"DRV:CYC:SPAN {index_start} {index_end}")
 
     def get_bounds(self) -> tuple[float, float]:
         """Get the current wavelength sweep range bounds.
@@ -166,10 +162,10 @@ class SweepMode(__Calibrated):
             tuple[float, float]: A tuple containing (lower_bound, upper_bound) wavelengths 
                 in nanometers.
         """
-        [index_lower, index_upper] = self._laser.query("DRV:CYC:SPAN?").split(' ')
+        [index_start, index_end] = self._laser.query("DRV:CYC:SPAN?").split(' ')
         return (
-            self._wavelengths[int(index_lower)],
-            self._wavelengths[int(index_upper)]
+            self._wavelengths[int(index_start)],
+            self._wavelengths[int(index_end)]
         )
 
     def get_total_time(self) -> float:
@@ -180,7 +176,7 @@ class SweepMode(__Calibrated):
                 interval, number of wavelength points, and number of sweep cycles.
                 Returns 0.0 if number of sweeps is 0 (infinite sweeps).
         """
-        return self.cycler_interval * len(self.get_points()) * self.no_sweeps if self.no_sweeps > 0 else 0.0
+        return self.cycler_interval * len(self.get_points()) * self.number_sweeps if self.number_sweeps > 0 else 0.0
 
     def get_points(self) -> list[float]:
         """Get all wavelength points within the current sweep bounds.
@@ -253,16 +249,16 @@ class SweepMode(__Calibrated):
         self._laser.query(data=f"DRV:CYC:INT {value}")
 
     @property
-    def no_sweeps(self) -> int:
+    def number_sweeps(self) -> int:
         """Get the configured number of sweep cycles.
         
         Returns:
             int: The number of sweep cycles configured. 0 indicates infinite sweeps.
         """
         return self._no_sweeps
-    
-    @no_sweeps.setter
-    def no_sweeps(self, value: int) -> None:
+
+    @number_sweeps.setter
+    def number_sweeps(self, value: int) -> None:
         """Set the number of sweep cycles to perform.
         
         Args:
