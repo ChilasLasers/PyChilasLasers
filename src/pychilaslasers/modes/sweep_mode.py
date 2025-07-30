@@ -88,7 +88,7 @@ class SweepMode(__Calibrated):
         self.set_bounds(start_wl=self._max_wl, end_wl=self._min_wl)
         self.cycler_interval = self._default_cycler_interval
 
-    def start(self, number_sweeps: int | None) -> None:
+    def start(self, number_sweeps: int | None = None) -> None:
         """Start the wavelength sweep operation.
         <p> 
         Initiates the sweep operation with the configured number of cycles.
