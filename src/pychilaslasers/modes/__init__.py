@@ -2,15 +2,17 @@
 PyChilasLasers Modes Module
 
 This module provides various laser operation modes and related classes for controlling
-Chilas laser systems. It includes manual mode for direct control, calibrated modes
-for wavelength-based operations, and wavelength change methods.
+Chilas laser systems. Laser modes provide an encapsulation for operations that require
+common settings and/or cannot be performed together.It includes manual mode for direct control and calibrated modes
+for steady-state and sweeping operations. The module also defines wavelength change methods
+and manages the calibration data for different laser models.
 
 Classes:
     - LaserMode: Enum defining available laser modes
     - Mode: Abstract base class for all modes
     - ManualMode: Direct manual control of laser parameters
     - SteadyMode: Calibrated steady-state wavelength operation
-    - SweepMode: Calibrated wavelength sweeping operation
+    - SweepMode: Calibrated sweeping operations
     - WLChangeMethod: Abstract base for wavelength change methods
     - PreLoad: Preload-based wavelength change method
     - CyclerIndex: Cycler index-based wavelength change method
