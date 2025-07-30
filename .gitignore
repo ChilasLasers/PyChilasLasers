@@ -182,3 +182,5 @@ docs/_build/*
 docs/generated/
 docs/uml_images/
 
+*.xml
+*.iml
