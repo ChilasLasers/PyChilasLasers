@@ -1,7 +1,10 @@
-"""Steady mode operation for laser wavelength control.
+"""
+Steady mode operation for laser wavelength control.
 
 This module implements steady mode operation of the laser which allows for tuning to
 wavelengths from the calibration table.
+Authors: RLK, AVR, SDU
+Last Revision: July 30, 2025 - Enhanced documentation and improved code formatting
 """
 
 from __future__ import annotations
@@ -21,7 +24,7 @@ if TYPE_CHECKING:
 class SteadyMode(__Calibrated):
     """Steady operation mode of the laser.
     <p>
-    SteadyMode provides wavelength control using the provided calibration data.
+    SteadyMode allows for tuning to specific wavelengths
     <p>
     The mode supports anti-hysteresis correction to improve wavelength stability
     and provides convenient methods for wavelength setting and control.
@@ -29,6 +32,7 @@ class SteadyMode(__Calibrated):
     Args:
         laser: The laser instance to control.
         calibration: Calibration data dictionary containing steady mode parameters.
+                as returned by the :meth:`utils.read_calibration_file` method
     
     Attributes:
         wavelength: Current wavelength setting in nanometers.
@@ -99,12 +103,14 @@ class SteadyMode(__Calibrated):
     @wavelength.setter
     def wavelength(self, value: float) -> float:
         """Set the laser wavelength.
-        <p>
-        If the value is not in the calibration table,
-        it will find the closest available wavelength.
         
         Args:
             value: Target wavelength in nanometers.
+                If the value is not in the calibration table, it will find the
+                closest available wavelength and use that instead.
+            
+        Returns:
+            float: The actual wavelength that was set.
             
         Raises:
             ValueError: If wavelength is outside the valid calibration range.
@@ -112,6 +118,7 @@ class SteadyMode(__Calibrated):
         if value < self._min_wl or value > self._max_wl:
             raise ValueError(f"Wavelength must be between {self._min_wl} and {self._max_wl}.")
         if value not in self._calibration.keys():
+            # Find the closest available wavelength to the requested value
             value = min(self._calibration.keys(), key=lambda x: abs(x - value))
 
         self._change_method.set_wl(value)
@@ -167,7 +174,10 @@ class SteadyMode(__Calibrated):
         
         Args:
             value: Wavelength change in nanometers, relative to current wavelength.
-                  Positive values increase wavelength, negative values decrease it.
+                Positive values increase wavelength, negative values decrease it.
+                
+        Returns:
+            float: The new absolute wavelength that was set.
         
         Raises:
             ValueError: If the resulting wavelength is outside the valid range.
@@ -183,13 +193,13 @@ class SteadyMode(__Calibrated):
         
         Args:
             value: Optional explicit state to set. If None, toggles current state.
-                  True enables anti-hysteresis, False disables it.
+                True enables anti-hysteresis, False disables it.
         """
-        if value is not None:
-            self._change_method.anti_hyst_enabled = value
-        else:
+        if value is None:
             # Toggle the current state
             self._change_method.anti_hyst_enabled = not self._change_method.anti_hyst_enabled
+        else:
+            self._change_method.anti_hyst_enabled = value
 
 
 ########## Private Classes ##########
@@ -200,7 +210,7 @@ class _WLChangeMethod(ABC):
     <p>
     Defines the interface for different wavelength change strategies used by
     different laser models. Each implementation handles the specific hardware
-    commands and anti-hysteresis procedures.
+    commands and anti-hysteresis procedures for its respective laser type.
 
     Args:
         steady_mode: Reference to the parent SteadyMode instance.
@@ -223,7 +233,10 @@ class _WLChangeMethod(ABC):
             steady_mode: Reference to the parent SteadyMode instance.
             laser: The laser hardware interface.
             calibration_table: Wavelength to calibration entry mapping.
-            anti_hyst_parameters: Tuple containing voltage steps and timing for anti-hysteresis.
+                This is not the same as the calibration dictionary returned by
+                :meth:`utils.read_calibration_file`, just the calibration data
+            anti_hyst_parameters: Tuple containing voltage steps and timing 
+                for anti-hysteresis correction.
         """
 
         self._laser: Laser = laser
@@ -236,7 +249,12 @@ class _WLChangeMethod(ABC):
     ########## Private Methods ##########
 
     def _antihyst(self) -> None:
-        """ Apply anti-hysteresis correction to the laser."""
+        """Apply anti-hysteresis correction to the laser.
+        <p> 
+        Applies a voltage ramping procedure to the phase section heater to
+        minimize hysteresis effects during wavelength changes. The specifics of 
+        this method are laser-dependent and are specified as part of the calibration data.
+        """
 
         initial_phase = float(self._calibration_table[self._wavelength].phase_section)
 
@@ -276,16 +294,18 @@ class _WLChangeMethod(ABC):
             
         Raises:
             ValueError: If wavelength is not found in calibration table.
+        
+        Warning:
+            This method assumes self._wavelength is NOT already set to the current wavelength.
+            This is important for mode checking and anti-hysteresis application.
+            This method assumes that the wavelength is in the calibration data provided
+            and does not choose the closest wavelength.
         """
         pass
 
 
 class _PreLoad(_WLChangeMethod):
     """Preload-based wavelength change method for COMET model.
-    <p>
-    Uses preloaded calibration values to set heater voltages directly.
-    This method loads all heater values simultaneously and applies anti-hysteresis
-    correction only when mode hops occur.
     
     Note:
         This method is specifically designed for COMET laser models.
@@ -296,9 +316,10 @@ class _PreLoad(_WLChangeMethod):
         <p>
         Loads heater values from calibration table and applies them to the laser.
         Anti-hysteresis correction is applied only when a mode hop is detected.
-        <p>
-        This method assumes self._wavelength is NOT already set to the current wavelength.
-        This is important for mode checking and anti-hysteresis application.
+        
+        Warning:
+            This method assumes self._wavelength is NOT already set to the current
+            wavelength. This is important for mode checking and anti-hysteresis application.
         
         Args:
             value: Target wavelength in nanometers.
@@ -338,15 +359,16 @@ class _CyclerIndex(_WLChangeMethod):
 
     def set_wl(self, value: float) -> None:
         """Set wavelength using the laser's cycler index.
-        <p>
-        Loads a pre-configured cycler index from the calibration table and
-        applies anti-hysteresis correction if enabled.
         
         Args:
             value: Target wavelength in nanometers.
             
         Raises:
             ValueError: If wavelength is not found in calibration table.
+
+        Warning:
+            This method assumes self._wavelength is NOT already set to the current
+            wavelength. This is important for mode checking and anti-hysteresis application.
         """
         if value not in self._calibration_table.keys():
             raise ValueError(f"Wavelength {value} not found in calibration table.")

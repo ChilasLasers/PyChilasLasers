@@ -259,6 +259,9 @@ def set_sweep_parameters(self, start_wl: float, end_wl: float) -> None:
     Args:
         start_wl: Starting wavelength in nanometers.
         end_wl: Ending wavelength in nanometers.
+        
+    Returns:
+        int: The sum of the two numbers.
 
     Raises:
         ValueError: If wavelength range is invalid.

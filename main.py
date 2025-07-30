@@ -29,6 +29,10 @@ print(f"Current wavelength: {laser.sweep.wavelength} nm")
 print(f"Current wavelength: {laser.sweep.wavelength} nm")
 
 
+# TODO go trough all files and check for comments about imports like in laser.py
+# TODO go trough all files and check for type checking init like laser.py
+
+
 
 
 
