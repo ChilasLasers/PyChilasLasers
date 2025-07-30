@@ -332,7 +332,7 @@ class TLMLaser(Laser):
         Args:
             path_cycler_table(str | Path): filepath of cycler table / LUT file to load
         """
-        logger.info("Loading cycler table from file")
+        logger.info("Loading calibration look-up table from file")
 
         try:
             with open(path_cycler_table, "r") as file:

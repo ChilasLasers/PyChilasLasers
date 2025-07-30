@@ -265,7 +265,7 @@ class SweptLaser(TLMLaser):
         """
         # Exit out early if current cycler table already has all columns
         if self._is_lut_prepared:
-            logger.warning("Cycler table already has added columns.")
+            logger.debug("Cycler table already has added columns.")
             if not force:
                 return
 
@@ -327,7 +327,7 @@ class SweptLaser(TLMLaser):
         wc = self.query("DRV:CYC:WC?")
         self.write("DRV:CYC:WC 10")  # Set write count to 1
 
-        logger.info("Loading cycler table from laser driver")
+        logger.info("Loading calibration table from laser driver")
         start_time: float = time.time()
 
         # Get the heater values from the driver
@@ -570,6 +570,7 @@ class SweptLaser(TLMLaser):
         self.phase_anti_hyst()
         # Update internal state
         self._operation_mode = OperatingMode.SWEEP
+        logger.info("Switched to sweep mode")
 
     def prepare_steady_mode(self):
         """Prepares the laser for steady tuning operation
@@ -590,6 +591,7 @@ class SweptLaser(TLMLaser):
         self.phase_anti_hyst()
         # Update internal state
         self._operation_mode = OperatingMode.STEADY
+        logger.info("Switched to tune mode")
 
     def trigger_pulse(self):
         """Initiate a trigger pulse
@@ -842,11 +844,12 @@ class SweptLaser(TLMLaser):
 
         # Perform a phase anti-hysteresis function when the set mode number is different from the previously set one.
         mode_number_new = self.get_mode_number_idx(idx)
-        if mode_number_new != self._mode_number:
-            logger.info(f"Phase anti-hysteresis required due to switching to mode number {mode_number_new:d}")
-            self.phase_anti_hyst(v_phase=v_phase)
-        else:
-            logger.info(f"Mode number {mode_number_new:d}")
+        #if mode_number_new != self._mode_number:
+        #    logger.info(f"Phase anti-hysteresis required due to switching to mode number {mode_number_new:d}")
+        #    self.phase_anti_hyst(v_phase=v_phase)
+        #else:
+        #    logger.info(f"Mode number {mode_number_new:d}")
+        self.phase_anti_hyst(v_phase=v_phase)
         self._mode_number = mode_number_new
 
         # Provide a trigger signal to indicate that a new wavelength is set
