@@ -28,7 +28,7 @@ class Constants:
     # Sweep mode default values (for COMET model)
     HARD_CODED_SWEEP_CURRENT: float = 280.0
     HARD_CODED_SWEEP_TEC_TEMP: float = 25.0
-    HARD_CODED_CYCLER_INTERVAL: int = 100
+    HARD_CODED_INTERVAL: int = 100
 
 
 from dataclasses import dataclass
@@ -100,7 +100,7 @@ def read_calibration_file(file_path: str | Path) -> dict:
         calibration["sweep"] = {
             "current": Constants.HARD_CODED_SWEEP_CURRENT,  # Default current for sweep mode
             "tec_temp": Constants.HARD_CODED_SWEEP_TEC_TEMP,  # Default TEC temperature for sweep mode
-            "cycler_interval": Constants.HARD_CODED_CYCLER_INTERVAL,  # Default cycler interval for sweep mode
+            "interval": Constants.HARD_CODED_INTERVAL,  # Default interval for sweep mode
             "wavelengths": []  # List of wavelengths for sweep mode
         }
 
