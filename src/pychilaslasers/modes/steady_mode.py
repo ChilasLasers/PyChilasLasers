@@ -273,8 +273,7 @@ class _WLChangeMethod(ABC):
 
     @property
     def _wavelength(self) -> float:
-        """Get the current wavelength from the parent steady mode.
-        
+        """
         Returns:
             Current wavelength setting in nanometers.
         """

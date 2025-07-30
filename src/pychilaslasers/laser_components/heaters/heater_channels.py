@@ -1,4 +1,4 @@
-from enum import Enum, auto
+from enum import Enum
 
 class HeaterChannel(Enum):
     PHASE_SECTION = 0

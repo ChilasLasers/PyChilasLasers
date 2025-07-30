@@ -75,8 +75,7 @@ class Mode(ABC):
     @property
     @abstractmethod
     def mode(self) -> LaserMode:
-        """Get the mode type.
-        
+        """
         Returns:
             LaserMode: The enumeration value identifying this mode type.
         """
