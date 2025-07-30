@@ -4,6 +4,7 @@ from pathlib import Path
 
 class Constants:
     """Constants used throughout the PyChilasLasers library."""
+
     DEFAULT_BAUDRATE = 57600
     SUPPORTED_BAUDRATES = {9600, 14400, 19200, 28800, 38400, 57600, 115200, 230400, 460800, 912600}
     # ERROR CODES THAT SHOULD TRIGGER A ERROR DIALOG (errors 14 to 23)
@@ -33,9 +34,10 @@ class Constants:
 from dataclasses import dataclass
 from typing import Tuple
 
-# For calibration data
 @dataclass
 class CalibrationEntry:
+    """Represents a single entry in the calibration data.
+    """
     wavelength: float 
     phase_section: float
     large_ring: float
@@ -70,7 +72,7 @@ def read_calibration_file(file_path: str | Path) -> dict:
             "current": float,  # Default current for sweep mode
             "tec_temp": float,  # Default TEC temperature for sweep mode
             "sweep_interval": int(micro-seconds),  # Default sweep interval for sweep mode
-            "wavelengths": list(float),  # List of wavelengths for sweep mode]
+            "wavelengths": list(float),  # List of wavelengths for sweep mode
 
             This list contains duplicate entries for each wavelength that has a mode hop.
             This is because the sweep mode uses the cycler index to set the wavelength, 

@@ -212,6 +212,47 @@ class LaserController:
 
 Use **Google-style** docstrings:
 
+Indent everything under each section by 4 spaces.
+
+The first line should be a short summary, followed by a blank line and a longer description (optional).
+
+All section headers should be capitalized and followed by a colon (Args:, not args or args:).
+
+### Supported sections
+
+| Section             | Description                               |
+| ------------------- | ----------------------------------------- |
+| `Args:`             | Function or method parameters             |
+| `Attributes:`       | Class instance attributes                 |
+| `Class Attributes:` | Class-level attributes                    |
+| `Returns:`          | Return value(s) from a function           |
+| `Yields:`           | If the function is a generator            |
+| `Raises:`           | Exceptions the function may raise         |
+| `Examples:`         | Example usage (can use `>>>` for doctest) |
+| `Note:`             | Extra developer or usage notes            |
+| `Warning:`          | Cautions about usage                      |
+| `See Also:`         | Related functions, classes, or modules    |
+
+
+### Text formatting
+
+| Feature               | Syntax                                                       | Example                              |
+| --------------------- | ------------------------------------------------------------ | ------------------------------------ |
+| **Bold text**         | `**bold**`                                                   | `This is **important**.`             |
+| *Italic text*         | `*italic*`                                                   | `This is *emphasized*.`              |
+| `Code`                | \`inline code\`                                              | `Returns a `dict\`\`                 |
+| Code block            | Indent with 4 spaces or triple backticks (in Markdown tools) | ``` code ```                            |
+| Hyperlink (inline)    | `[text](URL)` *(Markdown style)*                             | `[Google](https://google.com)`       |
+| Hyperlink (RST style) | `` `text <url>`_ ``                                          | `` `Google <https://google.com>`_ `` |
+
+### Links
+
+:class:, :func:, and :mod: will create links if Sphinx can find them.
+
+You can also link to methods like :meth:YourClass.method_name`
+
+### Example
+
 ```python
 def set_sweep_parameters(self, start_wl: float, end_wl: float) -> None:
     """Configure wavelength sweep parameters.
@@ -225,6 +266,11 @@ def set_sweep_parameters(self, start_wl: float, end_wl: float) -> None:
 
     Examples:
         >>> laser.set_sweep_parameters(1530, 1570)
+
+    See Also:
+        :class:`DataParser`
+        :func:`validate_input`
+        :mod:`your_package.utils`
     """
 ```
 
