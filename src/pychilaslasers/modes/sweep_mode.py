@@ -135,12 +135,12 @@ class SweepMode(__Calibrated):
             end_wl: End bound wavelength in nanometers.
 
         Raises:
-            ValueError: If bounds are outside the calibrated range or if lower >= upper.
+            ValueError: If bounds are outside the calibrated range or if start >= end.
         """
         if end_wl < self._min_wl or start_wl > self._max_wl:
             raise ValueError(f"Bounds must be between {self._min_wl} and {self._max_wl}.")
         if start_wl <= end_wl:
-            raise ValueError(f"Lower bound {start_wl} must be less than upper bound {end_wl}.")
+            raise ValueError(f"Start wavelength {start_wl} cannot be less than end wavelength {end_wl}.")
         if start_wl not in self._wavelengths:
             start_wl = self._find_closest_wavelength(start_wl)
         if end_wl not in self._wavelengths:
