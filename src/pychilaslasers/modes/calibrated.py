@@ -12,8 +12,12 @@ if TYPE_CHECKING:
 class __Calibrated(Mode):
 
     def __init__(self, laser: Laser) -> None:
-        super().__init__()
-        self._laser: Laser = laser
+        """Initialize the calibrated mode base class.
+        
+        Args:
+            laser (Laser): The parent laser instance that owns this mode.
+        """
+        super().__init__(laser)
 
         # Initialize the mode-specific attributes
         self._autoTrig: bool = False

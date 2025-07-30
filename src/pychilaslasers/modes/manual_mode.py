@@ -6,8 +6,6 @@ from pychilaslasers.laser_components.heaters import HeaterChannel, LargeRing, Ph
 from pychilaslasers.modes import LaserMode, Mode
 
 
-
-
 if TYPE_CHECKING:
     from pychilaslasers import Laser
 
@@ -17,8 +15,7 @@ class ManualMode(Mode):
         """
         docstring
         """
-        self._laser: Laser = laser
-
+        super().__init__(laser)
         self._laser.turn_on()  # Ensure the laser is on after initializing heaters
         self._phase_section: PhaseSection = PhaseSection(laser)
         self._large_ring: LargeRing = LargeRing(laser)
