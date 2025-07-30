@@ -85,7 +85,7 @@ class SweepMode(__Calibrated):
         """
         self._laser.tec.target = self._default_TEC
         self._laser.diode.current = self._default_current
-        self.set_bounds(start_wl=self._min_wl, end_wl=self._max_wl)
+        self.set_bounds(start_wl=self._max_wl, end_wl=self._min_wl)
         self.cycler_interval = self._default_cycler_interval
 
     def start(self, number_sweeps: int | None) -> None:
@@ -122,18 +122,18 @@ class SweepMode(__Calibrated):
     def set_bounds(self, start_wl: float, end_wl: float) -> None:
         """Set the wavelength sweep range bounds.
         <p>
-        Configures the lower and upper wavelength limits for the sweep operation.
-        When setting bounds, the lower bound is set to the first occurrence of 
-        a wavelength in the cycler table and the upper bound is set to the last 
+        Configures the start and end wavelength limits for the sweep operation.
+        When setting bounds, the start bound is set to the first occurrence of
+        a wavelength in the cycler table and the end bound is set to the last
         occurrence. This ensures proper indexing within the calibration table.
         <p>
         If the specified wavelengths are not exact matches in the calibration table,
         the closest available wavelengths will be used instead.
 
         Args:
-            start_wl: Lower bound wavelength in nanometers.
-            end_wl: Upper bound wavelength in nanometers.
-            
+            start_wl: Start bound wavelength in nanometers.
+            end_wl: End bound wavelength in nanometers.
+
         Raises:
             ValueError: If bounds are outside the calibrated range or if lower >= upper.
         """
@@ -146,11 +146,11 @@ class SweepMode(__Calibrated):
         if end_wl not in self._wavelengths:
             end_wl = self._find_closest_wavelength(end_wl)
 
-        # Get the index of the first occurrence of the lower bound wavelength
+        # Get the index of the first occurrence of the start bound wavelength
         index_start: int = self._wavelengths.index(start_wl) 
-        # Get the index of the first occurrence of the upper bound wavelength
+        # Get the index of the first occurrence of the end bound wavelength
         index_end: int = self._wavelengths.index(end_wl)
-        # Get the index of the last occurrence of the upper bound wavelength
+        # Get the index of the last occurrence of the end bound wavelength
         index_end += self._wavelengths.count(end_wl) - 1
         
         self._laser.query(data=f"DRV:CYC:SPAN {index_start} {index_end}")
