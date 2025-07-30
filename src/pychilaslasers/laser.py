@@ -107,7 +107,7 @@ class Laser:
         )
         
         # Laser identification. Library will not work with non-Chilas lasers.
-        if "Chilas" not in self.query("*IDN?"):
+        if "Chilas" not in self.query("*IDN?") and "LioniX" not in self.query("*IDN?"):
             logger.critical("Laser is not a Chilas device")
             import sys
             sys.exit(1)
