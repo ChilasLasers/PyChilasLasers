@@ -212,11 +212,10 @@ class LaserController:
 
 Use **Google-style** docstrings:
 
-Indent everything under each section by 4 spaces.
-
-The first line should be a short summary, followed by a blank line and a longer description (optional).
-
-All section headers should be capitalized and followed by a colon (Args:, not args or args:).
+- Indent everything under each section by 4 spaces.
+- The first line should be a short summary, followed by a blank line and a longer description (optional).
+- All section headers should be capitalized and followed by a colon (Args:, not args or args:).
+- Empty lines don't consistently produce paragraphs for some reason. Use `<p>` to force them
 
 ### Supported sections
 

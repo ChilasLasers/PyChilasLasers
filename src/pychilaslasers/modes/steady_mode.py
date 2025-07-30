@@ -20,9 +20,9 @@ if TYPE_CHECKING:
 
 class SteadyMode(__Calibrated):
     """Steady operation mode of the laser.
-
+    <p>
     SteadyMode provides wavelength control using the provided calibration data.
-    
+    <p>
     The mode supports anti-hysteresis correction to improve wavelength stability
     and provides convenient methods for wavelength setting and control.
     
@@ -78,7 +78,7 @@ class SteadyMode(__Calibrated):
 
     def apply_defaults(self) -> None:
         """Apply default settings for steady mode operation.
-        
+        <p>
         Sets the TEC temperature and diode current to their default values
         as specified in the calibration data.
         """
@@ -98,7 +98,9 @@ class SteadyMode(__Calibrated):
 
     @wavelength.setter
     def wavelength(self, value: float) -> float:
-        """Set the laser wavelength. If the value is not in the calibration table,
+        """Set the laser wavelength.
+        <p>
+        If the value is not in the calibration table,
         it will find the closest available wavelength.
         
         Args:
@@ -152,7 +154,7 @@ class SteadyMode(__Calibrated):
 
     def get_wl(self) -> float:
         """Get the current wavelength setting.
-        
+        <p>
         Alias for the wavelength property getter.
         
         Returns:
@@ -195,7 +197,7 @@ class SteadyMode(__Calibrated):
 
 class _WLChangeMethod(ABC):
     """Abstract base class for wavelength change methods.
-    
+    <p>
     Defines the interface for different wavelength change strategies used by
     different laser models. Each implementation handles the specific hardware
     commands and anti-hysteresis procedures.
@@ -265,7 +267,7 @@ class _WLChangeMethod(ABC):
     @abstractmethod
     def set_wl(self, value: float) -> None:
         """Set the laser wavelength using the specific method implementation.
-        
+        <p>
         This method must be implemented by subclasses to handle the wavelength
         change procedure specific to each laser model.
         
@@ -280,7 +282,7 @@ class _WLChangeMethod(ABC):
 
 class _PreLoad(_WLChangeMethod):
     """Preload-based wavelength change method for COMET model.
-    
+    <p>
     Uses preloaded calibration values to set heater voltages directly.
     This method loads all heater values simultaneously and applies anti-hysteresis
     correction only when mode hops occur.
@@ -291,10 +293,10 @@ class _PreLoad(_WLChangeMethod):
 
     def set_wl(self, value: float) -> None:
         """Set wavelength using preloaded calibration values.
-        
+        <p>
         Loads heater values from calibration table and applies them to the laser.
         Anti-hysteresis correction is applied only when a mode hop is detected.
-
+        <p>
         This method assumes self._wavelength is NOT already set to the current wavelength.
         This is important for mode checking and anti-hysteresis application.
         
@@ -326,7 +328,7 @@ class _PreLoad(_WLChangeMethod):
 
 class _CyclerIndex(_WLChangeMethod):
     """Cycler index-based wavelength change method for ATLAS model.
-    
+    <p>
     Uses the laser's internal cycler functionality to change wavelengths.
     This method always applies anti-hysteresis correction when enabled.
     
@@ -336,7 +338,7 @@ class _CyclerIndex(_WLChangeMethod):
 
     def set_wl(self, value: float) -> None:
         """Set wavelength using the laser's cycler index.
-        
+        <p>
         Loads a pre-configured cycler index from the calibration table and
         applies anti-hysteresis correction if enabled.
         

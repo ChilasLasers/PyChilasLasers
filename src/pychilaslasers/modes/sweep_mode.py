@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 class SweepMode(__Calibrated):
     """Manages laser wavelength sweep operations using calibrated wavelength tables.
-    
+    <p>
     SweepMode allows the laser to continuously cycle through a range of wavelengths
     based on a predefined calibration table. The sweep can be configured with custom
     bounds, intervals, and repetition counts.
@@ -58,7 +58,7 @@ class SweepMode(__Calibrated):
     
     def apply_defaults(self) -> None:
         """Apply default settings for the mode.
-        
+        <p>
         Sets the laser to the default TEC temperature, diode current,
         full wavelength range bounds, and cycler interval from calibration data.
         """
@@ -76,21 +76,21 @@ class SweepMode(__Calibrated):
 
     def stop(self) -> None:
         """Stop the current wavelength sweep.
-        
+        <p>
         Aborts the sweep operation immediately.
         """
         self._laser.query(data="DRV:CYC:ABRT")
         
     def resume(self) -> None:
         """Resume a paused wavelength sweep.
-        
+        <p>
         Continues the sweep from where it was stopped.
         """
         self._laser.query(data="DRV:CYC:CONT")
 
     def set_bounds(self, lower_wl: float, upper_wl: float) -> None:
         """Set the wavelength sweep bounds.
-        
+        <p>
         When setting bounds, the lower bound is set to the first occurrence of 
         a wavelength in the cycler table and the upper bound is set to the last occurrence.
         

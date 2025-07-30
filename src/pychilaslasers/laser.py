@@ -1,23 +1,24 @@
 """
 This module defines the Laser class for Chilas lasers. 
-
+<p>
 This acts as the main interface for controlling the laser. Some properties and 
 methods of the laser are accessible at all times, while others are only available 
 in specific operation modes.
-
+<p>
 The modes of the laser are:
     1. Manual Mode: Allows manual control of the heater values.
     2. Steady Mode: Can be used to tune the laser to specific wavelengths according 
        to the calibration data.
     3. Sweep Mode: Sweep mode is used for COMET lasers to enable the sweep 
        functionality.
-
+<p>
 Changing the diode current or TEC temperature of the laser is available in all modes 
 however this implies that the calibration of the laser is no longer valid and the 
 laser may not achieve the desired wavelength.
+<p>
 
-Authors: RLK, AVR, SDU
-Last Revision: July 30, 2025 - Enhanced documentation and improved code formatting
+**Authors:** RLK, AVR, SDU
+**Last Revision:** July 30, 2025 - Enhanced documentation and improved code formatting
 """
 
 # Standard library imports
@@ -38,7 +39,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 class Laser:
     """Laser class for Chilas lasers. 
-    
+    <p> 
     Contains the main methods for communication with the laser, the logic for changing 
     and accessing the laser modes, and the properties of the laser. Multiple overloaded 
     methods are available to interact with the laser. Many of the methods are overloads 
@@ -51,14 +52,14 @@ class Laser:
         however only work if the laser is in the correct mode. If the laser is not in 
         the correct mode, an exception will be raised. The current mode of the laser 
         can be set using the `mode` property as well.
-        
+        <p> 
         The laser can be turned on and off using the `system_state` property. The laser 
         can also be triggered to pulse using the `trigger_pulse()` method. The laser 
         can be set to prefix mode using the `prefix_mode` property. The prefix mode can 
         be used to speed up communication with the laser by reducing the amount of data 
         sent over the serial connection however this reduces the amount of information 
         that is sent back from the laser.
-        
+        <p> 
         Some laser components such as the TEC and Diode can be accessed in all modes 
         using the `tec` and `diode` properties respectively. Other components are only 
         available in manual mode.
@@ -75,7 +76,7 @@ class Laser:
     def __init__(self, com_port: str, calibration_file: str | Path) -> None:
         """Laser class constructor. Initializes the laser with the given COM port and 
         calibration file.
-
+        <p>
         Opens the serial connection to the laser, initializes the laser components and 
         variables, and sets the initial mode to manual.
 
@@ -140,11 +141,11 @@ class Laser:
 
     def query(self, data: str) -> str:
         """Main method for communication with the laser.
-        
-        This method sends a command to the laser over the serial connection and returns 
-        the response. It also handles the logging of the command and response. The 
-        response code of the reply is checked and an error is raised if the response 
-        code is not 0. Commands that are sent multiple times may be replaced with a 
+        <p>
+        This method sends a command to the laser over the serial connection and returns
+        the response. It also handles the logging of the command and response. The
+        response code of the reply is checked and an error is raised if the response
+        code is not 0. Commands that are sent multiple times may be replaced with a
         semicolon to speed up communication.
         
         Args:
@@ -187,7 +188,7 @@ class Laser:
 
     def _semicolon_replace(self, cmd: str) -> str:
         """To speed up communication, a repeating command can be replaced with a semicolon.
-        
+        <p>
         Check if the command was previously sent to the device. In that case, replace 
         it with a semicolon.
 
@@ -213,7 +214,7 @@ class Laser:
     @property
     def system_state(self) -> bool:
         """System state of the laser.
-
+        <p>
         The property of the laser that indicates whether the laser is on or off.
         This is a boolean property that can be set to True to turn on the laser 
         or False to turn it off.
@@ -251,7 +252,7 @@ class Laser:
     @mode.setter
     def mode(self, mode: LaserMode|Mode|str) -> None:
         """Main method for setting the mode of the laser.
-        
+        <p>
         This method is used for changing the current mode of the laser. The mode 
         can be set to one of the following:
             - ManualMode
@@ -325,7 +326,7 @@ class Laser:
     @property
     def steady(self) -> SteadyMode:
         """Getter function for the steady mode instance.
-        
+        <p>
         This property allows access to the steady mode instance of the laser in a convenient way
         such as `laser.steady.method()`. Steady mode uses calibration data to tune the laser
         to specific wavelengths with high precision. This mode is available for both COMET and
@@ -357,7 +358,7 @@ class Laser:
     @property
     def sweep(self) -> SweepMode:
         """Getter function for the sweep mode instance.
-        
+        <p> 
         This property allows access to the sweep mode instance of the laser in a convenient way
         such as `laser.sweep.method()`. Sweep mode is only available for COMET lasers and 
         enables sweeping functionality for wavelength scanning applications. This mode uses
@@ -389,7 +390,7 @@ class Laser:
     @property
     def manual(self) -> ManualMode:
         """Getter function for the manual mode instance.
-        
+        <p>        
         This property allows access to the manual mode instance of the laser in a convenient way
         such as `laser.manual.method()`. Manual mode is always available and is the default mode.
         In manual mode, you have direct control over individual laser components and can manually
@@ -418,16 +419,16 @@ class Laser:
     @property
     def prefix_mode(self) -> bool:
         """Gets prefix mode for the laser driver.
-
+        <p>
         The laser driver can be operated in two different communication modes:
             1. Prefix mode on
             2. Prefix mode off
-
+        <p>
         When prefix mode is on, every message over the serial connection will be
         replied to by the driver with a response, and every response will be 
         prefixed with a return code (rc), either `0` or `1` for an OK or ERROR 
         respectively.
-
+        <p>
         With prefix mode is off, responses from the laser driver are not prefixed
         with a return code. This means that in the case for a serial write command
         without an expected return value, the driver will not send back a reply.
@@ -440,16 +441,16 @@ class Laser:
     @prefix_mode.setter
     def prefix_mode(self, mode: bool) -> None:
         """Sets prefix mode for the laser driver.
-
+        <p>
         The laser driver can be operated in two different communication modes:
             1. Prefix mode on
             2. Prefix mode off
-
+        <p>
         When prefix mode is on, every message over the serial connection will be
         replied to by the driver with a response, and every response will be 
         prefixed with a return code (rc), either `0` or `1` for an OK or ERROR 
         respectively.
-
+        <p>
         With prefix mode is off, responses from the laser driver are not prefixed
         with a return code. This means that in the case for a serial write command
         without an expected return value, the driver will not send back a reply.
@@ -474,7 +475,7 @@ class Laser:
 
     def set_mode(self, mode: LaserMode | Mode | str) -> None:
         """Sets the mode of the laser. 
-        
+        <p>
         This is an alias for the :meth:`mode` property setter.
         """
         self.mode = mode
@@ -482,14 +483,14 @@ class Laser:
 
     def turn_on(self) -> None:
         """Turn on the laser.
-        
+        <p>
         This is an alias for setting the system state to True.
         """
         self.system_state = True
 
     def turn_off(self) -> None:
         """Turn off the laser.
-        
+        <p>
         This is an alias for setting the system state to False.
         """
         self.system_state = False
