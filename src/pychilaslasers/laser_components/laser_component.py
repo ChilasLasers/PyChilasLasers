@@ -48,15 +48,15 @@ class LaserComponent(ABC):
     def value(self) -> float:
         """        
         Returns:
-            float: The current value of the component in appropriate units.
+            The current value of the component in appropriate units.
         """
         pass
 
     @property
     def min_value(self) -> float:
         """
-        Returns
-            float: The minimum value that can be safely set for this component.
+        Returns:
+            The minimum value that can be safely set for this component.
         """
         return self._min
 
@@ -64,7 +64,7 @@ class LaserComponent(ABC):
     def max_value(self) -> float:
         """
         Returns:
-            float: The maximum value that can be safely set for this component.
+            The maximum value that can be safely set for this component.
         """
         return self._max
 
@@ -72,6 +72,6 @@ class LaserComponent(ABC):
     def unit(self) -> str:
         """        
         Returns:
-            str: The unit string (e.g., "mA", "°C", "V") for this component.
+            The unit string (e.g., "mA", "°C", "V") for this component.
         """
         return self._unit

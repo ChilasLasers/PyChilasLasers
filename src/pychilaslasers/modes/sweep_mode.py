@@ -129,7 +129,7 @@ class SweepMode(__Calibrated):
         """Calculate the total estimated time for the complete sweep operation.
         
         Returns:
-            float: The estimated total time for the sweep in microseconds, based on the current
+            The estimated total time for the sweep in microseconds, based on the current
                 interval, number of wavelength points, and number of sweep cycles.
                 Returns 0.0 if number of sweeps is 0 (infinite sweeps).
         """
@@ -139,7 +139,7 @@ class SweepMode(__Calibrated):
         """Get all wavelength points within the current sweep range.
         
         Returns:
-            list[float]: List of wavelengths that will be swept through during operation, 
+            List of wavelengths that will be swept through during operation, 
                 including both the lower and upper wavelengths.
         """
         lower_index: int = self._wavelengths.index(self.start_wavelength)
@@ -154,7 +154,7 @@ class SweepMode(__Calibrated):
         """Get the laser operation mode.
         
         Returns:
-            LaserMode: LaserMode.SWEEP indicating this is a sweep mode instance.
+            LaserMode.SWEEP indicating this is a sweep mode instance.
         """
         return LaserMode.SWEEP
 
@@ -163,7 +163,7 @@ class SweepMode(__Calibrated):
         """Get the current wavelength from the laser.
         
         Returns:
-            float: The wavelength corresponding to the current wavelength 
+            The wavelength corresponding to the current wavelength 
                 in nanometers.
             
         Note:
@@ -182,16 +182,16 @@ class SweepMode(__Calibrated):
         """Get the current interval setting.
         
         Returns:
-            float: The time interval between wavelength steps in milliseconds.
+            The time interval between wavelength steps in milliseconds.
         """
         return float(self._laser.query("DRV:CYC:INT?"))
 
     @interval.setter
-    def interval(self, value: int) -> None:
+    def interval(self, interval: int) -> None:
         """Set the interval between wavelength steps.
         
         Args:
-            value: Time interval between wavelength steps in microseconds.
+            interval: Time interval between wavelength steps in microseconds.
                 Must be a positive integer between 20 and 50 000.
                 
         Warning:
@@ -199,41 +199,41 @@ class SweepMode(__Calibrated):
             may cause the laser to behave differently than expected.
             
         Raises:
-            ValueError: If value is not a positive integer within the valid range.
+            ValueError: If interval is not a positive integer within the valid range.
         """
-        if 20 > value or value > 50000 or not isinstance(value, int):
+        if 20 > interval or interval > 50000 or not isinstance(interval, int):
             raise ValueError("interval must be a positive integer between 20 and 50 000 microseconds.")
-        self._laser.query(data=f"DRV:CYC:INT {value}")
+        self._laser.query(data=f"DRV:CYC:INT {interval}")
 
     @property
     def number_sweeps(self) -> int:
         """Get the configured number of sweep cycles.
         
         Returns:
-            int: The number of sweep cycles configured. 0 indicates infinite sweeps.
+            The number of sweep cycles configured. 0 indicates infinite sweeps.
         """
         return self._no_sweeps
 
     @number_sweeps.setter
-    def number_sweeps(self, value: int) -> None:
+    def number_sweeps(self, number: int) -> None:
         """Set the number of sweep cycles to perform.
         
         Args:
-            value: Number of sweep cycles to perform. Set to 0 for infinite sweeps.
+            number: Number of sweep cycles to perform. Set to 0 for infinite sweeps.
             
         Raises:
-            ValueError: If value is negative or not an integer.
+            ValueError: If number is negative or not an integer.
         """
-        if value < 0 or not isinstance(value, int):
+        if number < 0 or not isinstance(number, int):
             raise ValueError("Number of sweeps must be a non-negative integer.")
-        self._no_sweeps = value
+        self._no_sweeps = number
 
     @property
     def range(self) -> tuple[float, float]:
         """Get the current wavelength sweep range.
         
         Returns:
-            tuple[float, float]: A tuple containing (start_wavelength, end_wavelength) where
+            A tuple containing (start_wavelength, end_wavelength) where
                 start_wavelength is the higher value and end_wavelength is the lower value,
                 reflecting the high-to-low sweep direction.
         """
@@ -292,7 +292,7 @@ class SweepMode(__Calibrated):
         """Get the step size between consecutive wavelengths in the sweep range.
         
         Returns:
-            float: The step size in nanometers between consecutive wavelengths
+            The step size in nanometers between consecutive wavelengths
                 in the sweep range.
                 
         """
@@ -313,7 +313,7 @@ class SweepMode(__Calibrated):
             wavelength: The target wavelength in nanometers.
         
         Returns:
-            float: The closest valid wavelength from the calibration data in nanometers.
+            The closest valid wavelength from the calibration data in nanometers.
         """
         return min(self._wavelengths, key=lambda x: abs(x - wavelength))
 
@@ -325,7 +325,7 @@ class SweepMode(__Calibrated):
         Alias for the :attr:`wavelength` property getter for convenience.
         
         Returns:
-            float: Current wavelength in nanometers.
+            Current wavelength in nanometers.
         """
         return self.wavelength
 
@@ -341,7 +341,7 @@ class SweepMode(__Calibrated):
             may cause the laser to behave differently than expected.
 
         Raises:
-            ValueError: If value is not a positive integer within the valid range.
+            ValueError: If interval is not a positive integer within the valid range.
         """
         self.interval = interval
 
@@ -353,25 +353,25 @@ class SweepMode(__Calibrated):
         Alias for :meth:`get_range` result extraction for convenience.
         
         Returns:
-            float: The wavelength at the start of the current sweep range
+            The wavelength at the start of the current sweep range
                 in nanometers.
         """
         return self.range[0]
 
     @start_wavelength.setter
-    def start_wavelength(self, value: float) -> None:
+    def start_wavelength(self, wavelength: float) -> None:
         """Set the lower wavelength of the sweep range.
         <p>
         Alias for :meth:`set_range` with current end wavelength for convenience.
         
         Args:
-            value: New start wavelength in nanometers.
+            wavelength: New start wavelength in nanometers.
             
         Raises:
-            ValueError: If value is outside the calibrated wavelength range or
+            ValueError: If wavelength is outside the calibrated wavelength range or
                 if it is greater than or equal to the current end wavelength.
         """
-        self.range = (value, self.end_wavelength)
+        self.range = (wavelength, self.end_wavelength)
 
     @property
     def end_wavelength(self) -> float:
@@ -380,25 +380,25 @@ class SweepMode(__Calibrated):
         Alias for :meth:`get_range` result extraction for convenience.
         
         Returns:
-            float: The wavelength at the end of the current sweep range
+            The wavelength at the end of the current sweep range
                 in nanometers.
         """
         return self.range[1]
 
     @end_wavelength.setter
-    def end_wavelength(self, value: float) -> None:
+    def end_wavelength(self, wavelength: float) -> None:
         """Set the end wavelength of the sweep range.
         <p>
         Alias for :meth:`set_range` with current start wavelength for convenience.
         
         Args:
-            value: New end wavelength in nanometers.
+            wavelength: New end wavelength in nanometers.
             
         Raises:
-            ValueError: If value is outside the calibrated wavelength range or
+            ValueError: If wavelength is outside the calibrated wavelength range or
                 if it is less than or equal to the current start wavelength.
         """
-        self.range = (self.start_wavelength, value)
+        self.range = (self.start_wavelength, wavelength)
 
 
     def get_range(self) -> tuple[float, float]:
@@ -406,7 +406,7 @@ class SweepMode(__Calibrated):
         Alias for :attr:`range`. Returns the current sweep range as configured for high-to-low wavelength sweeping.
 
         Returns:
-            tuple[float, float]: A tuple containing (start_wavelength, end_wavelength) where
+            A tuple containing (start_wavelength, end_wavelength) where
                 start_wavelength is the higher value and end_wavelength is the lower value,
                 reflecting the high-to-low sweep direction.
         """

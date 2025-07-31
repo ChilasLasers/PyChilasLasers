@@ -34,7 +34,7 @@ class __Calibrated(Mode):
         """Initialize the calibrated mode base class.
         
         Args:
-            laser (Laser): The parent laser instance that owns this mode.
+            laser: The parent laser instance that owns this mode.
         """
         super().__init__(laser)
 
@@ -51,27 +51,27 @@ class __Calibrated(Mode):
         synchronizing the laser with other equipment or processes that depend on it.
         
         Returns:
-            bool: True if auto-trigger is enabled, False otherwise.
+            True if auto-trigger is enabled, False otherwise.
         """
         return self._autoTrig
     
     @autoTrig.setter
-    def autoTrig(self, value: bool) -> None:
+    def autoTrig(self, state: bool) -> None:
         """Set the auto-trigger setting of the laser.
         
         Args:
-            value (bool): Whether to enable (True) or disable (False) auto-trigger.
+            state: Whether to enable (True) or disable (False) auto-trigger.
         """
-        self._autoTrig = value
+        self._autoTrig = state
 
 
     ########## Main Methods ##########
 
-    def toggle_autoTrig(self, value: bool | None = None) -> None:
+    def toggle_autoTrig(self, state: bool | None = None) -> None:
         """Toggle the auto-trigger setting.
         <p>
-        If `value` is provided, it sets the auto-trigger to that value.
-        If `value` is None, it toggles the current state of auto-trigger.
+        If `state` is provided, it sets the auto-trigger to that state.
+        If `state` is None, it toggles the current state of auto-trigger.
         <p>
         This is useful for quickly enabling or disabling the auto-trigger without
         having to explicitly set it to True or False.
@@ -79,10 +79,10 @@ class __Calibrated(Mode):
         This method is an alternative to the setter for `autoTrig`.
         
         Args:
-            value (bool | None): The value to set the auto-trigger to. If None,
+            state: The state to set the auto-trigger to. If None,
                 it toggles the current state.
         """
-        self._autoTrig = value if value is not None else not self._autoTrig
+        self._autoTrig = state if state is not None else not self._autoTrig
 
     ########## Properties (Getters/Setters) ##########
 
@@ -93,7 +93,7 @@ class __Calibrated(Mode):
         Trying to set a wavelength below this value will raise an error.
         
         Returns:
-            float: The minimum calibrated wavelength in nanometers.
+            The minimum calibrated wavelength in nanometers.
         """
         return self._min_wl
     
@@ -104,7 +104,7 @@ class __Calibrated(Mode):
         Trying to set a wavelength above this value will raise an error.
         
         Returns:
-            float: The maximum calibrated wavelength in nanometers.
+            The maximum calibrated wavelength in nanometers.
         """
         return self._max_wl
 
@@ -117,6 +117,6 @@ class __Calibrated(Mode):
         current wavelength setting of the laser.
         
         Returns:
-            float: The current wavelength in nanometers.
+            The current wavelength in nanometers.
         """
         pass

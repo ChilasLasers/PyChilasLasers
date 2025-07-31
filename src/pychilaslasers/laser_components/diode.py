@@ -57,27 +57,27 @@ class Diode(LaserComponent):
         """Get the current on/off state of the laser diode.
 
         Returns:
-            bool: True if the laser diode is ON, False if OFF.
+            True if the laser diode is ON, False if OFF.
         """
         return bool(int(self._laser.query("LSR:STAT?")))
 
     @state.setter
-    def state(self, value: bool) -> None:
+    def state(self, state: bool) -> None:
         """Set the on/off state of the laser diode.
         <p>
         Controls laser emission by enabling or disabling the diode.
 
         Args:
-            value: True to turn the laser ON, False to turn it OFF.
+            state: True to turn the laser ON, False to turn it OFF.
         """
-        self._laser.query(f"LSR:STAT {value:d}")
+        self._laser.query(f"LSR:STAT {state:d}")
 
     @property
     def current(self) -> float:
         """Get the current drive current of the laser diode.
         
         Returns:
-            float: The current drive current in milliamps.
+            The current drive current in milliamps.
         """
         return float(self._laser.query("LSR:ILEV?"))
 
@@ -122,7 +122,7 @@ class Diode(LaserComponent):
         Alias for the :attr:`current` property to implement the LaserComponent interface.
 
         Returns:
-            float: The current drive current in milliamps.
+            The current drive current in milliamps.
         """
         return self.current
 

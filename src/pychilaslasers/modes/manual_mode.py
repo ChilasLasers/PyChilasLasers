@@ -138,7 +138,7 @@ class ManualMode(Mode):
         Alias that provides all individual heater components in a single list.
         
         Returns:
-            list[Heater]: List containing:
+            List containing:
                 0. phase_section
                 1. large_ring
                 2. small_ring

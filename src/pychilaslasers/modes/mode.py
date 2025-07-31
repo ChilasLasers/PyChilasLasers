@@ -56,7 +56,7 @@ class Mode(ABC):
         """Initialize the mode with a reference to the parent laser.
         
         Args:
-            laser (Laser): The laser instance that owns this mode.
+            laser: The laser instance that owns this mode.
         """
         super().__init__()
         self._laser: Laser = laser
@@ -77,6 +77,6 @@ class Mode(ABC):
     def mode(self) -> LaserMode:
         """
         Returns:
-            LaserMode: The enumeration value identifying this mode type.
+            The enumeration value identifying this mode type.
         """
         pass

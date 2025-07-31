@@ -52,7 +52,7 @@ class Heater(LaserComponent):
         heater channel this component controls.
         
         Returns:
-            HeaterChannel: The channel identifier for this heater.
+            The channel identifier for this heater.
         """
         pass
     
@@ -61,7 +61,7 @@ class Heater(LaserComponent):
         """Get the current heater drive value.
 
         Returns:
-            float: The current heater drive value.
+            The current heater drive value.
         """
         return float(self._laser.query(f"DRV:D? {self.channel.value:d}"))
     

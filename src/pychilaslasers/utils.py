@@ -161,7 +161,7 @@ def list_comports() -> list[str]:
     ports. In that regard this method is but a wrapper for it.
 
     Returns:
-        list[str]: List of available COM ports as strings sorted
+        List of available COM ports as strings sorted
         alphabetically in ascending order.
     """
     return sorted([port.device for port in comports()])

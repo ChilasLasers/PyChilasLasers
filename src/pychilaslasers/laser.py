@@ -86,7 +86,7 @@ class Laser:
             its components such as maximum values for parameters.
 
         Args:
-            com_port (str): The COM port to which the laser is connected. This should 
+            com_port: The COM port to which the laser is connected. This should 
                 be a string such as "COM7". To see available COM you may use the 
                 :meth:`pychilaslasers.utils.list_comports` method from the `utils` module.
             calibration_file (str | Path): The path to the calibration file that was 
@@ -149,10 +149,10 @@ class Laser:
         semicolon to speed up communication.
         
         Args:
-            data (str): The serial command to be sent to the laser.
+            data: The serial command to be sent to the laser.
             
         Returns:
-            str: The response from the laser. The response is stripped of any leading 
+            The response from the laser. The response is stripped of any leading 
                 or trailing whitespace as well as the return code. Response may be 
                 empty if the command does not return a value.
                 
@@ -193,10 +193,10 @@ class Laser:
         it with a semicolon.
 
         Args:
-            cmd (str): The command to be replaced with semicolon.
+            cmd: The command to be replaced with semicolon.
 
         Returns:
-            str: The command with semicolon inserted
+            The command with semicolon inserted
         """
         if cmd.split(" ")[0] == self._previous_command and self._previous_command in Constants.SEMICOLON_COMMANDS:
             cmd = cmd.replace(cmd.split(" ")[0], ";")
@@ -220,21 +220,21 @@ class Laser:
         or False to turn it off.
 
         Returns:
-            bool: The system state. Whether the laser is on (True) or off (False).
+            The system state. Whether the laser is on (True) or off (False).
         """
         return bool(int(self.query("SYST:STAT?")))
 
     @system_state.setter
-    def system_state(self, value: bool) -> None:
+    def system_state(self, state: bool) -> None:
         """Sets the system state.
 
         Args:
-            value (bool): The system state to be set.
+            state: The system state to be set.
         """
-        if type(value) is not bool:
-            logger.error("ERROR: given value is not a boolean")
+        if type(state) is not bool:
+            logger.error("ERROR: given state is not a boolean")
             return
-        self.query(f"SYST:STAT {value:d}")
+        self.query(f"SYST:STAT {state:d}")
 
 
     @property
@@ -242,7 +242,7 @@ class Laser:
         """Gets the current mode of the laser.
         
         Returns:
-            LaserMode: The current mode of the laser. This can be one of the following:
+            The current mode of the laser. This can be one of the following:
                 - LaserMode.MANUAL
                 - LaserMode.STEADY
                 - LaserMode.SWEEP
@@ -338,7 +338,7 @@ class Laser:
             use `laser.mode = LaserMode.STEADY` or `laser.set_mode("steady")` first.
         
         Returns:
-            SteadyMode: The steady mode instance with access to wavelength control methods.
+            The steady mode instance with access to wavelength control methods.
             
         Raises:
             NotImplementedError: If the laser is not in steady mode. TODO
@@ -370,7 +370,7 @@ class Laser:
             use `laser.mode = LaserMode.SWEEP` or `laser.set_mode("sweep")` first.
         
         Returns:
-            SweepMode: The sweep mode instance with access to sweep control methods.
+            The sweep mode instance with access to sweep control methods.
             
         Raises:
             NotImplementedError: If the laser is not in sweep mode or sweep mode is not available. TODO
@@ -402,7 +402,7 @@ class Laser:
             use `laser.mode = LaserMode.MANUAL` or `laser.set_mode("manual")` first.
         
         Returns:
-            ManualMode: The manual mode instance with access to manual control methods.
+            The manual mode instance with access to manual control methods.
             
         Raises:
             NotImplementedError: If the laser is not in manual mode. TODO
@@ -434,7 +434,7 @@ class Laser:
         without an expected return value, the driver will not send back a reply.
 
         Returns:
-            bool: whether prefix mode is enabled (True) or disabled (False)
+            whether prefix mode is enabled (True) or disabled (False)
         """
         return bool(int(self.query("SYST:COMM:PFX?")))
 
@@ -456,7 +456,7 @@ class Laser:
         without an expected return value, the driver will not send back a reply.
 
         Args:
-            mode (bool): whether to enable prefix mode (True) or disable it (False)
+            mode: whether to enable prefix mode (True) or disable it (False)
         """
         self.query(f"SYST:COMM:PFX {mode:d}")
         logger.info(f"Changed prefix mode to {mode}")
@@ -466,7 +466,7 @@ class Laser:
         """Return the model of the laser.
         
         Returns:
-            str: The model of the laser. May be "COMET" or "ATLAS"
+            The model of the laser. May be "COMET" or "ATLAS"
         """
         return self._model
 
