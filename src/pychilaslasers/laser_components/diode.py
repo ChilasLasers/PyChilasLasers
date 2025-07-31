@@ -6,16 +6,18 @@ emission by managing the drive current and on/off state. Handles
 laser enable/disable operations as well as current adjustments.
 <p>
 Authors: SDU
-Last Revision: July 30, 2025 - Enhanced documentation and improved code formatting
+Last Revision: July 31, 2025 - Reorganized imports according to coding conventions
 """
 
+# ⚛️ Type checking
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from pychilaslasers.laser_components.laser_component import LaserComponent
-
 if TYPE_CHECKING:
-    from pychilaslasers import Laser
+    from pychilaslasers.laser import Laser
+
+# ✅ Local imports
+from pychilaslasers.laser_components.laser_component import LaserComponent
 
 
 class Diode(LaserComponent):

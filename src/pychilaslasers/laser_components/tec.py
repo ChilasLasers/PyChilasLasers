@@ -4,16 +4,18 @@ Temperature control (TEC) component
 The TEC component allows for setting target temperatures as well as monitoring current temperatures.
 <p>
 Authors: SDU
-Last Revision: July 30, 2025 - Enhanced documentation and improved code formatting
+Last Revision: July 31, 2025 - Reorganized imports according to coding conventions
 """
 
+# ⚛️ Type checking
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-
 if TYPE_CHECKING:
-    from pychilaslasers import Laser
-    from pychilaslasers.laser_components.laser_component import LaserComponent
+    from pychilaslasers.laser import Laser
+
+# ✅ Local imports
+from pychilaslasers.laser_components.laser_component import LaserComponent
 
 
 class TEC(LaserComponent):

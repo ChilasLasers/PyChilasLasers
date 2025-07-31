@@ -9,19 +9,26 @@ advanced users and debugging purposes.
 **The calibration is not valid during manual mode**
 <p>
 Authors: RLK, AVR, SDU
-Last Revision: July 30, 2025 - Enhanced documentation and improved code formatting
+Last Revision: July 31, 2025 - Reorganized imports according to coding conventions
 """
 
+# ⚛️ Type checking
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-
-from pychilaslasers.laser_components.heaters import HeaterChannel, LargeRing, PhaseSection, SmallRing, TunableCoupler, Heater
-from pychilaslasers.modes import LaserMode, Mode
-
-
 if TYPE_CHECKING:
-    from pychilaslasers import Laser
+    from pychilaslasers.laser import Laser
+
+# ✅ Local imports
+from pychilaslasers.laser_components.heaters.heaters import (
+    Heater,
+    LargeRing,
+    PhaseSection,
+    SmallRing,
+    TunableCoupler,
+)
+from pychilaslasers.laser_components.heaters.heater_channels import HeaterChannel
+from pychilaslasers.modes.mode import LaserMode, Mode
 
 class ManualMode(Mode):
     """Manual laser control mode for direct heater manipulation.

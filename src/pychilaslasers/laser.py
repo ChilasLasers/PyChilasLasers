@@ -18,21 +18,30 @@ laser may not achieve the desired wavelength.
 <p>
 
 **Authors:** RLK, AVR, SDU
-**Last Revision:** July 30, 2025 - Enhanced documentation and improved code formatting
+**Last Revision:** July 31, 2025 - Reorganized imports according to coding conventions
 """
 
-# Standard library imports
-from pathlib import Path
+# ⚛️ Type checking
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+# ✅ Standard library imports
 import logging
+
+# ✅ Third-party imports
 import serial
 
-# Local imports
+# ✅ Local imports
+from pychilaslasers.laser_components.diode import Diode
+from pychilaslasers.laser_components.tec import TEC
 from pychilaslasers.modes.manual_mode import ManualMode
+from pychilaslasers.modes.mode import LaserMode, Mode
 from pychilaslasers.modes.steady_mode import SteadyMode
 from pychilaslasers.modes.sweep_mode import SweepMode
-from .laser_components import TEC, Diode
-from .modes.mode import LaserMode, Mode
-from .utils import Constants, read_calibration_file
+from pychilaslasers.utils import Constants, read_calibration_file
 
 logger: logging.Logger = logging.getLogger(__name__)
 

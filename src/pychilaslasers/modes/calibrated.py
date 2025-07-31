@@ -6,17 +6,21 @@ laser wavelengths and other calibrated parameters. It provides common functional
 shared between steady and sweep mode operations.
 <p>
 Authors: SDU
-Last Revision: July 30, 2025 - Enhanced documentation and improved code formatting
+Last Revision: July 31, 2025 - Reorganized imports according to coding conventions
 """
 
+# ⚛️ Type checking
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from abc import abstractmethod
-
-from pychilaslasers.modes.mode import Mode
 
 if TYPE_CHECKING:
-    from pychilaslasers import Laser
+    from pychilaslasers.laser import Laser
+
+# ✅ Standard library imports
+from abc import abstractmethod
+
+# ✅ Local imports
+from pychilaslasers.modes.mode import Mode
 
 
 class __Calibrated(Mode):

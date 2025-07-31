@@ -7,17 +7,17 @@ the laser in such a way as to allow for better visualization of their state and
 possible operations.
 <p>
 Authors: SDU
-Last Revision: July 30, 2025 - Enhanced documentation and improved code formatting
+Last Revision: July 31, 2025 - Reorganized imports according to coding conventions
 """
 
+# ⚛️ Type checking
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from laser import Laser
-
-
 if TYPE_CHECKING:
-    from pychilaslasers import Laser
+    from pychilaslasers.laser import Laser
+
+# ✅ Standard library imports
 from abc import ABC, abstractmethod
 
 class LaserComponent(ABC):

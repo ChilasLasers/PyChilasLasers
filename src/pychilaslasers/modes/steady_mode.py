@@ -4,21 +4,25 @@ Steady mode operation for laser wavelength control.
 This module implements steady mode operation of the laser which allows for tuning to
 wavelengths from the calibration table.
 Authors: RLK, AVR, SDU
-Last Revision: July 30, 2025 - Enhanced documentation and improved code formatting
+Last Revision: July 31, 2025 - Reorganized imports according to coding conventions
 """
 
+# ⚛️ Type checking
 from __future__ import annotations
-from abc import ABC, abstractmethod
-from time import sleep
 from typing import TYPE_CHECKING
 
-from pychilaslasers.laser_components.heaters import HeaterChannel
+if TYPE_CHECKING:
+    from pychilaslasers.laser import Laser
+    from pychilaslasers.utils import CalibrationEntry
+
+# ✅ Standard library imports
+from abc import ABC, abstractmethod
+from time import sleep
+
+# ✅ Local imports
+from pychilaslasers.laser_components.heaters.heater_channels import HeaterChannel
 from pychilaslasers.modes.calibrated import __Calibrated
 from pychilaslasers.modes.mode import LaserMode
-
-if TYPE_CHECKING:
-    from pychilaslasers import Laser
-    from utils import CalibrationEntry
 
 
 class SteadyMode(__Calibrated):

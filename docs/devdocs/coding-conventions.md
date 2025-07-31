@@ -26,6 +26,16 @@ We follow **PEP 8** as our base style guide. All code should be consistent, read
 ## 📦 Import Organization
 
 ```python
+"""
+Docstring
+"""
+
+# ⚛️ Type checking
+from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from pychilaslasers import Laser
+
 # ✅ Standard library imports
 import logging
 import time
@@ -38,7 +48,10 @@ import serial
 # ✅ Local imports
 from pychilaslasers.exceptions import LaserError
 from pychilaslasers.components.tec import TECController
+
+
 ```
+This first one helps import things that are only used for type hints without having to worry about circular imports or other issues 
 
 ## 📄 Package `__init__.py` Files
 

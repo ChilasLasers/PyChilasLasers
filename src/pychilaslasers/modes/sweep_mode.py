@@ -6,17 +6,19 @@ continuous cycling through wavelengths with configurable range, intervals,
 and repetition counts.
 <p>
 Authors: RLK, AVR, SDU
-Last Revision: July 30, 2025 - Enhanced documentation and improved code formatting
+Last Revision: July 31, 2025 - Reorganized imports according to coding conventions
 """
 
+# ⚛️ Type checking
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from pychilaslasers.laser import Laser
+
+# ✅ Local imports
 from pychilaslasers.modes.calibrated import __Calibrated
 from pychilaslasers.modes.mode import LaserMode
-
-if TYPE_CHECKING:
-    from pychilaslasers import Laser
 
 
 class SweepMode(__Calibrated):
