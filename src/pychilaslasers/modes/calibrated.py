@@ -11,6 +11,7 @@ Last Revision: July 30, 2025 - Enhanced documentation and improved code formatti
 
 from __future__ import annotations
 from typing import TYPE_CHECKING
+from abc import abstractmethod
 
 from pychilaslasers.modes.mode import Mode
 
@@ -108,5 +109,14 @@ class __Calibrated(Mode):
         return self._max_wl
 
 
-
-   
+    @abstractmethod
+    def get_wl(self) -> float:
+        """Get the current wavelength of the laser.
+        <p>
+        This method must be implemented by all subclasses to provide the
+        current wavelength setting of the laser.
+        
+        Returns:
+            float: The current wavelength in nanometers.
+        """
+        pass
