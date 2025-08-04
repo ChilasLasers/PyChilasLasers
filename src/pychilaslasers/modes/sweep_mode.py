@@ -6,7 +6,7 @@ continuous cycling through wavelengths with configurable range, intervals,
 and repetition counts.
 <p>
 Authors: RLK, AVR, SDU
-Last Revision: July 31, 2025 - Reorganized imports according to coding conventions
+Last Revision: Aug 4, 2025 - Implemented new Communication class for serial communication
 """
 
 # ⚛️ Type checking
@@ -106,7 +106,7 @@ class SweepMode(__Calibrated):
         if number_sweeps is not None:
             self.number_sweeps = number_sweeps
 
-        self._laser.query(data=f"DRV:CYC:RUN {self.number_sweeps:d}")
+        self._comm.query(data=f"DRV:CYC:RUN {self.number_sweeps:d}")
 
     def stop(self) -> None:
         """Stop the current wavelength sweep operation.
@@ -116,7 +116,7 @@ class SweepMode(__Calibrated):
         from where it was stopped.
         """
 
-        self._laser.query(data="DRV:CYC:ABRT")
+        self._comm.query(data="DRV:CYC:ABRT")
         
     def resume(self) -> None:
         """Resume a paused wavelength sweep operation.
@@ -125,7 +125,7 @@ class SweepMode(__Calibrated):
         :meth:`stop` method. The sweep will continue from its current position
         with the same configuration settings.
         """
-        self._laser.query(data="DRV:CYC:CONT")
+        self._comm.query(data="DRV:CYC:CONT")
 
     def get_total_time(self) -> float:
         """Calculate the total estimated time for the complete sweep operation.
@@ -176,7 +176,7 @@ class SweepMode(__Calibrated):
             Depending on the interval, this value may have changed by the 
             time it is retrieved due to the continuous sweeping operation.
         """
-        current_index: int = int(self._laser.query("DRV:CYC:CPOS?"))
+        current_index: int = int(self._comm.query("DRV:CYC:CPOS?"))
         return self._wavelengths[current_index]
 
     @property
@@ -186,7 +186,7 @@ class SweepMode(__Calibrated):
         Returns:
             The time interval between wavelength steps in milliseconds.
         """
-        return float(self._laser.query("DRV:CYC:INT?"))
+        return float(self._comm.query("DRV:CYC:INT?"))
 
     @interval.setter
     def interval(self, interval: int) -> None:
@@ -205,7 +205,7 @@ class SweepMode(__Calibrated):
         """
         if 20 > interval or interval > 50000 or not isinstance(interval, int):
             raise ValueError("interval must be a positive integer between 20 and 50 000 microseconds.")
-        self._laser.query(data=f"DRV:CYC:INT {interval}")
+        self._comm.query(data=f"DRV:CYC:INT {interval}")
 
     @property
     def number_sweeps(self) -> int:
@@ -239,7 +239,7 @@ class SweepMode(__Calibrated):
                 start_wavelength is the higher value and end_wavelength is the lower value,
                 reflecting the high-to-low sweep direction.
         """
-        [index_start, index_end] = self._laser.query("DRV:CYC:SPAN?").split(' ')
+        [index_start, index_end] = self._comm.query("DRV:CYC:SPAN?").split(' ')
         return (
             self._wavelengths[int(index_start)],
             self._wavelengths[int(index_end)]
@@ -287,7 +287,7 @@ class SweepMode(__Calibrated):
         # Get the index of the last occurrence of the end wavelength
         index_end += self._wavelengths.count(end_wl) - 1
         
-        self._laser.query(data=f"DRV:CYC:SPAN {index_start} {index_end}")
+        self._comm.query(data=f"DRV:CYC:SPAN {index_start} {index_end}")
 
     @property
     def step_size(self) -> float:

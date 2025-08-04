@@ -5,7 +5,7 @@ This module implements heater components that control thermal elements in the la
 Includes individual heater types. These are only available in manual mode.
 <p>
 Authors: SDU
-Last Revision: July 31, 2025 - Reorganized imports according to coding conventions
+Last Revision: Aug 4, 2025 - Implemented new Communication class for serial communication
 """
 
 # ⚛️ Type checking
@@ -47,9 +47,9 @@ class Heater(LaserComponent):
             laser: The laser instance to control.
         """
         super().__init__(laser)
-        self._min: float = float(laser.query(f"DRV:LIM:MIN? {self.channel.value}"))
-        self._max: float = float(laser.query(f"DRV:LIM:MAX? {self.channel.value}"))
-        self._unit: str = laser.query(f"DRV:UNIT? {self.channel.value}").strip()
+        self._min: float = float(self._comm.query(f"DRV:LIM:MIN? {self.channel.value}"))
+        self._max: float = float(self._comm.query(f"DRV:LIM:MAX? {self.channel.value}"))
+        self._unit: str = self._comm.query(f"DRV:UNIT? {self.channel.value}").strip()
 
     ########## Properties (Getters/Setters) ##########
 
@@ -73,8 +73,8 @@ class Heater(LaserComponent):
         Returns:
             The current heater drive value.
         """
-        return float(self._laser.query(f"DRV:D? {self.channel.value:d}"))
-    
+        return float(self._comm.query(f"DRV:D? {self.channel.value:d}"))
+
     @value.setter
     def value(self, value: float) -> None:  
         """Set the heater drive value.
@@ -91,7 +91,7 @@ class Heater(LaserComponent):
         if value < self._min or value > self._max:
             raise ValueError(f"Heater value must be between {self._min} and {self._max} {self._unit}.")
 
-        self._laser.query(f"DRV:D {self.channel.value:d} {value:.3f}")
+        self._comm.query(f"DRV:D {self.channel.value:d} {value:.3f}")
 
 
 class TunableCoupler(Heater):

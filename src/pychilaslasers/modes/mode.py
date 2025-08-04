@@ -6,15 +6,17 @@ It provides the base Mode class that all specific modes inherit from, as well as
 the LaserMode enumeration for type-safe mode identification.
 
 Authors: RLK, AVR, SDU
-Last Revision: July 31, 2025 - Reorganized imports according to coding conventions
+Last Revision: Aug 4, 2025 - Implemented new Communication class for serial communication
 """
 
 # ⚛️ Type checking
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from pychilaslasers.laser import Laser
+    from pychilaslasers.comm import Communication
 
 # ✅ Standard library imports
 from abc import ABC, abstractmethod
@@ -63,6 +65,7 @@ class Mode(ABC):
         """
         super().__init__()
         self._laser: Laser = laser
+        self._comm: Communication = laser._comm
 
     ########## Abstract Methods ##########
 

@@ -6,7 +6,7 @@ emission by managing the drive current and on/off state. Handles
 laser enable/disable operations as well as current adjustments.
 <p>
 Authors: SDU
-Last Revision: July 31, 2025 - Reorganized imports according to coding conventions
+Last Revision: Aug 4, 2025 - Implemented new Communication class for serial communication
 """
 
 # ⚛️ Type checking
@@ -49,7 +49,7 @@ class Diode(LaserComponent):
         """
         super().__init__(laser=laser)
         self._min: float = 0.0
-        self._max: float = float(laser.query("LSR:IMAX?"))
+        self._max: float = float(laser._comm.query("LSR:IMAX?"))
         self._unit: str = "mA"
 
     ########## Properties (Getters/Setters) ##########
@@ -61,7 +61,7 @@ class Diode(LaserComponent):
         Returns:
             True if the laser diode is ON, False if OFF.
         """
-        return bool(int(self._laser.query("LSR:STAT?")))
+        return bool(int(self._comm.query("LSR:STAT?")))
 
     @state.setter
     def state(self, state: bool) -> None:
@@ -72,7 +72,7 @@ class Diode(LaserComponent):
         Args:
             state: True to turn the laser ON, False to turn it OFF.
         """
-        self._laser.query(f"LSR:STAT {state:d}")
+        self._comm.query(f"LSR:STAT {state:d}")
 
     @property
     def current(self) -> float:
@@ -81,7 +81,7 @@ class Diode(LaserComponent):
         Returns:
             The current drive current in milliamps.
         """
-        return float(self._laser.query("LSR:ILEV?"))
+        return float(self._comm.query("LSR:ILEV?"))
 
     @current.setter
     def current(self, current_ma: float) -> None:
@@ -98,8 +98,8 @@ class Diode(LaserComponent):
             raise ValueError("Current must be a number.")
         if current_ma < self._min or current_ma > self._max:
             raise ValueError(f"Current must be between {self._min} and {self._max} mA.")
-        
-        self._laser.query(f"LSR:ILEV {current_ma:.3f}")
+
+        self._comm.query(f"LSR:ILEV {current_ma:.3f}")
 
     ########## Method Overloads/Aliases ##########
 

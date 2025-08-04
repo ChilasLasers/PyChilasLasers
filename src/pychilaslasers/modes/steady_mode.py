@@ -4,15 +4,17 @@ Steady mode operation for laser wavelength control.
 This module implements steady mode operation of the laser which allows for tuning to
 wavelengths from the calibration table.
 Authors: RLK, AVR, SDU
-Last Revision: July 31, 2025 - Reorganized imports according to coding conventions
+Last Revision: Aug 4, 2025 - Implemented new Communication class for serial communication
 """
 
 # ⚛️ Type checking
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from pychilaslasers.laser import Laser
+    from pychilaslasers.comm import Communication
     from pychilaslasers.utils import CalibrationEntry
 
 # ✅ Standard library imports
@@ -53,7 +55,6 @@ class SteadyMode(__Calibrated):
         """
         super().__init__(laser)
         
-        self._laser = laser
         self._calibration = calibration["steady"]["calibration"]
         self._default_TEC = calibration["steady"]["tec_temp"]
         self._default_current = calibration["steady"]["current"]
@@ -244,6 +245,7 @@ class _WLChangeMethod(ABC):
         """
 
         self._laser: Laser = laser
+        self._comm: Communication = laser._comm
         self._steady_mode: SteadyMode = steady_mode
         self._calibration_table: dict[float, CalibrationEntry] = calibration_table
         self._antihyst_parameters: tuple[list[float], list[float]] = anti_hyst_parameters
@@ -267,11 +269,11 @@ class _WLChangeMethod(ABC):
         
         while offset >= 0:
             v_phase_anti_hyst = ((initial_phase ** 2) + offset) ** 0.5  # V^2
-            self._laser.query(f"DRV:D {HeaterChannel.PHASE_SECTION.value:d} {v_phase_anti_hyst:.4f}")
+            self._comm.query(f"DRV:D {HeaterChannel.PHASE_SECTION.value:d} {v_phase_anti_hyst:.4f}")
             offset -= 2
             sleep(self._antihyst_parameters[1][0])
 
-        self._laser.query(f"DRV:D {HeaterChannel.PHASE_SECTION.value:d} {v_phase_anti_hyst:.4f}")
+        self._comm.query(f"DRV:D {HeaterChannel.PHASE_SECTION.value:d} {v_phase_anti_hyst:.4f}")
 
     ########## Properties (Getters/Setters) ##########
 
@@ -336,13 +338,13 @@ class _PreLoad(_WLChangeMethod):
         entry: CalibrationEntry = self._calibration_table[wavelength]
         
         # Preload the laser with the calibration entry values
-        self._laser.query(f"DRV:DP 0 {entry.phase_section:.4f}")
-        self._laser.query(f"DRV:DP 1 {entry.large_ring:.4f}")
-        self._laser.query(f"DRV:DP 2 {entry.small_ring:.4f}")
-        self._laser.query(f"DRV:DP 3 {entry.coupler:.4f}")
+        self._comm.query(f"DRV:DP 0 {entry.phase_section:.4f}")
+        self._comm.query(f"DRV:DP 1 {entry.large_ring:.4f}")
+        self._comm.query(f"DRV:DP 2 {entry.small_ring:.4f}")
+        self._comm.query(f"DRV:DP 3 {entry.coupler:.4f}")
 
         # Apply the heater values
-        self._laser.query("DRV:U")
+        self._comm.query("DRV:U")
 
         # Check for mode hop and apply anti-hysteresis if needed
         if self._calibration_table[self._wavelength].mode_index != entry.mode_index:
@@ -376,7 +378,7 @@ class _CyclerIndex(_WLChangeMethod):
         if wavelength not in self._calibration_table.keys():
             raise ValueError(f"Wavelength {wavelength} not found in calibration table.")
 
-        self._laser.query(f"DRV:CYC:LOAD {self._calibration_table[wavelength].cycler_index}")
+        self._comm.query(f"DRV:CYC:LOAD {self._calibration_table[wavelength].cycler_index}")
 
         if self.anti_hyst_enabled:
             self._antihyst()

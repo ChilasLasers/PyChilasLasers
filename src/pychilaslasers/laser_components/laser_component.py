@@ -7,15 +7,17 @@ the laser in such a way as to allow for better visualization of their state and
 possible operations.
 <p>
 Authors: SDU
-Last Revision: July 31, 2025 - Reorganized imports according to coding conventions
+Last Revision: Aug 4, 2025 - Implemented new Communication class for serial communication
 """
 
 # ⚛️ Type checking
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from pychilaslasers.laser import Laser
+    from pychilaslasers.comm import Communication
 
 # ✅ Standard library imports
 from abc import ABC, abstractmethod
@@ -39,7 +41,7 @@ class LaserComponent(ABC):
 
     def __init__(self, laser: Laser) -> None:
         super().__init__()
-        self._laser: Laser = laser
+        self._comm: Communication = laser._comm
 
     ########## Properties (Getters/Setters) ##########
 

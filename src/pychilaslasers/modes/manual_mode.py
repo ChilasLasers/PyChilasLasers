@@ -9,7 +9,7 @@ advanced users and debugging purposes.
 **The calibration is not valid during manual mode**
 <p>
 Authors: RLK, AVR, SDU
-Last Revision: July 31, 2025 - Reorganized imports according to coding conventions
+Last Revision: Aug 4, 2025 - Implemented new Communication class for serial communication
 """
 
 # ⚛️ Type checking
@@ -106,7 +106,7 @@ class ManualMode(Mode):
             This method performs no validation on the input values.
             Setting inappropriate voltages may result in errors or undefined behavior.
         """
-        self._laser.query(f"DRV:D {heater_ch:d} {heater_value:.4f}")
+        self._comm.query(f"DRV:D {heater_ch:d} {heater_value:.4f}")
 
     ########## Properties (Getters/Setters) ##########
 

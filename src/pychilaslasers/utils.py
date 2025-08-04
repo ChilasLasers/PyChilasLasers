@@ -5,8 +5,10 @@ from pathlib import Path
 class Constants:
     """Constants used throughout the PyChilasLasers library."""
 
-    DEFAULT_BAUDRATE = 57600
+    DEFAULT_BAUDRATE = 460800
+    TLM_INITIAL_BAUDRATE = 57600 # Initial baudrate the laser is set to when it is powered on.
     SUPPORTED_BAUDRATES = {9600, 14400, 19200, 28800, 38400, 57600, 115200, 230400, 460800, 912600}
+
     # ERROR CODES THAT SHOULD TRIGGER A ERROR DIALOG (errors 14 to 23)
     CRITICAL_ERRORS: list[str] = ["E0" + str(x) for x in range(14,24)] + ["E0" + str(x) for x in range(30,51)]
 

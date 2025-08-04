@@ -4,7 +4,7 @@ Temperature control (TEC) component
 The TEC component allows for setting target temperatures as well as monitoring current temperatures.
 <p>
 Authors: SDU
-Last Revision: July 31, 2025 - Reorganized imports according to coding conventions
+Last Revision: Aug 4, 2025 - Implemented new Communication class for serial communication
 """
 
 # ⚛️ Type checking
@@ -44,9 +44,9 @@ class TEC(LaserComponent):
             laser: The laser instance to control.
         """
         super().__init__(laser=laser)
-        self._min: float = float(self._laser.query("TEC:CFG:TMIN?"))
-        self._max: float = float(self._laser.query("TEC:CFG:TMAX?"))
-        self._unit: str = "Celsius" 
+        self._min: float = float(self._comm.query("TEC:CFG:TMIN?"))
+        self._max: float = float(self._comm.query("TEC:CFG:TMAX?"))
+        self._unit: str = "Celsius"
 
     ########## Properties (Getters/Setters) ##########
     
@@ -54,7 +54,7 @@ class TEC(LaserComponent):
     def target(self) -> float:
         """Get the current target temperature in Celsius.
         """
-        return float(self._laser.query("TEC:TTGT?"))
+        return float(self._comm.query("TEC:TTGT?"))
 
 
     @target.setter
@@ -73,13 +73,13 @@ class TEC(LaserComponent):
         # Check if the target is within the valid range
         if target < self.min_value or target > self.max_value:
             raise ValueError(f"Target temperature must be between {self.min_value} and {self.max_value} °C.")
-        
-        self._laser.query(f"TEC:TTGT {target:.3f}")
+
+        self._comm.query(f"TEC:TTGT {target:.3f}")
 
     @property
     def temp(self) -> float:
         """Get the current **measured** temperature reading in Celsius."""
-        return float(self._laser.query("TEC:TEMP?"))
+        return float(self._comm.query("TEC:TEMP?"))
 
     @property
     def value(self) -> float:

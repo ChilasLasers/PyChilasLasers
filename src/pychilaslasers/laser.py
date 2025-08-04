@@ -18,21 +18,19 @@ laser may not achieve the desired wavelength.
 <p>
 
 **Authors:** RLK, AVR, SDU
-**Last Revision:** July 31, 2025 - Reorganized imports according to coding conventions
+**Last Revision:** August 4, 2025 - Refactored communications to new Communication class
 """
 
 # ⚛️ Type checking
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from pathlib import Path
 
 # ✅ Standard library imports
 import logging
-
-# ✅ Third-party imports
-import serial
 
 # ✅ Local imports
 from pychilaslasers.laser_components.diode import Diode
@@ -41,7 +39,8 @@ from pychilaslasers.modes.manual_mode import ManualMode
 from pychilaslasers.modes.mode import LaserMode, Mode
 from pychilaslasers.modes.steady_mode import SteadyMode
 from pychilaslasers.modes.sweep_mode import SweepMode
-from pychilaslasers.utils import Constants, read_calibration_file
+from pychilaslasers.utils import read_calibration_file
+from pychilaslasers.comm import Communication
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -102,21 +101,12 @@ class Laser:
                 provided for the laser.
         """
 
-        # Variable initialization
-        self._initialize_variables()
+        self._comm: Communication = Communication(
+            com_port=com_port
+        )        
 
-        # Initialize serial connection to the laser
-        self._serial: serial.Serial = serial.Serial(
-            port=com_port,
-            baudrate=Constants.DEFAULT_BAUDRATE,
-            bytesize=serial.EIGHTBITS,
-            parity=serial.PARITY_NONE,
-            stopbits=serial.STOPBITS_ONE,
-            timeout=10.0,
-        )
-        
         # Laser identification. Library will not work with non-Chilas lasers.
-        if "Chilas" not in self.query("*IDN?") and "LioniX" not in self.query("*IDN?"):
+        if "Chilas" not in (idn := self._comm.query("*IDN?")) and "LioniX" not in idn:
             logger.critical("Laser is not a Chilas device")
             import sys
             sys.exit(1)
@@ -144,78 +134,8 @@ class Laser:
 
     def trigger_pulse(self) -> None:
         """Instructs the laser to send a trigger pulse."""
-        self.query(f"DRV:CYC:TRIG {int(True):d}")
-        self.query(f"DRV:CYC:TRIG {int(False):d}")
-
-
-    def query(self, data: str) -> str:
-        """Main method for communication with the laser.
-        <p>
-        This method sends a command to the laser over the serial connection and returns
-        the response. It also handles the logging of the command and response. The
-        response code of the reply is checked and an error is raised if the response
-        code is not 0. Commands that are sent multiple times may be replaced with a
-        semicolon to speed up communication.
-        
-        Args:
-            data: The serial command to be sent to the laser.
-            
-        Returns:
-            The response from the laser. The response is stripped of any leading 
-                or trailing whitespace as well as the return code. Response may be 
-                empty if the command does not return a value.
-                
-        Raises:
-            ValueError: If the command is not a string.
-            serial.SerialException: If there is an error with the serial connection.
-            NotImplementedError: For most errors TODO
-        """
-
-        # Write the command to the serial port
-        logger.debug(msg=f"W {data}")  # Logs the command being sent
-        self._serial.write(
-            f"{self._semicolon_replace(data)}\r\n"
-            .encode("ascii")
-            )
-
-        # Read the response from the laser
-        reply: str = self._serial.readline().decode("ascii").rstrip()
-
-        # Error handling
-        if not reply and not self._prefix_mode:
-            logger.error("Empty reply from device")
-            return reply
-
-        if reply[0] != "0":
-            logger.error(f"Nonzero return code: {reply[2:]}")
-        else:
-            logger.debug(f"R {reply}")
-
-        return reply[2:]
-
-    ########## Private Methods ##########
-
-    def _semicolon_replace(self, cmd: str) -> str:
-        """To speed up communication, a repeating command can be replaced with a semicolon.
-        <p>
-        Check if the command was previously sent to the device. In that case, replace 
-        it with a semicolon.
-
-        Args:
-            cmd: The command to be replaced with semicolon.
-
-        Returns:
-            The command with semicolon inserted
-        """
-        if cmd.split(" ")[0] == self._previous_command and self._previous_command in Constants.SEMICOLON_COMMANDS:
-            cmd = cmd.replace(cmd.split(" ")[0], ";")
-        else:
-            self._previous_command = cmd.split(" ")[0]
-        return cmd
-
-    def _initialize_variables(self) -> None:
-        """Initialize private variables."""
-        self._previous_command: str = "None"
+        self._comm.query(f"DRV:CYC:TRIG {int(True):d}")
+        self._comm.query(f"DRV:CYC:TRIG {int(False):d}")
 
     ########## Properties (Getters/Setters) ##########
 
@@ -231,7 +151,7 @@ class Laser:
         Returns:
             The system state. Whether the laser is on (True) or off (False).
         """
-        return bool(int(self.query("SYST:STAT?")))
+        return bool(int(self._comm.query("SYST:STAT?")))
 
     @system_state.setter
     def system_state(self, state: bool) -> None:
@@ -243,7 +163,7 @@ class Laser:
         if type(state) is not bool:
             logger.error("ERROR: given state is not a boolean")
             return
-        self.query(f"SYST:STAT {state:d}")
+        self._comm.query(f"SYST:STAT {state:d}")
 
 
     @property
@@ -426,51 +346,6 @@ class Laser:
         return self._manual_mode
 
     @property
-    def prefix_mode(self) -> bool:
-        """Gets prefix mode for the laser driver.
-        <p>
-        The laser driver can be operated in two different communication modes:
-            1. Prefix mode on
-            2. Prefix mode off
-        <p>
-        When prefix mode is on, every message over the serial connection will be
-        replied to by the driver with a response, and every response will be 
-        prefixed with a return code (rc), either `0` or `1` for an OK or ERROR 
-        respectively.
-        <p>
-        With prefix mode is off, responses from the laser driver are not prefixed
-        with a return code. This means that in the case for a serial write command
-        without an expected return value, the driver will not send back a reply.
-
-        Returns:
-            whether prefix mode is enabled (True) or disabled (False)
-        """
-        return bool(int(self.query("SYST:COMM:PFX?")))
-
-    @prefix_mode.setter
-    def prefix_mode(self, mode: bool) -> None:
-        """Sets prefix mode for the laser driver.
-        <p>
-        The laser driver can be operated in two different communication modes:
-            1. Prefix mode on
-            2. Prefix mode off
-        <p>
-        When prefix mode is on, every message over the serial connection will be
-        replied to by the driver with a response, and every response will be 
-        prefixed with a return code (rc), either `0` or `1` for an OK or ERROR 
-        respectively.
-        <p>
-        With prefix mode is off, responses from the laser driver are not prefixed
-        with a return code. This means that in the case for a serial write command
-        without an expected return value, the driver will not send back a reply.
-
-        Args:
-            mode: whether to enable prefix mode (True) or disable it (False)
-        """
-        self.query(f"SYST:COMM:PFX {mode:d}")
-        logger.info(f"Changed prefix mode to {mode}")
-
-    @property
     def model(self) -> str:
         """Return the model of the laser.
         
@@ -503,10 +378,3 @@ class Laser:
         This is an alias for setting the system state to False.
         """
         self.system_state = False
-
-
-
-    ########## Special Methods ##########
-
-    def __del__(self) -> None:
-        self._serial.close()
