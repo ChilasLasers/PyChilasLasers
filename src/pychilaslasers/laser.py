@@ -18,12 +18,13 @@ laser may not achieve the desired wavelength.
 <p>
 
 **Authors:** RLK, AVR, SDU
-**Last Revision:** August 4, 2025 - Refactored communications to new Communication class
+**Last Revision:** Aug 4, 2025 - Refactored communications to new Communication class and improved error handling
 """
 
 # ⚛️ Type checking
 from __future__ import annotations
 from typing import TYPE_CHECKING
+
 
 
 if TYPE_CHECKING:
@@ -39,6 +40,7 @@ from pychilaslasers.modes.manual_mode import ManualMode
 from pychilaslasers.modes.mode import LaserMode, Mode
 from pychilaslasers.modes.steady_mode import SteadyMode
 from pychilaslasers.modes.sweep_mode import SweepMode
+from pychilaslasers.exceptions.mode_error import ModeError
 from pychilaslasers.utils import read_calibration_file
 from pychilaslasers.comm import Communication
 
@@ -121,7 +123,7 @@ class Laser:
         calibration = read_calibration_file(file_path=calibration_file)
         self._model: str = calibration["model"]
 
-        self._steady_mode: SteadyMode | None = SteadyMode(self, calibration) if calibration else None
+        self._steady_mode: SteadyMode = SteadyMode(self, calibration) 
         self._sweep_mode: SweepMode | None = SweepMode(self, calibration) if calibration["model"] == "COMET" else None
         self._mode: Mode = self._manual_mode
 
@@ -200,8 +202,9 @@ class Laser:
                   LaserMode.STEADY, LaserMode.SWEEP)
                   
         Raises:
-            NotImplementedError: If the mode is not initialized or not available.TODO
-            ValueError: If the mode is not recognized or not a valid type.
+            ValueError: If the mode is not recognized or is not available for the laser model.
+            TypeError: If the mode is not a valid type (not a string, enum, or specific mode instance).
+            ModeError: If the sweep mode is not available for this laser model when trying to set it.
         """
 
         # Check if the mode is an instance of specific mode classes
@@ -213,8 +216,13 @@ class Laser:
                 self._mode = self._steady_mode
 
             elif isinstance(mode, SweepMode):
+                if self._sweep_mode is None:
+                    raise ModeError(message="Sweep mode is not available for this laser model.", 
+                                    current_mode=self.mode)
                 self._mode = self._sweep_mode
-
+            else:
+                raise ValueError(f"Unknown mode instance: {mode}. "
+                                 "Please use 'ManualMode', 'SteadyMode', or 'SweepMode' instances.")
         # Check if the mode is a string or enum
         elif isinstance(mode, str) or isinstance(mode, LaserMode):
             if isinstance(mode, LaserMode):
@@ -240,16 +248,18 @@ class Laser:
 
             if ( mode := mode.lower() ) in mode_mappings:
                 self._mode = mode_mappings[mode]
-            if self._mode is None:
-                raise NotImplementedError("Proper exception to be raised here")
-                raise ModeNotInitializedError(f"Mode {mode} is not initialized.")
+            else:
+                raise ValueError(f"Unknown mode: {mode}. "
+                                 "Please use 'manual', 'steady', or 'sweep' ")
                 
         else:
-            raise ValueError(f"Unknown mode: {mode}")
+            raise TypeError(f"Invalid mode type: {type(mode)}. "
+                            "Please use 'ManualMode', 'SteadyMode', 'SweepMode' instances, "
+                            "or a string representing the mode (e.g., 'manual', 'steady', 'sweep').")
         
         self._mode.apply_defaults()
-        logger.info(f"Laser mode set to {self._mode.mode}")
-        
+        logging.info(f"Laser mode set to {self._mode.mode}")
+
 
 
     @property
@@ -270,18 +280,15 @@ class Laser:
             The steady mode instance with access to wavelength control methods.
             
         Raises:
-            NotImplementedError: If the laser is not in steady mode. TODO
+            ModeError: If the laser is not in steady mode.
             
         Example:
             >>> laser.mode = LaserMode.STEADY
             >>> laser.steady.set_wavelength(1550.0)  # Set wavelength to 1550nm
-        """
-        if self._steady_mode is None:
-            raise NotImplementedError("Proper exception to be raised here")
-            raise NotCalibratedError("Steady mode is not initialized.")
-        if self.mode != LaserMode.STEADY:
-            raise NotImplementedError("Proper exception to be raised here")
-            raise IncorrectModeError("Laser not in steady mode.")
+        """       
+        if self.mode != LaserMode.STEADY: 
+            raise ModeError("Laser not in steady mode.", 
+                            self.mode, desired_mode=LaserMode.STEADY)
         return self._steady_mode
     
     @property
@@ -302,18 +309,18 @@ class Laser:
             The sweep mode instance with access to sweep control methods.
             
         Raises:
-            NotImplementedError: If the laser is not in sweep mode or sweep mode is not available. TODO
+            ModeError: If the laser is not in sweep mode or sweep mode is not available. 
             
         Example:
             >>> laser.mode = LaserMode.SWEEP  # Only works for COMET lasers
             >>> laser.sweep.start_wavelength_sweep(1550.0, 1560.0)  # Sweep from 1550nm to 1560nm
         """
         if self._sweep_mode is None:
-            raise NotImplementedError("Proper exception to be raised here")
-            raise NotCalibratedError("Sweep mode is not initialized.")
+            raise ModeError("Sweep mode is not available for this laser model.", 
+                            self.mode, desired_mode=LaserMode.SWEEP)
         if self.mode != LaserMode.SWEEP:
-            raise NotImplementedError("Proper exception to be raised here")
-            raise IncorrectModeError("Laser not in sweep mode.")
+            raise ModeError("Laser not in sweep mode.", 
+                            self.mode, desired_mode=LaserMode.SWEEP)
         return self._sweep_mode
     
     @property
@@ -341,8 +348,8 @@ class Laser:
             >>> laser.manual.set_heater_value(50.0)  # Set heater to 50%
         """
         if self.mode != LaserMode.MANUAL:
-            raise NotImplementedError("Proper exception to be raised here")
-            raise IncorrectModeError("Laser not in manual mode.")
+            raise ModeError("Laser not in manual mode.", 
+                            self.mode, LaserMode.MANUAL)
         return self._manual_mode
 
     @property

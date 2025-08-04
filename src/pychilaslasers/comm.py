@@ -6,7 +6,7 @@ It contains the methods for sending commands to the laser, receiving responses, 
 the serial connection. 
 <p>
 **Authors:** RLK, AVR, SDU
-**Last Revision:** Aug 4, 2025 - Created
+**Last Revision:** Aug 4, 2025 - Created and improved error handling
 """
 
 # ✅ Standard library imports
@@ -18,6 +18,7 @@ import signal
 import serial
 
 # ✅ Local imports
+from exceptions.laser_error import LaserError
 from pychilaslasers.utils import Constants
 
 logger = logging.getLogger(__name__)
@@ -99,9 +100,9 @@ class Communication:
                 empty if the command does not return a value.
                 
         Raises:
-            ValueError: If the command is not a string.
-            serial.SerialException: If there is an error with the serial connection.
-            NotImplementedError: For most errors TODO
+            serial.SerialException: If there is an error in the serial communication,
+                such as a decoding error or an empty reply.
+            LaserError: If the response code from the laser is not 0, indicating an error.
         """
 
         # Write the command to the serial port
@@ -119,16 +120,19 @@ class Communication:
         try: 
            reply: str = self._serial.readline().decode("ascii").rstrip()
         except UnicodeDecodeError as e:
-           logger.error(f"Failed to decode reply from device: {e}")
-           return ""
+            logger.error(f"Failed to decode reply from device: {e}")
+            raise serial.SerialException(f"Failed to decode reply from device: {e}. " + 
+                                         "Please check the connection and baudrate settings.")
 
         # Error handling
-        if not reply and self.prefix_mode:
+        if not reply or reply == "":
             logger.error("Empty reply from device")
-            raise serial.SerialException("Empty reply from device")
+            raise serial.SerialException("Empty reply from device. " \
+            "Please check the connection and prefix mode.")
 
         if reply[0] != "0":
             logger.error(f"Nonzero return code: {reply[2:]}")
+            raise LaserError(code=reply[0],message=reply[2:])  # Raise a custom error with the reply message
         else:
             logger.debug(f"R {reply}")
 
@@ -165,7 +169,7 @@ class Communication:
         This method is registered to be called on exit or when a signal is received.
         """
 
-        
+
         if signum is not None:
             logger.error(f"Received signal {signal.Signals(signum).name} ({signum}): closing connection")
         else: 
@@ -173,7 +177,7 @@ class Communication:
         if self._serial and self._serial.is_open:
             self.system_state = False
             self._serial.write(f"SYST:SER:BAUD {Constants.TLM_INITIAL_BAUDRATE}\r\n".encode("ascii"))
-            logger.debug("Ressetting serial baudrate to initial value")
+            logger.debug("Resetting serial baudrate to initial value")
             self._serial.close()
 
     ########## Properties (Getters/Setters) ##########

@@ -69,7 +69,7 @@ class TEC(LaserComponent):
         """
         # Validate the target temperature
         if not isinstance(target, (int, float)):
-            raise ValueError("Target temperature must be a number.") ##TODO maybe implement diff error
+            raise ValueError("Target temperature must be a number.") 
         # Check if the target is within the valid range
         if target < self.min_value or target > self.max_value:
             raise ValueError(f"Target temperature must be between {self.min_value} and {self.max_value} °C.")

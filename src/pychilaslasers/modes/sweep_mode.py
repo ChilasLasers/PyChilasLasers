@@ -6,7 +6,7 @@ continuous cycling through wavelengths with configurable range, intervals,
 and repetition counts.
 <p>
 Authors: RLK, AVR, SDU
-Last Revision: Aug 4, 2025 - Implemented new Communication class for serial communication
+Last Revision: Aug 4, 2025 - Implemented new Communication class for serial communication and improved mode error handling L71
 """
 
 # ⚛️ Type checking
@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from pychilaslasers.laser import Laser
 
 # ✅ Local imports
+from exceptions.mode_error import ModeError
 from pychilaslasers.modes.calibrated import __Calibrated
 from pychilaslasers.modes.mode import LaserMode
 
@@ -67,7 +68,8 @@ class SweepMode(__Calibrated):
             or calibration.get("model") != "COMET"
             or "sweep" not in calibration
         ):
-            raise ValueError("Sweep mode is only supported for COMET lasers.")
+            raise ModeError("Sweep mode is only supported for COMET lasers.", 
+                            current_mode=laser.mode)
 
         # Gather calibration data
         self._calibration = calibration["sweep"]
