@@ -303,6 +303,15 @@ class SweepMode(__Calibrated):
         return self._step_size
     
 
+    @property
+    def cycler_running(self) -> bool:
+        """Indicates if the cycler is currently running
+
+        Returns:
+            (bool): if the cycler is running
+        """
+        return bool(int(self._comm.query("DRV:CYC:RUN?")))
+
 
     ########## Private Methods ##########
 

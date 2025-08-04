@@ -208,6 +208,7 @@ class Laser:
         """
 
         # Check if the mode is an instance of specific mode classes
+        previous_mode: LaserMode = self._mode.mode 
         if isinstance(mode, Mode):  
             if isinstance(mode, ManualMode):
                 self._mode = self._manual_mode
@@ -256,7 +257,11 @@ class Laser:
             raise TypeError(f"Invalid mode type: {type(mode)}. "
                             "Please use 'ManualMode', 'SteadyMode', 'SweepMode' instances, "
                             "or a string representing the mode (e.g., 'manual', 'steady', 'sweep').")
-        
+
+        # If we were in sweep mode and are switching to another mode, stop the sweep
+        if previous_mode is LaserMode.SWEEP and self._mode.mode is not LaserMode.SWEEP:
+            self._sweep_mode.stop()
+
         self._mode.apply_defaults()
         logging.info(f"Laser mode set to {self._mode.mode}")
 
