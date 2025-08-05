@@ -6,7 +6,7 @@ It contains the methods for sending commands to the laser, receiving responses, 
 the serial connection. 
 <p>
 **Authors:** RLK, AVR, SDU
-**Last Revision:** Aug 4, 2025 - Created and improved error handling
+**Last Revision:** Aug 5, 2025 - Created deconstructor
 """
 
 # ✅ Standard library imports
@@ -79,6 +79,15 @@ class Communication:
         atexit.register(self._close_connection)
         signal.signal(signal.SIGINT,self._close_connection)
         signal.signal(signal.SIGTERM, self._close_connection)  
+
+    def __del__(self) -> None:
+        """Destructor that ensures the serial connection is closed when the object is deleted.
+        <p>
+        This method is called when the object is garbage collected, providing an additional
+        safety mechanism to ensure the serial connection is properly closed even if the
+        user forgets to call close explicitly or if the program terminates unexpectedly.
+        """
+        self._close_connection()  
 
     ########## Main Methods ##########
     
