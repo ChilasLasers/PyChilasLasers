@@ -319,7 +319,7 @@ class Laser:
         """       
         if self.mode != LaserMode.STEADY: 
             raise ModeError("Laser not in steady mode.", 
-                            self.mode, desired_mode=LaserMode.STEADY)
+                            current_mode=self.mode, desired_mode=LaserMode.STEADY)
         return self._steady_mode
     
     @property

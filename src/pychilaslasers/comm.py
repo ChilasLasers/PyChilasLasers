@@ -53,7 +53,7 @@ class Communication:
         # Initialize serial connection to the laser
         self._serial: serial.Serial = serial.Serial(
             port=com_port,
-            baudrate=Constants.DEFAULT_BAUDRATE,  # Use the first supported baudrate
+            baudrate=Constants.TLM_INITIAL_BAUDRATE,  # Use the first supported baudrate
             bytesize=serial.EIGHTBITS,
             parity=serial.PARITY_NONE,
             stopbits=serial.STOPBITS_ONE,
@@ -70,9 +70,13 @@ class Communication:
                 self.prefix_mode = True
                 break
             except Exception:
-                logger.error(f"Serial connection failed at {rate} baud.Attempting new connection with baudrate {(rate:=baudrates.pop())}.")
-                self.baudrate = baudrates.pop()  # Try next baudrate if the current one fails
-
+                try:
+                    logger.error(f"Serial connection failed at {rate} baud.Attempting new connection with baudrate {(rate:=baudrates.pop())}.")
+                    self.baudrate = baudrates.pop()  # Try next baudrate if the current one fails
+                except KeyError:
+                    logger.critical("No more supported baudrates available. Cannot establish serial connection.")
+                    raise RuntimeError("Failed to establish serial connection with the laser driver. " +
+                                       "Please check the connection and supported baudrates.") from None
         self.baudrate = Constants.DEFAULT_BAUDRATE
 
         # Ensure proper closing of the serial connection on exit or signal
@@ -153,14 +157,12 @@ class Communication:
         <p>
         This method is registered to be called on exit or when a signal is received.
         """
-
-
-        if signum is not None:
-            logger.error(f"Received signal {signal.Signals(signum).name} ({signum}): closing connection")
-        else: 
-            logger.debug("Closing connection")
         if self._serial and self._serial.is_open:
-            self.system_state = False
+            if signum is not None:
+                logger.error(f"Received signal {signal.Signals(signum).name} ({signum}): closing connection")
+            else: 
+                logger.debug("Closing connection")
+            self.query("SYST:STAT 0")
             self._serial.write(f"SYST:SER:BAUD {Constants.TLM_INITIAL_BAUDRATE}\r\n".encode("ascii"))
             logger.debug("Resetting serial baudrate to initial value")
             self._serial.close()
