@@ -161,6 +161,17 @@ class Laser:
 
     ########## Properties (Getters/Setters) ##########
 
+    @property
+    def comm(self) -> Communication:
+        """Communication object for the laser.
+        <p>
+        This property provides access to the communication object used to interact with 
+        the laser. It can be used to send commands and queries to the laser.
+        
+        Returns:
+            The communication object for the laser.
+        """
+        return self._comm
 
     @property
     def system_state(self) -> bool:

@@ -76,9 +76,9 @@ class Communication:
         self.baudrate = Constants.DEFAULT_BAUDRATE
 
         # Ensure proper closing of the serial connection on exit or signal
-        atexit.register(self._close_connection)
-        signal.signal(signal.SIGINT,self._close_connection)
-        signal.signal(signal.SIGTERM, self._close_connection)  
+        atexit.register(self.close_connection)
+        signal.signal(signal.SIGINT,self.close_connection)
+        signal.signal(signal.SIGTERM, self.close_connection)  
 
     def __del__(self) -> None:
         """Destructor that ensures the serial connection is closed when the object is deleted.
@@ -87,7 +87,7 @@ class Communication:
         safety mechanism to ensure the serial connection is properly closed even if the
         user forgets to call close explicitly or if the program terminates unexpectedly.
         """
-        self._close_connection()  
+        self.close_connection()  
 
     ########## Main Methods ##########
     
@@ -147,6 +147,25 @@ class Communication:
 
         return reply[2:]
 
+    def close_connection(self, signum = None, fname = None) -> None:
+        """Closes the serial connection to the laser driver safely.
+        Attempts to reset the baudrate to the initial value before closing the connection.
+        <p>
+        This method is registered to be called on exit or when a signal is received.
+        """
+
+
+        if signum is not None:
+            logger.error(f"Received signal {signal.Signals(signum).name} ({signum}): closing connection")
+        else: 
+            logger.debug("Closing connection")
+        if self._serial and self._serial.is_open:
+            self.system_state = False
+            self._serial.write(f"SYST:SER:BAUD {Constants.TLM_INITIAL_BAUDRATE}\r\n".encode("ascii"))
+            logger.debug("Resetting serial baudrate to initial value")
+            self._serial.close()
+
+
     ########## Private Methods ##########
 
     def _semicolon_replace(self, cmd: str) -> str:
@@ -171,23 +190,6 @@ class Communication:
         """Initialize private variables."""
         self._previous_command: str = "None"
 
-    def _close_connection(self, signum = None, fname = None) -> None:
-        """Closes the serial connection to the laser driver safely.
-        Attempts to reset the baudrate to the initial value before closing the connection.
-        <p>
-        This method is registered to be called on exit or when a signal is received.
-        """
-
-
-        if signum is not None:
-            logger.error(f"Received signal {signal.Signals(signum).name} ({signum}): closing connection")
-        else: 
-            logger.debug("Closing connection")
-        if self._serial and self._serial.is_open:
-            self.system_state = False
-            self._serial.write(f"SYST:SER:BAUD {Constants.TLM_INITIAL_BAUDRATE}\r\n".encode("ascii"))
-            logger.debug("Resetting serial baudrate to initial value")
-            self._serial.close()
 
     ########## Properties (Getters/Setters) ##########
             
