@@ -61,6 +61,9 @@ class SteadyMode(__Calibrated):
 
         self._min_wl: float = min(self._calibration.keys())
         self._max_wl: float = max(self._calibration.keys())
+        _wavelengths: list[float] = sorted(list(self._calibration.keys()))
+        self._step_size: float = abs(_wavelengths[0] - _wavelengths[_wavelengths.count(_wavelengths[0])])
+
 
         
         self._wl: float = self._min_wl  # Default to minimum wavelength
@@ -161,7 +164,17 @@ class SteadyMode(__Calibrated):
             LaserMode.STEADY indicating steady mode operation.
         """
         return LaserMode.STEADY
-
+    
+    @property
+    def step_size(self) -> float:
+        """Get the step size between consecutive wavelengths.
+        
+        Returns:
+            The step size in nanometers between consecutive wavelengths.
+        """
+        return self._step_size
+    
+    
     ########## Method Overloads/Aliases ##########
 
     def get_wl(self) -> float:
@@ -350,7 +363,19 @@ class _PreLoad(_WLChangeMethod):
         if self._calibration_table[self._wavelength].mode_index != entry.mode_index:
             if self.anti_hyst_enabled:
                 self._antihyst()
-
+    
+    
+    @property
+    def step_size(self) -> float:
+        """Get the step size between consecutive wavelengths in the sweep range.
+        
+        Returns:
+            The step size in nanometers between consecutive wavelengths
+                in the sweep range.
+                
+        """
+        return self._step_size
+    
 
 class _CyclerIndex(_WLChangeMethod):
     """Cycler index-based wavelength change method for ATLAS model.
