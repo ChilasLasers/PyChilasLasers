@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from pychilaslasers.laser import Laser
 
 # ✅ Local imports
-from exceptions.mode_error import ModeError
+from pychilaslasers.exceptions.mode_error import ModeError
 from pychilaslasers.modes.calibrated import __Calibrated
 from pychilaslasers.modes.mode import LaserMode
 

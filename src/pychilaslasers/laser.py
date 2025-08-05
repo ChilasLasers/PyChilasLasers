@@ -18,7 +18,7 @@ laser may not achieve the desired wavelength.
 <p>
 
 **Authors:** RLK, AVR, SDU
-**Last Revision:** Aug 4, 2025 - Refactored communications to new Communication class and improved error handling
+**Last Revision:** Aug 5, 2025 - Add ability to initialize laser without calibration file
 """
 
 # ⚛️ Type checking
@@ -83,7 +83,7 @@ class Laser:
     """
 
 
-    def __init__(self, com_port: str, calibration_file: str | Path) -> None:
+    def __init__(self, com_port: str, calibration_file: str | Path | None = None) -> None:
         """Laser class constructor. Initializes the laser with the given COM port and 
         calibration file.
         <p>
@@ -120,16 +120,21 @@ class Laser:
         # Initialize modes 
         self._manual_mode: ManualMode = ManualMode(self)
 
-        calibration = read_calibration_file(file_path=calibration_file)
-        self._model: str = calibration["model"]
-
-        self._steady_mode: SteadyMode = SteadyMode(self, calibration) 
-        self._sweep_mode: SweepMode | None = SweepMode(self, calibration) if calibration["model"] == "COMET" else None
+        if calibration_file is not None:
+            calibration = read_calibration_file(file_path=calibration_file)
+            self._model: str = calibration["model"]
+            self._steady_mode: SteadyMode | None = SteadyMode(self, calibration) 
+            self._sweep_mode: SweepMode | None = (
+                SweepMode(self, calibration) if 
+                calibration["model"] == "COMET" else None
+            )
+        else:
+            self._model: str = "Unknown"
+            self._steady_mode: SteadyMode | None = None 
+            self._sweep_mode: SweepMode | None = None
         self._mode: Mode = self._manual_mode
 
         logger.debug(f"Initialized laser {self._model} on {com_port} with calibration file {calibration_file}")
-
-        self._prefix_mode: bool = True  # Default to prefix mode TODO may go in special calibration class
 
     ########## Main Methods ##########
 
@@ -138,6 +143,21 @@ class Laser:
         """Instructs the laser to send a trigger pulse."""
         self._comm.query(f"DRV:CYC:TRIG {int(True):d}")
         self._comm.query(f"DRV:CYC:TRIG {int(False):d}")
+
+    def calibrate(self, calibration_file: str | Path) -> None:
+        """Calibrates the laser with the given calibration file.
+
+        Args:
+            calibration_file (str | Path): The path to the calibration file to be used for 
+                calibrating the laser.
+        """
+        calibration = read_calibration_file(file_path=calibration_file)
+        self._model = calibration["model"]
+        self._steady_mode = SteadyMode(self, calibration)
+        
+        if self._model == "COMET":
+            self._sweep_mode = SweepMode(self, calibration)
+
 
     ########## Properties (Getters/Setters) ##########
 
@@ -204,55 +224,50 @@ class Laser:
         Raises:
             ValueError: If the mode is not recognized or is not available for the laser model.
             TypeError: If the mode is not a valid type (not a string, enum, or specific mode instance).
-            ModeError: If the sweep mode is not available for this laser model when trying to set it.
+            ModeError: If the sweep mode is not available 
         """
 
         # Check if the mode is an instance of specific mode classes
         previous_mode: LaserMode = self._mode.mode 
-        if isinstance(mode, Mode):  
-            if isinstance(mode, ManualMode):
-                self._mode = self._manual_mode
+        if isinstance(mode, Mode):
+            mode = mode.mode  # Get the mode from the instance  
 
-            elif isinstance(mode, SteadyMode):
-                self._mode = self._steady_mode
-
-            elif isinstance(mode, SweepMode):
-                if self._sweep_mode is None:
-                    raise ModeError(message="Sweep mode is not available for this laser model.", 
-                                    current_mode=self.mode)
-                self._mode = self._sweep_mode
-            else:
-                raise ValueError(f"Unknown mode instance: {mode}. "
-                                 "Please use 'ManualMode', 'SteadyMode', or 'SweepMode' instances.")
         # Check if the mode is a string or enum
-        elif isinstance(mode, str) or isinstance(mode, LaserMode):
-            if isinstance(mode, LaserMode):
-                mode = mode.value  # Convert enum to string if necessary
+        if isinstance(mode, str) or isinstance(mode, LaserMode):
+            if isinstance(mode, str):
+                # Define mode mappings including exact matches and fuzzy matches
+                mode_mappings = {
+                    "manual": LaserMode.MANUAL,  # Exact match
+                    "steady": LaserMode.STEADY,  # Exact match
+                    "sweep":  LaserMode.SWEEP,   # Exact match
+                    "manuel": LaserMode.MANUAL,  # Common misspelling
+                    "manua":  LaserMode.MANUAL,   # Partial typing
+                    "man":    LaserMode.MANUAL,     # Short form
+                    "steadi": LaserMode.STEADY,  # Partial typing
+                    "stead":  LaserMode.STEADY,   # Partial typing
+                    "ste":    LaserMode.STEADY,   # Partial typing
+                    "swep":   LaserMode.SWEEP,     # Common misspelling
+                    "swp":    LaserMode.SWEEP,     # Common misspelling
+                    "sweap":  LaserMode.SWEEP,    # Common misspelling
+                    "sweepin": LaserMode.SWEEP,  # Partial typing
+                    "sweeping":  LaserMode.SWEEP,    # Exact match
+                }
 
-            # Define mode mappings including exact matches and fuzzy matches
-            mode_mappings = {
-                "manual": self._manual_mode,  # Exact match
-                "steady": self._steady_mode,  # Exact match
-                "sweep":  self._sweep_mode,   # Exact match
-                "manuel": self._manual_mode,  # Common misspelling
-                "manua":  self._manual_mode,   # Partial typing
-                "man":    self._manual_mode,     # Short form
-                "steadi": self._steady_mode,  # Partial typing
-                "stead":  self._steady_mode,   # Partial typing
-                "ste":    self._steady_mode,   # Partial typing
-                "swep":   self._sweep_mode,     # Common misspelling
-                "swp":    self._sweep_mode,     # Common misspelling
-                "sweap":  self._sweep_mode,    # Common misspelling
-                "sweepin": self._sweep_mode,  # Partial typing
-                "sweeping":  self._sweep_mode,    # Exact match
-            }
-
-            if ( mode := mode.lower() ) in mode_mappings:
-                self._mode = mode_mappings[mode]
-            else:
-                raise ValueError(f"Unknown mode: {mode}. "
-                                 "Please use 'manual', 'steady', or 'sweep' ")
-                
+                if ( mode := mode.lower() ) in mode_mappings:
+                    mode = mode_mappings[mode]
+                else:
+                    raise ValueError(f"Unknown mode: {mode}. "
+                                    "Please use 'manual', 'steady', or 'sweep' ")
+            # Check if the mode is a valid mode to enter at this point
+            if mode in (LaserMode.STEADY, LaserMode.SWEEP) and not self.calibrated:
+                raise ValueError(f"Calibration data not available, laser cannot enter {mode.name.lower()} mode.")
+            if mode is LaserMode.SWEEP and self._sweep_mode is None:
+                raise ModeError(message="Sweep mode is not available for this laser model.", 
+                                current_mode=self.mode)
+            # Change mode to the corresponding mode instance
+            self._mode = self._sweep_mode if mode is LaserMode.SWEEP else \
+                         self._steady_mode if mode is LaserMode.STEADY else \
+                         self._manual_mode # type: ignore
         else:
             raise TypeError(f"Invalid mode type: {type(mode)}. "
                             "Please use 'ManualMode', 'SteadyMode', 'SweepMode' instances, "
@@ -366,6 +381,14 @@ class Laser:
         """
         return self._model
 
+    @property
+    def calibrated(self) -> bool:
+        """Check if the laser is calibrated.
+
+        Returns:
+            True if the laser has calibration data, False otherwise.
+        """
+        return self._steady_mode is not None or self._sweep_mode is not None
     ########## Method Overloads/Aliases ##########
 
 

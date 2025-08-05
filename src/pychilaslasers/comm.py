@@ -18,7 +18,7 @@ import signal
 import serial
 
 # ✅ Local imports
-from exceptions.laser_error import LaserError
+from pychilaslasers.exceptions.laser_error import LaserError
 from pychilaslasers.utils import Constants
 
 logger = logging.getLogger(__name__)
@@ -69,7 +69,7 @@ class Communication:
             try:
                 self.prefix_mode = True
                 break
-            except serial.SerialException:
+            except Exception:
                 logger.error(f"Serial connection failed at {rate} baud.Attempting new connection with baudrate {(rate:=baudrates.pop())}.")
                 self.baudrate = baudrates.pop()  # Try next baudrate if the current one fails
 
