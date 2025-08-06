@@ -14,7 +14,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from pychilaslasers.modes.mode import LaserMode, Mode
+    from pychilaslasers.modes.mode import Mode
+
+from pychilaslasers.modes.mode import LaserMode
 
 class ModeError(Exception):
     """Exception raised for errors related to the laser mode."""
