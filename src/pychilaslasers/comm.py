@@ -72,7 +72,7 @@ class Communication:
             except Exception:
                 try:
                     logger.error(f"Serial connection failed at {rate} baud.Attempting new connection with baudrate {(rate:=baudrates.pop())}.")
-                    self.baudrate = baudrates.pop()  # Try next baudrate if the current one fails
+                    self.baudrate = rate  # Try next baudrate if the current one fails
                 except KeyError:
                     logger.critical("No more supported baudrates available. Cannot establish serial connection.")
                     raise RuntimeError("Failed to establish serial connection with the laser driver. " +
