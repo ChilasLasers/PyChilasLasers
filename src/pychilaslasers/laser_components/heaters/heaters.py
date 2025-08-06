@@ -93,6 +93,29 @@ class Heater(LaserComponent):
 
         self._comm.query(f"DRV:D {self.channel.value:d} {value:.3f}")
 
+    ########## Method Overloads/Aliases ##########
+
+    def get_value(self) -> float:
+        """
+        Alias for the :attr:`value` property getter.
+        
+        Returns:
+            The current heater drive value.
+        """
+        return self.value
+
+    def set_value(self, value: float) -> None:
+        """
+        Alias for the :attr:`value` property setter.
+
+        Args:
+            value: The heater drive value to set.
+            
+        Raises:
+            ValueError: If value is not a number or outside valid range.
+        """
+        self.value = value
+
 
 class TunableCoupler(Heater):
     """Tunable coupler heater component."""

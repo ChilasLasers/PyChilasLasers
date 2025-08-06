@@ -103,6 +103,48 @@ class Diode(LaserComponent):
 
     ########## Method Overloads/Aliases ##########
 
+    def get_value(self) -> float:
+        """
+        Alias for the :attr:`value` property getter.
+        
+        Returns:
+            The current drive current in milliamps.
+        """
+        return self.value
+
+    def set_value(self, val: float) -> None:
+        """
+        Alias for the :attr:`value` property setter.
+
+        Args:
+            val: The desired drive current in milliamps.
+            
+        Raises:
+            ValueError: If current is not a number or is outside the valid range.
+        """
+        self.value = val
+
+    def get_current(self) -> float:
+        """
+        Alias for the :attr:`current` property getter.
+        
+        Returns:
+            The current drive current in milliamps.
+        """
+        return self.current
+
+    def set_current(self, current_ma: float) -> None:
+        """
+        Alias for the :attr:`current` property setter.
+
+        Args:
+            current_ma: The desired drive current in milliamps.
+            
+        Raises:
+            ValueError: If current is not a number or is outside the valid range.
+        """
+        self.current = current_ma
+
     def turn_ON(self) -> None:
         """Turn the laser diode ON.
         <p>

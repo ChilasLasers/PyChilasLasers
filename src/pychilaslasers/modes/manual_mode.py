@@ -120,21 +120,56 @@ class ManualMode(Mode):
         """Get the phase section heater."""
         return self._phase_section
 
+    @phase_section.setter
+    def phase_section(self, value: float) -> None:
+        """Set the phase section heater value.
+        
+        Args:
+            value: The heater drive value to set.
+        """
+        self._phase_section.value = value
+
     @property
     def large_ring(self) -> LargeRing:
         """Get the large ring heater."""
         return self._large_ring
 
+    @large_ring.setter
+    def large_ring(self, value: float) -> None:
+        """Set the large ring heater value.
+        
+        Args:
+            value: The heater drive value to set.
+        """
+        self._large_ring.value = value
+
     @property
     def small_ring(self) -> SmallRing:
         """Get the small ring heater."""
-
         return self._small_ring
+
+    @small_ring.setter
+    def small_ring(self, value: float) -> None:
+        """Set the small ring heater value.
+        
+        Args:
+            value: The heater drive value to set.
+        """
+        self._small_ring.value = value
 
     @property
     def tunable_coupler(self) -> TunableCoupler:
         """Get the tunable coupler."""
         return self._tunable_coupler
+
+    @tunable_coupler.setter
+    def tunable_coupler(self, value: float) -> None:
+        """Set the tunable coupler heater value.
+        
+        Args:
+            value: The heater drive value to set.
+        """
+        self._tunable_coupler.value = value
 
     ########## Method Overloads/Aliases ##########
 

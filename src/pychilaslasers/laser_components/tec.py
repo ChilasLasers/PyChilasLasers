@@ -90,3 +90,56 @@ class TEC(LaserComponent):
         """
         return self.temp
 
+    ########## Method Overloads/Aliases ##########
+
+    def get_value(self) -> float:
+        """
+        Alias for the :attr:`value` property getter.
+        
+        Returns:
+            The current measured temperature in Celsius.
+        """
+        return self.value
+
+    def set_value(self, val: float) -> None:
+        """
+        Alias for the :attr:`target` property setter.
+
+        Args:
+            val: The desired target temperature in Celsius.
+            
+        Raises:
+            ValueError: If target is not a number or is outside the valid range.
+        """
+        self.target = val
+
+    def get_temp(self) -> float:
+        """
+        Alias for the :attr:`temp` property getter.
+        
+        Returns:
+            The current measured temperature in Celsius.
+        """
+        return self.temp
+
+    def get_target_temp(self) -> float:
+        """
+        Alias for the :attr:`target` property getter.
+        
+        Returns:
+            The current target temperature in Celsius.
+        """
+        return self.target
+
+    def set_target(self, target: float) -> None:
+        """
+        Alias for the :attr:`target` property setter.
+
+        Args:
+            target: The desired target temperature in Celsius.
+            
+        Raises:
+            ValueError: If target is not a number or is outside the valid range.
+        """
+        self.target = target
+
