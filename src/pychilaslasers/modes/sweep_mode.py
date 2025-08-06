@@ -182,13 +182,13 @@ class SweepMode(__Calibrated):
         return self._wavelengths[current_index]
 
     @property
-    def interval(self) -> float:
+    def interval(self) -> int:
         """Get the current interval setting.
         
         Returns:
             The time interval between wavelength steps in milliseconds.
         """
-        return float(self._comm.query("DRV:CYC:INT?"))
+        return int(self._comm.query("DRV:CYC:INT?"))
 
     @interval.setter
     def interval(self, interval: int) -> None:
