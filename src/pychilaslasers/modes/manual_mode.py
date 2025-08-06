@@ -81,13 +81,8 @@ class ManualMode(Mode):
 
     def apply_defaults(self) -> None:
         """Apply default settings for manual mode operation.
-        <p>
-        Resets all heater values to zero, providing a safe starting state
-        for manual operation. This ensures no residual voltages remain
-        from previous operations.
         """
-        for heater in self._heaters:
-            heater.value = 0
+        pass
 
     def set_driver_value(self, heater_ch: int | HeaterChannel, heater_value: float) -> None:
         """Manually set the voltage value of a specific driver channel.
