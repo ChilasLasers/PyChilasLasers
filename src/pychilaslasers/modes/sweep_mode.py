@@ -332,6 +332,18 @@ class SweepMode(__Calibrated):
 
 
     ########## Method Overloads/Aliases ##########
+
+    def set_count(self, count: int) -> None:
+        """
+        Alias for the :attr:`number_sweeps` property setter.
+        
+        Args:
+            count: Number of sweeps to perform. Set to 0 for infinite sweeps.
+            
+        Raises:
+            ValueError: If count is negative or not an integer.
+        """
+        self.number_sweeps = count
     
     def get_wl(self) -> float:
         """
