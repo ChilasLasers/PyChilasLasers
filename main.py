@@ -33,7 +33,7 @@ print(f"Current wavelength: {laser.sweep.wavelength} nm")
 print(f"Current wavelength: {laser.sweep.wavelength} nm")
 
 
-
+#  TODO move step size to calibrated class
 print("No errors!")
 
 

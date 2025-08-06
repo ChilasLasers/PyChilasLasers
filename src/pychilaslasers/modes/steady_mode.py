@@ -124,7 +124,7 @@ class SteadyMode(__Calibrated):
             ValueError: If wavelength is outside the valid calibration range.
         """
         if wavelength < self._min_wl or wavelength > self._max_wl:
-            raise ValueError(f"Wavelength must be between {self._min_wl} and {self._max_wl}.")
+            raise ValueError(f"Wavelength value {wavelength} not valid: must be between {self._min_wl} and {self._max_wl}.")
         if wavelength not in self._calibration.keys():
             # Find the closest available wavelength to the requested wavelength
             wavelength = min(self._calibration.keys(), key=lambda x: abs(x - wavelength))

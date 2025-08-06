@@ -97,7 +97,7 @@ class Diode(LaserComponent):
         if not isinstance(current_ma, (int, float)):
             raise ValueError("Current must be a number.")
         if current_ma < self._min or current_ma > self._max:
-            raise ValueError(f"Current must be between {self._min} and {self._max} mA.")
+            raise ValueError(f"Current value {current_ma} not valid: must be between {self._min} and {self._max} mA.")
 
         self._comm.query(f"LSR:ILEV {current_ma:.3f}")
 

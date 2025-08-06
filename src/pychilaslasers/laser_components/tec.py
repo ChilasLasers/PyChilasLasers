@@ -72,7 +72,7 @@ class TEC(LaserComponent):
             raise ValueError("Target temperature must be a number.") 
         # Check if the target is within the valid range
         if target < self.min_value or target > self.max_value:
-            raise ValueError(f"Target temperature must be between {self.min_value} and {self.max_value} °C.")
+            raise ValueError(f"Target temperature value {target} not valid: must be between {self.min_value} and {self.max_value} °C.")
 
         self._comm.query(f"TEC:TTGT {target:.3f}")
 

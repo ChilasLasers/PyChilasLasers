@@ -206,7 +206,7 @@ class SweepMode(__Calibrated):
             ValueError: If interval is not a positive integer within the valid range.
         """
         if 20 > interval or interval > 50000 or not isinstance(interval, int):
-            raise ValueError("interval must be a positive integer between 20 and 50 000 microseconds.")
+            raise ValueError(f"Interval value {interval} not valid: must be a positive integer between 20 and 50 000 microseconds.")
         self._comm.query(data=f"DRV:CYC:INT {interval}")
 
     @property

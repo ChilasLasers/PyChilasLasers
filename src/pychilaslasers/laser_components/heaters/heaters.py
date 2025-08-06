@@ -89,7 +89,7 @@ class Heater(LaserComponent):
         if not isinstance(value, (int, float)):
             raise ValueError("Heater value must be a number.")
         if value < self._min or value > self._max:
-            raise ValueError(f"Heater value must be between {self._min} and {self._max} {self._unit}.")
+            raise ValueError(f"Heater value {value} not valid: must be between {self._min} and {self._max} {self._unit}.")
 
         self._comm.query(f"DRV:D {self.channel.value:d} {value:.3f}")
 
