@@ -9,6 +9,8 @@ Last Revision: Aug 4, 2025 - Implemented new Communication class for serial comm
 
 # ⚛️ Type checking
 from __future__ import annotations
+import logging
+from math import sqrt
 from typing import TYPE_CHECKING
 
 
@@ -261,8 +263,18 @@ class _WLChangeMethod(ABC):
         self._comm: Communication = laser._comm
         self._steady_mode: SteadyMode = steady_mode
         self._calibration_table: dict[float, CalibrationEntry] = calibration_table
-        self._antihyst_parameters: tuple[list[float], list[float]] = anti_hyst_parameters
-        
+        antihyst_parameters: tuple[list[float], list[float]] = anti_hyst_parameters
+
+        self._voltages = antihyst_parameters[0]
+        self._time_steps = antihyst_parameters[1]
+
+        assert len(self._voltages) != 0 and  len(self._time_steps) != 0
+        assert len(self._voltages) == len(self._time_steps) + 1 or len(self._time_steps) == 1
+        self._time_steps: list[float] = [self._time_steps[0]] * (len(self._voltages) - 1) + [0] if len(self._time_steps) == 1 else self._time_steps + [0]
+
+        self._phase_max: float = self._laser._manual_mode.phase_section.max_value
+        self._phase_min: float = self._laser._manual_mode.phase_section.min_value
+
         self.anti_hyst_enabled: bool = True  # Default to enabled
 
     ########## Private Methods ##########
@@ -275,18 +287,21 @@ class _WLChangeMethod(ABC):
         this method are laser-dependent and are specified as part of the calibration data.
         """
 
-        initial_phase = float(self._calibration_table[self._wavelength].phase_section)
+        target = float(self._calibration_table[self._wavelength].phase_section)
 
-        offset: float = self._antihyst_parameters[0][0]
-        v_phase_anti_hyst = initial_phase  # Initialize with the base value
-        
-        while offset >= 0:
-            v_phase_anti_hyst = ((initial_phase ** 2) + offset) ** 0.5  # V^2
-            self._comm.query(f"DRV:D {HeaterChannel.PHASE_SECTION.value:d} {v_phase_anti_hyst:.4f}")
-            offset -= 2
-            sleep(self._antihyst_parameters[1][0])
+        voltages = self._voltages.copy()
+        time_steps = self._time_steps.copy()
 
-        self._comm.query(f"DRV:D {HeaterChannel.PHASE_SECTION.value:d} {v_phase_anti_hyst:.4f}")
+
+        for i, voltage in enumerate(voltages):
+            value: float = sqrt(target**2 - voltage**2)
+            if value < self._phase_min or value > self._phase_max:
+                logging.getLogger(__name__).error(f"Anti-hysteresis value out of bounds: {value} (min: {self._phase_min}, max: {self._phase_max})")
+            value = min(value, self._phase_max)
+            value = max(value, self._phase_min)
+            self._comm.query(f"DRV:D {HeaterChannel.PHASE_SECTION.value:d} {value:.4f}")
+            sleep(time_steps[i])
+
 
     ########## Properties (Getters/Setters) ##########
 
