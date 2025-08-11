@@ -3,10 +3,12 @@
         "ABRT",
         "antihyst",
         "antihysteresis",
+        "baudrates",
         "bytesize",
         "CPOS",
         "EIGHTBITS",
         "pychilaslasers",
+        "signum",
         "stopbits",
         "viewcode"
     ],

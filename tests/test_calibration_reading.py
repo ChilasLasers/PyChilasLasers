@@ -35,7 +35,7 @@ class TestCalibrationReading:
         # Check sweep data
         assert result["sweep"]["current"] == 150.0
         assert result["sweep"]["tec_temp"] == 30.0
-        assert result["sweep"]["cycler_interval"] == 1000
+        assert result["sweep"]["interval"] == 1000
         assert len(result["sweep"]["wavelengths"]) > 0
 
     def test_read_calibration_file_comet2(self):

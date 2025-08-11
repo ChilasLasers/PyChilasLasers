@@ -6,20 +6,29 @@ manipulation of individual heater channels without calibration constraints.
 Manual mode provides low-level access to all laser heater components for
 advanced users and debugging purposes.
 <p>
+**The calibration is not valid during manual mode**
+<p>
 Authors: RLK, AVR, SDU
-Last Revision: July 30, 2025 - Enhanced documentation and improved code formatting
+Last Revision: Aug 4, 2025 - Implemented new Communication class for serial communication
 """
 
+# ⚛️ Type checking
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-
-from pychilaslasers.laser_components.heaters import HeaterChannel, LargeRing, PhaseSection, SmallRing, TunableCoupler, Heater
-from pychilaslasers.modes import LaserMode, Mode
-
-
 if TYPE_CHECKING:
-    from pychilaslasers import Laser
+    from pychilaslasers.laser import Laser
+
+# ✅ Local imports
+from pychilaslasers.laser_components.heaters.heaters import (
+    Heater,
+    LargeRing,
+    PhaseSection,
+    SmallRing,
+    TunableCoupler,
+)
+from pychilaslasers.laser_components.heaters.heater_channels import HeaterChannel
+from pychilaslasers.modes.mode import LaserMode, Mode
 
 class ManualMode(Mode):
     """Manual laser control mode for direct heater manipulation.
@@ -47,9 +56,8 @@ class ManualMode(Mode):
     def __init__(self, laser: Laser) -> None:
         """Initialize manual mode with laser instance and heater components.
         <p>
-        Creates all heater component instances and establishes direct control
-        over the laser hardware. The laser is temporarily turned on during
-        initialization to gather component characteristics.
+        Creates all heater component instances. The laser is temporarily turned on
+        during initialization to gather component characteristics.
         
         Args:
             laser: The laser instance to control.
@@ -73,13 +81,8 @@ class ManualMode(Mode):
 
     def apply_defaults(self) -> None:
         """Apply default settings for manual mode operation.
-        <p>
-        Resets all heater values to zero, providing a safe starting state
-        for manual operation. This ensures no residual voltages remain
-        from previous operations.
         """
-        for heater in self._heaters:
-            heater.value = 0
+        pass
 
     def set_driver_value(self, heater_ch: int | HeaterChannel, heater_value: float) -> None:
         """Manually set the voltage value of a specific driver channel.
@@ -96,56 +99,72 @@ class ManualMode(Mode):
                 
         Warning:
             This method performs no validation on the input values.
-            Setting inappropriate voltages may damage the laser hardware.
+            Setting inappropriate voltages may result in errors or undefined behavior.
         """
-        self._laser.query(f"DRV:D {heater_ch:d} {heater_value:.4f}")
+        self._comm.query(f"DRV:D {heater_ch:d} {heater_value:.4f}")
 
     ########## Properties (Getters/Setters) ##########
 
     @property
     def mode(self) -> LaserMode:
-        """Get the laser operation mode.
-        
-        Returns:
-            LaserMode: LaserMode.MANUAL indicating manual mode operation.
-        """
+        """Get the laser operation mode."""
         return LaserMode.MANUAL
 
     @property
     def phase_section(self) -> PhaseSection:
-        """Get the phase section heater component.
-        
-        Returns:
-            PhaseSection: The phase section heater for wavelength fine-tuning.
-        """
+        """Get the phase section heater."""
         return self._phase_section
+
+    @phase_section.setter
+    def phase_section(self, value: float) -> None:
+        """Set the phase section heater value.
+        
+        Args:
+            value: The heater drive value to set.
+        """
+        self._phase_section.value = value
 
     @property
     def large_ring(self) -> LargeRing:
-        """Get the large ring heater component.
-        
-        Returns:
-            LargeRing: The large ring heater for coarse wavelength control.
-        """
+        """Get the large ring heater."""
         return self._large_ring
+
+    @large_ring.setter
+    def large_ring(self, value: float) -> None:
+        """Set the large ring heater value.
+        
+        Args:
+            value: The heater drive value to set.
+        """
+        self._large_ring.value = value
 
     @property
     def small_ring(self) -> SmallRing:
-        """Get the small ring heater component.
-        
-        Returns:
-            SmallRing: The small ring heater for medium wavelength control.
-        """
+        """Get the small ring heater."""
         return self._small_ring
+
+    @small_ring.setter
+    def small_ring(self, value: float) -> None:
+        """Set the small ring heater value.
+        
+        Args:
+            value: The heater drive value to set.
+        """
+        self._small_ring.value = value
 
     @property
     def tunable_coupler(self) -> TunableCoupler:
-        """Get the tunable coupler heater component.
-        
-        Returns:
-            TunableCoupler: The tunable coupler heater for output coupling control.
-        """
+        """Get the tunable coupler."""
         return self._tunable_coupler
+
+    @tunable_coupler.setter
+    def tunable_coupler(self, value: float) -> None:
+        """Set the tunable coupler heater value.
+        
+        Args:
+            value: The heater drive value to set.
+        """
+        self._tunable_coupler.value = value
 
     ########## Method Overloads/Aliases ##########
 
@@ -156,8 +175,12 @@ class ManualMode(Mode):
         Alias that provides all individual heater components in a single list.
         
         Returns:
-            list[Heater]: List containing phase_section, large_ring, small_ring,
-                and tunable_coupler heater instances.
+            List containing:
+                0. phase_section
+                1. large_ring
+                2. small_ring
+                3. tunable_coupler
+                In this order for easy iteration and access.
         """
         return self._heaters
     

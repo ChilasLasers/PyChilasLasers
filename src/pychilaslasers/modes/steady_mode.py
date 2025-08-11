@@ -4,21 +4,27 @@ Steady mode operation for laser wavelength control.
 This module implements steady mode operation of the laser which allows for tuning to
 wavelengths from the calibration table.
 Authors: RLK, AVR, SDU
-Last Revision: July 30, 2025 - Enhanced documentation and improved code formatting
+Last Revision: Aug 4, 2025 - Implemented new Communication class for serial communication
 """
 
+# ⚛️ Type checking
 from __future__ import annotations
-from abc import ABC, abstractmethod
-from time import sleep
 from typing import TYPE_CHECKING
 
-from pychilaslasers.laser_components.heaters import HeaterChannel
-from pychilaslasers.modes.calibrated import __Calibrated
-from pychilaslasers.modes.mode import LaserMode
 
 if TYPE_CHECKING:
-    from pychilaslasers import Laser
-    from utils import CalibrationEntry
+    from pychilaslasers.laser import Laser
+    from pychilaslasers.comm import Communication
+    from pychilaslasers.utils import CalibrationEntry
+
+# ✅ Standard library imports
+from abc import ABC, abstractmethod
+from time import sleep
+
+# ✅ Local imports
+from pychilaslasers.laser_components.heaters.heater_channels import HeaterChannel
+from pychilaslasers.modes.calibrated import __Calibrated
+from pychilaslasers.modes.mode import LaserMode
 
 
 class SteadyMode(__Calibrated):
@@ -49,13 +55,15 @@ class SteadyMode(__Calibrated):
         """
         super().__init__(laser)
         
-        self._laser = laser
         self._calibration = calibration["steady"]["calibration"]
         self._default_TEC = calibration["steady"]["tec_temp"]
         self._default_current = calibration["steady"]["current"]
 
         self._min_wl: float = min(self._calibration.keys())
         self._max_wl: float = max(self._calibration.keys())
+        _wavelengths: list[float] = sorted(list(self._calibration.keys()))
+        self._step_size: float = abs(_wavelengths[0] - _wavelengths[_wavelengths.count(_wavelengths[0])])
+
 
         
         self._wl: float = self._min_wl  # Default to minimum wavelength
@@ -101,28 +109,28 @@ class SteadyMode(__Calibrated):
         return self._wl
 
     @wavelength.setter
-    def wavelength(self, value: float) -> float:
+    def wavelength(self, wavelength: float) -> float:
         """Set the laser wavelength.
         
         Args:
-            value: Target wavelength in nanometers.
-                If the value is not in the calibration table, it will find the
+            wavelength: Target wavelength in nanometers.
+                If the wavelength is not in the calibration table, it will find the
                 closest available wavelength and use that instead.
             
         Returns:
-            float: The actual wavelength that was set.
+            The actual wavelength that was set.
             
         Raises:
             ValueError: If wavelength is outside the valid calibration range.
         """
-        if value < self._min_wl or value > self._max_wl:
-            raise ValueError(f"Wavelength must be between {self._min_wl} and {self._max_wl}.")
-        if value not in self._calibration.keys():
-            # Find the closest available wavelength to the requested value
-            value = min(self._calibration.keys(), key=lambda x: abs(x - value))
+        if wavelength < self._min_wl or wavelength > self._max_wl:
+            raise ValueError(f"Wavelength value {wavelength} not valid: must be between {self._min_wl} and {self._max_wl}.")
+        if wavelength not in self._calibration.keys():
+            # Find the closest available wavelength to the requested wavelength
+            wavelength = min(self._calibration.keys(), key=lambda x: abs(x - wavelength))
 
-        self._change_method.set_wl(value)
-        self._wl = value
+        self._change_method.set_wl(wavelength)
+        self._wl = wavelength
         
         # Trigger pulse if auto-trigger is enabled (inherited from parent)
         if self._autoTrig:
@@ -140,13 +148,13 @@ class SteadyMode(__Calibrated):
         return self._change_method.anti_hyst_enabled
 
     @antihyst.setter
-    def antihyst(self, value: bool) -> None:
+    def antihyst(self, state: bool) -> None:
         """Set the anti-hysteresis correction state.
         
         Args:
-            value: Enable (True) or disable (False) anti-hysteresis correction.
+            state: Enable (True) or disable (False) anti-hysteresis correction.
         """
-        self._change_method.anti_hyst_enabled = value
+        self._change_method.anti_hyst_enabled = state
 
     @property
     def mode(self) -> LaserMode:
@@ -156,7 +164,17 @@ class SteadyMode(__Calibrated):
             LaserMode.STEADY indicating steady mode operation.
         """
         return LaserMode.STEADY
-
+    
+    @property
+    def step_size(self) -> float:
+        """Get the step size between consecutive wavelengths.
+        
+        Returns:
+            The step size in nanometers between consecutive wavelengths.
+        """
+        return self._step_size
+    
+    
     ########## Method Overloads/Aliases ##########
 
     def get_wl(self) -> float:
@@ -169,37 +187,37 @@ class SteadyMode(__Calibrated):
         """
         return self.wavelength
 
-    def set_wl_relative(self, value: float) -> float:
+    def set_wl_relative(self, delta: float) -> float:
         """Set wavelength relative to current position.
         
         Args:
-            value: Wavelength change in nanometers, relative to current wavelength.
-                Positive values increase wavelength, negative values decrease it.
+            delta: Wavelength change in nanometers, relative to current wavelength.
+                Positive deltas increase wavelength, negative deltas decrease it.
                 
         Returns:
-            float: The new absolute wavelength that was set.
+            The new absolute wavelength that was set.
         
         Raises:
             ValueError: If the resulting wavelength is outside the valid range.
         """
-        self.wavelength = self.get_wl() + value
+        self.wavelength = self.get_wl() + delta
 
         return self.wavelength
     
 
     
-    def toggle_antihyst(self, value: bool | None = None) -> None:
+    def toggle_antihyst(self, state: bool | None = None) -> None:
         """Toggle the anti-hysteresis correction state.
         
         Args:
-            value: Optional explicit state to set. If None, toggles current state.
+            state: Optional explicit state to set. If None, toggles current state.
                 True enables anti-hysteresis, False disables it.
         """
-        if value is None:
+        if state is None:
             # Toggle the current state
             self._change_method.anti_hyst_enabled = not self._change_method.anti_hyst_enabled
         else:
-            self._change_method.anti_hyst_enabled = value
+            self._change_method.anti_hyst_enabled = state
 
 
 ########## Private Classes ##########
@@ -240,6 +258,7 @@ class _WLChangeMethod(ABC):
         """
 
         self._laser: Laser = laser
+        self._comm: Communication = laser._comm
         self._steady_mode: SteadyMode = steady_mode
         self._calibration_table: dict[float, CalibrationEntry] = calibration_table
         self._antihyst_parameters: tuple[list[float], list[float]] = anti_hyst_parameters
@@ -263,18 +282,17 @@ class _WLChangeMethod(ABC):
         
         while offset >= 0:
             v_phase_anti_hyst = ((initial_phase ** 2) + offset) ** 0.5  # V^2
-            self._laser.query(f"DRV:D {HeaterChannel.PHASE_SECTION.value:d} {v_phase_anti_hyst:.4f}")
+            self._comm.query(f"DRV:D {HeaterChannel.PHASE_SECTION.value:d} {v_phase_anti_hyst:.4f}")
             offset -= 2
             sleep(self._antihyst_parameters[1][0])
 
-        self._laser.query(f"DRV:D {HeaterChannel.PHASE_SECTION.value:d} {v_phase_anti_hyst:.4f}")
+        self._comm.query(f"DRV:D {HeaterChannel.PHASE_SECTION.value:d} {v_phase_anti_hyst:.4f}")
 
     ########## Properties (Getters/Setters) ##########
 
     @property
     def _wavelength(self) -> float:
-        """Get the current wavelength from the parent steady mode.
-        
+        """
         Returns:
             Current wavelength setting in nanometers.
         """
@@ -283,14 +301,14 @@ class _WLChangeMethod(ABC):
     ########## Abstract Methods ##########
 
     @abstractmethod
-    def set_wl(self, value: float) -> None:
+    def set_wl(self, wavelength: float) -> None:
         """Set the laser wavelength using the specific method implementation.
         <p>
         This method must be implemented by subclasses to handle the wavelength
         change procedure specific to each laser model.
         
         Args:
-            value: Target wavelength in nanometers.
+            wavelength: Target wavelength in nanometers.
             
         Raises:
             ValueError: If wavelength is not found in calibration table.
@@ -311,41 +329,53 @@ class _PreLoad(_WLChangeMethod):
         This method is specifically designed for COMET laser models.
     """
 
-    def set_wl(self, value: float) -> None:
-        """Set wavelength using preloaded calibration values.
+    def set_wl(self, wavelength: float) -> None:
+        """Set wavelength using preloaded calibration wavelengths.
         <p>
         Loads heater values from calibration table and applies them to the laser.
         Anti-hysteresis correction is applied only when a mode hop is detected.
         
         Warning:
-            This method assumes self._wavelength is NOT already set to the current
+            This method assumes self._wavelength is NOT already set to the requested
             wavelength. This is important for mode checking and anti-hysteresis application.
         
         Args:
-            value: Target wavelength in nanometers.
+            wavelength: Target wavelength in nanometers.
             
         Raises:
             ValueError: If wavelength is not found in calibration table.
         """
-        if value not in self._calibration_table.keys():
-            raise ValueError(f"Wavelength {value} not found in calibration table.")
+        if wavelength not in self._calibration_table.keys():
+            raise ValueError(f"Wavelength {wavelength} not found in calibration table.")
 
-        entry: CalibrationEntry = self._calibration_table[value]
+        entry: CalibrationEntry = self._calibration_table[wavelength]
         
         # Preload the laser with the calibration entry values
-        self._laser.query(f"DRV:DP 0 {entry.phase_section:.4f}")
-        self._laser.query(f"DRV:DP 1 {entry.large_ring:.4f}")
-        self._laser.query(f"DRV:DP 2 {entry.small_ring:.4f}")
-        self._laser.query(f"DRV:DP 3 {entry.coupler:.4f}")
+        self._comm.query(f"DRV:DP 0 {entry.phase_section:.4f}")
+        self._comm.query(f"DRV:DP 1 {entry.large_ring:.4f}")
+        self._comm.query(f"DRV:DP 2 {entry.small_ring:.4f}")
+        self._comm.query(f"DRV:DP 3 {entry.coupler:.4f}")
 
         # Apply the heater values
-        self._laser.query("DRV:U")
+        self._comm.query("DRV:U")
 
         # Check for mode hop and apply anti-hysteresis if needed
         if self._calibration_table[self._wavelength].mode_index != entry.mode_index:
             if self.anti_hyst_enabled:
                 self._antihyst()
-
+    
+    
+    @property
+    def step_size(self) -> float:
+        """Get the step size between consecutive wavelengths in the sweep range.
+        
+        Returns:
+            The step size in nanometers between consecutive wavelengths
+                in the sweep range.
+                
+        """
+        return self._step_size
+    
 
 class _CyclerIndex(_WLChangeMethod):
     """Cycler index-based wavelength change method for ATLAS model.
@@ -357,11 +387,11 @@ class _CyclerIndex(_WLChangeMethod):
         This method is the default for ATLAS laser models.
     """
 
-    def set_wl(self, value: float) -> None:
+    def set_wl(self, wavelength: float) -> None:
         """Set wavelength using the laser's cycler index.
         
         Args:
-            value: Target wavelength in nanometers.
+            wavelength: Target wavelength in nanometers.
             
         Raises:
             ValueError: If wavelength is not found in calibration table.
@@ -370,10 +400,10 @@ class _CyclerIndex(_WLChangeMethod):
             This method assumes self._wavelength is NOT already set to the current
             wavelength. This is important for mode checking and anti-hysteresis application.
         """
-        if value not in self._calibration_table.keys():
-            raise ValueError(f"Wavelength {value} not found in calibration table.")
+        if wavelength not in self._calibration_table.keys():
+            raise ValueError(f"Wavelength {wavelength} not found in calibration table.")
 
-        self._laser.query(f"DRV:CYC:LOAD {self._calibration_table[value].cycler_index}")
+        self._comm.query(f"DRV:CYC:LOAD {self._calibration_table[wavelength].cycler_index}")
 
         if self.anti_hyst_enabled:
             self._antihyst()

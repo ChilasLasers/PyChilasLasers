@@ -5,8 +5,10 @@ from pathlib import Path
 class Constants:
     """Constants used throughout the PyChilasLasers library."""
 
-    DEFAULT_BAUDRATE = 57600
+    DEFAULT_BAUDRATE = 460800
+    TLM_INITIAL_BAUDRATE = 57600 # Initial baudrate the laser is set to when it is powered on.
     SUPPORTED_BAUDRATES = {9600, 14400, 19200, 28800, 38400, 57600, 115200, 230400, 460800, 912600}
+
     # ERROR CODES THAT SHOULD TRIGGER A ERROR DIALOG (errors 14 to 23)
     CRITICAL_ERRORS: list[str] = ["E0" + str(x) for x in range(14,24)] + ["E0" + str(x) for x in range(30,51)]
 
@@ -28,7 +30,7 @@ class Constants:
     # Sweep mode default values (for COMET model)
     HARD_CODED_SWEEP_CURRENT: float = 280.0
     HARD_CODED_SWEEP_TEC_TEMP: float = 25.0
-    HARD_CODED_CYCLER_INTERVAL: int = 100
+    HARD_CODED_INTERVAL: int = 100
 
 
 from dataclasses import dataclass
@@ -100,7 +102,7 @@ def read_calibration_file(file_path: str | Path) -> dict:
         calibration["sweep"] = {
             "current": Constants.HARD_CODED_SWEEP_CURRENT,  # Default current for sweep mode
             "tec_temp": Constants.HARD_CODED_SWEEP_TEC_TEMP,  # Default TEC temperature for sweep mode
-            "cycler_interval": Constants.HARD_CODED_CYCLER_INTERVAL,  # Default cycler interval for sweep mode
+            "interval": Constants.HARD_CODED_INTERVAL,  # Default interval for sweep mode
             "wavelengths": []  # List of wavelengths for sweep mode
         }
 
@@ -161,7 +163,7 @@ def list_comports() -> list[str]:
     ports. In that regard this method is but a wrapper for it.
 
     Returns:
-        list[str]: List of available COM ports as strings sorted
+        List of available COM ports as strings sorted
         alphabetically in ascending order.
     """
     return sorted([port.device for port in comports()])

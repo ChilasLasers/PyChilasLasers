@@ -1,70 +1,182 @@
+"""
+Laser diode component 
+<p>
+This module implements the laser diode component that controls the laser's
+emission by managing the drive current and on/off state. Handles
+laser enable/disable operations as well as current adjustments.
+<p>
+Authors: SDU
+Last Revision: Aug 4, 2025 - Implemented new Communication class for serial communication
+"""
+
+# ⚛️ Type checking
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from pychilaslasers.laser_components.laser_component import LaserComponent
-
 if TYPE_CHECKING:
-    from pychilaslasers import Laser
+    from pychilaslasers.laser import Laser
+
+# ✅ Local imports
+from pychilaslasers.laser_components.laser_component import LaserComponent
 
 
 class Diode(LaserComponent):
+    """Laser diode component for current control.
+    <p>
+    The Diode class encapsulates the control of the laser's diode.
+    <p>
+    Args:
+        laser: The laser instance to control.
+    
+    Attributes:
+        state: The current on/off state of the laser diode.
+        current: The drive current level in milliamps.
+        value: Alias for the drive current (inherited from LaserComponent).
+        min_value: Minimum current (always 0.0 mA).
+        max_value: Maximum current.
+        unit: Current unit (mA).
+    """
 
     def __init__(self, laser: Laser) -> None:
-        super().__init__()
-        self._laser: Laser = laser
+        """Initialize the diode component with laser instance.
+        <p>
+        Sets up the laser diode component by querying the hardware for its
+        maximum current and configuring the component with
+        appropriate current range and units.
+        
+        Args:
+            laser: The laser instance to control.
+        """
+        super().__init__(laser=laser)
         self._min: float = 0.0
-        self._max: float = float(laser.query("LSR:IMAX?"))
+        self._max: float = float(laser._comm.query("LSR:IMAX?"))
         self._unit: str = "mA"
 
-    def turn_ON(self) -> None:
-        """Turns the laser diode ON."""
-        self._laser.query("LSR:STAT 1")
-
-    def turn_OFF(self) -> None:
-        """Turns the laser diode OFF."""
-        self.state = False
+    ########## Properties (Getters/Setters) ##########
 
     @property
     def state(self) -> bool:
-        """Gets the laser diode state.
+        """Get the current on/off state of the laser diode.
 
         Returns:
-            bool: The laser diode state.
+            True if the laser diode is ON, False if OFF.
         """
-        return bool(int(self._laser.query("LSR:STAT?")))
+        return bool(int(self._comm.query("LSR:STAT?")))
 
     @state.setter
-    def state(self, value: bool) -> None:
-        """Sets the laser diode state.
+    def state(self, state: bool) -> None:
+        """Set the on/off state of the laser diode.
+        <p>
+        Controls laser emission by enabling or disabling the diode.
 
         Args:
-            value (bool): The laser diode state to be set.
+            state: True to turn the laser ON, False to turn it OFF.
         """
-        self._laser.query(f"LSR:STAT {value:d}")
+        self._comm.query(f"LSR:STAT {state:d}")
 
     @property
     def current(self) -> float:
-        return float(self._laser.query("LSR:ILEV?"))
+        """Get the current drive current of the laser diode.
+        
+        Returns:
+            The current drive current in milliamps.
+        """
+        return float(self._comm.query("LSR:ILEV?"))
 
     @current.setter
     def current(self, current_ma: float) -> None:
-        """Sets the laser diode current.
+        """Set the drive current of the laser diode.
 
         Args:
-            current_ma (float): The laser diode current to be set.
+            current_ma: The desired drive current in milliamps.
+            
+        Raises:
+            ValueError: If current is not a number or is outside the valid range.
         """
         # Validate the value
         if not isinstance(current_ma, (int, float)):
             raise ValueError("Current must be a number.")
         if current_ma < self._min or current_ma > self._max:
-            raise ValueError(f"Current must be between {self._min} and {self._max} mA.")
+            raise ValueError(f"Current value {current_ma} not valid: must be between {self._min} and {self._max} mA.")
+
+        self._comm.query(f"LSR:ILEV {current_ma:.3f}")
+
+    ########## Method Overloads/Aliases ##########
+
+    def get_value(self) -> float:
+        """
+        Alias for the :attr:`value` property getter.
         
-        self._laser.query(f"LSR:ILEV {current_ma:.3f}")
+        Returns:
+            The current drive current in milliamps.
+        """
+        return self.value
+
+    def set_value(self, val: float) -> None:
+        """
+        Alias for the :attr:`value` property setter.
+
+        Args:
+            val: The desired drive current in milliamps.
+            
+        Raises:
+            ValueError: If current is not a number or is outside the valid range.
+        """
+        self.value = val
+
+    def get_current(self) -> float:
+        """
+        Alias for the :attr:`current` property getter.
+        
+        Returns:
+            The current drive current in milliamps.
+        """
+        return self.current
+
+    def set_current(self, current_ma: float) -> None:
+        """
+        Alias for the :attr:`current` property setter.
+
+        Args:
+            current_ma: The desired drive current in milliamps.
+            
+        Raises:
+            ValueError: If current is not a number or is outside the valid range.
+        """
+        self.current = current_ma
+
+    def turn_ON(self) -> None:
+        """Turn the laser diode ON.
+        <p>
+        Alias for setting :attr:`state` to True.
+        """
+        self.state = True
+
+    def turn_OFF(self) -> None:
+        """Turn the laser diode OFF.
+        <p>
+        Alias for setting :attr:`state` to False.
+        """
+        self.state = False
 
     @property
     def value(self) -> float:
+        """Get the current drive current value.
+        <p>
+        Alias for the :attr:`current` property to implement the LaserComponent interface.
+
+        Returns:
+            The current drive current in milliamps.
+        """
         return self.current
 
     @value.setter
     def value(self, val: float) -> None:
+        """Set the drive current value.
+        <p>
+        Alias for the :attr:`current` property setter to implement the LaserComponent interface.
+        
+        Args:
+            val: The desired drive current in milliamps.
+        """
         self.current = val

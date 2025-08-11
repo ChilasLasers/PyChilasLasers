@@ -27,10 +27,7 @@ from .manual_mode import ManualMode
 from .steady_mode import SteadyMode
 from .sweep_mode import SweepMode
 
-# Note: _Calibrated is kept internal as it's a base class for other modes
-# from .calibrated import _Calibrated  # Internal use only
-
-__all__ = [
+__all__: list[str] = [
     # Enums and base classes
     "LaserMode",
     "Mode",

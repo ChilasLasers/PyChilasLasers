@@ -1,4 +1,8 @@
-from enum import Enum, auto
+# ⚛️ Type checking
+from __future__ import annotations
+
+# ✅ Standard library imports
+from enum import Enum
 
 class HeaterChannel(Enum):
     PHASE_SECTION = 0

@@ -15,7 +15,11 @@ print(f"Current TEC temperature: {laser.tec.target} {laser.tec.unit}")
 
 
 
+
+
 laser.mode = LaserMode.SWEEP
+laser.sweep.set_range(1560.0,1550.0)  # Set sweep bounds
+laser.sweep.start_wavelength = 1555.0  # Set start wavelength for the sweep
 
 
 laser.sweep.start()  # Start the sweep mode
@@ -33,9 +37,7 @@ print(f"Current wavelength: {laser.sweep.wavelength} nm")
 # TODO go trough all files and check for type checking init like laser.py
 
 
-
-
-
+#  TODO move step size to calibrated class
 print("No errors!")
 
 

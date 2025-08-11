@@ -37,7 +37,7 @@ def run_sweeping_example(laser:Laser | None = None) -> None:
     max_wavelength: float = laser.sweep.max_wavelength
 
 
-    laser.sweep.cycler_interval = int(input("Enter the sweep interval (in us): "))
+    laser.sweep.interval = int(input("Enter the sweep interval (in us): "))
     print(f"Starting sweep from {min_wavelength}nm to {max_wavelength}nm")
     laser.sweep.start()
 

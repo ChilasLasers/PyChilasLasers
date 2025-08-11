@@ -6,16 +6,21 @@ It provides the base Mode class that all specific modes inherit from, as well as
 the LaserMode enumeration for type-safe mode identification.
 
 Authors: RLK, AVR, SDU
-Last Revision: July 30, 2025 - Enhanced documentation and improved code formatting
+Last Revision: Aug 4, 2025 - Implemented new Communication class for serial communication
 """
 
+# ⚛️ Type checking
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from abc import ABC, abstractmethod
-from enum import Enum
+
 
 if TYPE_CHECKING:
-    from pychilaslasers import Laser
+    from pychilaslasers.laser import Laser
+    from pychilaslasers.comm import Communication
+
+# ✅ Standard library imports
+from abc import ABC, abstractmethod
+from enum import Enum
 
 
 class LaserMode(Enum):
@@ -56,10 +61,11 @@ class Mode(ABC):
         """Initialize the mode with a reference to the parent laser.
         
         Args:
-            laser (Laser): The laser instance that owns this mode.
+            laser: The laser instance that owns this mode.
         """
         super().__init__()
         self._laser: Laser = laser
+        self._comm: Communication = laser._comm
 
     ########## Abstract Methods ##########
 
@@ -75,9 +81,8 @@ class Mode(ABC):
     @property
     @abstractmethod
     def mode(self) -> LaserMode:
-        """Get the mode type.
-        
+        """
         Returns:
-            LaserMode: The enumeration value identifying this mode type.
+            The enumeration value identifying this mode type.
         """
         pass
