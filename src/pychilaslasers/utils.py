@@ -1,6 +1,6 @@
 from csv import reader
 from pathlib import Path
-
+import pprint
 
 class Constants:
     """Constants used throughout the PyChilasLasers library."""
@@ -115,11 +115,55 @@ def read_calibration_file(file_path: str | Path) -> dict:
         if not content.strip():
             return calibration
             
+        if "[default_settings]" in csvfile.readline():
+            model = csvfile.readline()
+            assert model.split("=")[0].strip() == "laser_model"
+            model = model.split("=")[1].strip().replace('\r', '').replace('\n', '').upper()
+            calibration["model"] = model
+            settings: list[str]= [ "SWEEP_TEC_TARGET", "SWEEP_DIODE_CURRENT", "SWEEP_INTERVAL", "TUNE_TEC_TARGET", "TUNE_DIODE_CURRENT", "ANTI_HYST_PHASE_V_SQUARED", "ANTI_HYST_INTERVAL"]
+
+            if model != "COMET":
+                settings = list(filter(lambda setting: not setting.startswith("sweep"),settings))
+
+            def sanitize(word:str) -> str:
+                return word.strip().replace('\r', '').replace('\n', '').upper()
+
+            while "[look_up_table]" not in (line:= csvfile.readline()):
+                param, value = [sanitize(x) for x in line.split("=")]
+                assert param in settings
+                settings.pop(settings.index(param))
+
+                # Map settings to calibration dictionary
+                if param == "SWEEP_TEC_TARGET":
+                    calibration["sweep"]["tec_temp"] = float(value)
+                elif param == "SWEEP_DIODE_CURRENT":
+                    calibration["sweep"]["current"] = float(value)
+                elif param == "SWEEP_INTERVAL":
+                    calibration["sweep"]["interval"] = int(value)
+                elif param == "TUNE_TEC_TARGET":
+                    calibration["steady"]["tec_temp"] = float(value)
+                elif param == "TUNE_DIODE_CURRENT":
+                    calibration["steady"]["current"] = float(value)
+                elif param == "ANTI_HYST_PHASE_V_SQUARED":
+                    # Expecting a comma-separated list of floats
+                    voltages = [float(v) for v in value.strip("[]").split(",")]
+                    calibration["steady"]["anti-hyst"] = (voltages, calibration["steady"]["anti-hyst"][1])
+                elif param == "ANTI_HYST_INTERVAL":
+                    # Expecting a comma-separated list of floats
+                    intervals = [float(v) for v in value.strip("[]").split(",")]
+                    calibration["steady"]["anti-hyst"] = (calibration["steady"]["anti-hyst"][0], intervals)
+                
+            assert settings == []
+            assert len(calibration["steady"]["anti-hyst"][0]) > 0
+            assert len(calibration["steady"]["anti-hyst"][1]) > 0
+            assert len(calibration["steady"]["anti-hyst"][0]) == len(calibration["steady"]["anti-hyst"][1]) + 1\
+            or len(calibration["steady"]["anti-hyst"][1]) == 1
         # Use semicolon delimiter explicitly for calibration files
         csv_reader = reader(csvfile, delimiter=';')
         cycler_index: int = 0  # Initialize cycler index for COMET model
         mode_index = 0  # Initialize mode index for COMET model
         hop: bool = False
+
         for row in csv_reader:
 
             # Logic for only incrementing the mode_index once per mode hop
@@ -167,3 +211,11 @@ def list_comports() -> list[str]:
         alphabetically in ascending order.
     """
     return sorted([port.device for port in comports()])
+
+
+if __name__ == "__main__":
+    dic = read_calibration_file("C:\\Users\\Sebastian\\Documents\\Projects\\PyChilasLasers\\tests\\calibrationFiles\\comet1_with_settings.csv")
+    dic["steady"].pop("calibration")
+    dic["sweep"].pop("wavelengths")
+    pprint.pprint(dic)
+
