@@ -14,7 +14,6 @@ from math import sqrt
 from time import sleep
 from typing import TYPE_CHECKING
 
-
 if TYPE_CHECKING:
     from pychilaslasers.laser import Laser
 
@@ -70,7 +69,7 @@ class Heater(LaserComponent):
             The channel identifier for this heater.
         """
         pass
-    
+
     @property
     def value(self) -> float:
         """Get the current heater drive value.
@@ -81,7 +80,7 @@ class Heater(LaserComponent):
         return float(self._comm.query(f"DRV:D? {self.channel.value:d}"))
 
     @value.setter
-    def value(self, value: float) -> None:  
+    def value(self, value: float) -> None:
         """Set the heater drive value.
 
         Args:
@@ -130,6 +129,7 @@ class TunableCoupler(Heater):
         """Get the tunable coupler channel."""
         return HeaterChannel.TUNABLE_COUPLER
 
+
 class LargeRing(Heater):
     """Large ring heater component."""
 
@@ -138,6 +138,7 @@ class LargeRing(Heater):
         """Get the large ring channel."""
         return HeaterChannel.RING_LARGE
 
+
 class SmallRing(Heater):
     """Small ring heater component."""
 
@@ -145,20 +146,19 @@ class SmallRing(Heater):
     def channel(self) -> HeaterChannel:
         """Get the small ring channel."""
         return HeaterChannel.RING_SMALL
-    
+
+
 class PhaseSection(Heater):
     """Phase section heater component."""
+
     def __init__(self, laser: Laser) -> None:
         """Initialize the phase section heater component."""
         super().__init__(laser)
 
         self._anti_hyst = True
 
-        
         self._volts: None | list[float] = None
-        self._time_steps: None | list[float]  = None
-
-
+        self._time_steps: None | list[float] = None
 
     def set_value(self, value: float) -> None:
         super().set_value(value)
@@ -166,7 +166,7 @@ class PhaseSection(Heater):
         if self._anti_hyst:
             self._antihyst(value)
 
-    def _antihyst(self, target : float) -> None:
+    def _antihyst(self, target: float) -> None:
         """Apply anti-hysteresis correction to the laser.
         <p> 
         Applies a voltage ramping procedure to the phase section heater to
@@ -175,30 +175,33 @@ class PhaseSection(Heater):
         When calibration data is unavailable, default parameters from the constants class are used
         """
 
-        if not self._volts or not self._time_steps: 
-            voltages:list[float] = Constants.HARD_CODED_STEADY_ANTI_HYST[0]
-            time_steps:list[float] = Constants.HARD_CODED_STEADY_ANTI_HYST[0]
+        if not self._volts or not self._time_steps:
+            voltage_squares: list[float] = Constants.HARD_CODED_STEADY_ANTI_HYST[0]
+            time_steps: list[float] = Constants.HARD_CODED_STEADY_ANTI_HYST[0]
         else:
-            voltages = self._volts.copy()
+            voltage_squares = self._volts.copy()
             time_steps = self._time_steps.copy()
 
-        for i, voltage in enumerate(voltages):
-            if target**2 - voltage**2 < 0:
+        time_steps: list[float] = [time_steps[0]] * (len(voltage_squares) - 1) + [0] if len(time_steps) == 1 else time_steps + [0]
+
+        for i, voltage in enumerate(voltage_squares):
+            if target ** 2 + voltage < 0:
                 value = 0
                 logging.getLogger(__name__).warning("Anti-hysteresis"
-                f"value out of bounds: {value} (min: {self.min_value}, max: " \
-                f"{self.max_value}). Approximating by 0")
+                                                    f"value out of bounds: {value} (min: {self.min_value}, max: "
+                                                    f"{self.max_value}). Approximating by 0")
                 value: float = 0
             else:
-                value = (target**2 - voltage**2)
+                value = sqrt(target ** 2 + voltage)
             if value < self.min_value or value > self.max_value:
-                logging.getLogger(__name__).error("Anti-hysteresis" 
-                f"value out of bounds: {value} (min: {self.min_value}, max: "
-                f"{self.max_value}). Approximating with the closest limit.")
-            value = min(value, self.max_value)
-            value = max(value, self.min_value)
+                logging.getLogger(__name__).error("Anti-hysteresis"
+                                                  f"value out of bounds: {value} (min: {self.min_value}, max: "
+                                                  f"{self.max_value}). Approximating with the closest limit.")
+                value = min(value, self.max_value)
+                value = max(value, self.min_value)
             self._comm.query(f"DRV:D {HeaterChannel.PHASE_SECTION.value:d} {value:.4f}")
-            sleep(time_steps[i]/1000)
+            sleep(time_steps[i] / 1000)
+
     @property
     def anti_hyst(self) -> bool:
         """Get the anti-hysteresis flag."""
@@ -211,9 +214,7 @@ class PhaseSection(Heater):
             raise ValueError("anti_hyst must be a boolean.")
         self._anti_hyst = value
 
-
-
-    def set_hyst_params(self,volts:list[float], times: list[float]):
+    def set_hyst_params(self, volts: list[float], times: list[float]):
         self._volts = volts
         self._time_steps = times
 

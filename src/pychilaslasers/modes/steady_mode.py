@@ -265,12 +265,12 @@ class _WLChangeMethod(ABC):
         self._calibration_table: dict[float, CalibrationEntry] = calibration_table
         antihyst_parameters: tuple[list[float], list[float]] = anti_hyst_parameters
 
-        self._voltages = antihyst_parameters[0]
+        self._voltage_squares = antihyst_parameters[0]
         self._time_steps = antihyst_parameters[1]
 
-        assert len(self._voltages) != 0 and  len(self._time_steps) != 0
-        assert len(self._voltages) == len(self._time_steps) + 1 or len(self._time_steps) == 1
-        self._time_steps: list[float] = [self._time_steps[0]] * (len(self._voltages) - 1) + [0] if len(self._time_steps) == 1 else self._time_steps + [0]
+        assert len(self._voltage_squares) != 0 and len(self._time_steps) != 0
+        assert len(self._voltage_squares) == len(self._time_steps) + 1 or len(self._time_steps) == 1
+        self._time_steps: list[float] = [self._time_steps[0]] * (len(self._voltage_squares) - 1) + [0] if len(self._time_steps) == 1 else self._time_steps + [0]
 
         self._phase_max: float = self._laser._manual_mode.phase_section.max_value
         self._phase_min: float = self._laser._manual_mode.phase_section.min_value
@@ -289,25 +289,26 @@ class _WLChangeMethod(ABC):
 
         target = float(self._calibration_table[self._wavelength].phase_section)
 
-        voltages = self._voltages.copy()
+        voltage_squares = self._voltage_squares.copy()
         time_steps = self._time_steps.copy()
 
 
-        for i, voltage in enumerate(voltages):
-            if target**2 - voltage**2 < 0:
+
+        for i, voltage in enumerate(voltage_squares):
+            if target**2 + voltage < 0:
                 value = 0
                 logging.getLogger(__name__).warning("Anti-hysteresis " \
                 f"value out of bounds: {value} (min: {self._phase_min}, max: "
                 f"{self._phase_max}). Approximating by 0")
                 value: float = 0
             else:
-                value = (target**2 - voltage**2)
+                value = sqrt(target**2 + voltage)
             if value < self._phase_min or value > self._phase_max:
                 logging.getLogger(__name__).error("Anti-hysteresis" 
                 f"value out of bounds: {value} (min: {self._phase_min}, max: "
                 f"{self._phase_max}). Approximating with the closest limit.")
-            value = min(value, self._phase_max)
-            value = max(value, self._phase_min)
+                value = min(value, self._phase_max)
+                value = max(value, self._phase_min)
             self._comm.query(f"DRV:D {HeaterChannel.PHASE_SECTION.value:d} {value:.4f}")
             sleep(time_steps[i]/1000)
 
