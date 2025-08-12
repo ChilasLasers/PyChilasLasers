@@ -294,13 +294,22 @@ class _WLChangeMethod(ABC):
 
 
         for i, voltage in enumerate(voltages):
-            value: float = sqrt(target**2 - voltage**2)
+            if target**2 - voltage**2 < 0:
+                value = 0
+                logging.getLogger(__name__).warning("Anti-hysteresis " \
+                f"value out of bounds: {value} (min: {self._phase_min}, max: "
+                f"{self._phase_max}). Approximating by 0")
+                value: float = 0
+            else:
+                value = (target**2 - voltage**2)
             if value < self._phase_min or value > self._phase_max:
-                logging.getLogger(__name__).error(f"Anti-hysteresis value out of bounds: {value} (min: {self._phase_min}, max: {self._phase_max})")
+                logging.getLogger(__name__).error("Anti-hysteresis" 
+                f"value out of bounds: {value} (min: {self._phase_min}, max: "
+                f"{self._phase_max}). Approximating with the closest limit.")
             value = min(value, self._phase_max)
             value = max(value, self._phase_min)
             self._comm.query(f"DRV:D {HeaterChannel.PHASE_SECTION.value:d} {value:.4f}")
-            sleep(time_steps[i])
+            sleep(time_steps[i]/1000)
 
 
     ########## Properties (Getters/Setters) ##########

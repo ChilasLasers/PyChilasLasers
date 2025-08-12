@@ -175,7 +175,6 @@ class PhaseSection(Heater):
         When calibration data is unavailable, default parameters from the constants class are used
         """
 
-
         if not self._volts or not self._time_steps: 
             voltages:list[float] = Constants.HARD_CODED_STEADY_ANTI_HYST[0]
             time_steps:list[float] = Constants.HARD_CODED_STEADY_ANTI_HYST[0]
@@ -183,16 +182,23 @@ class PhaseSection(Heater):
             voltages = self._volts.copy()
             time_steps = self._time_steps.copy()
 
-
         for i, voltage in enumerate(voltages):
-            value: float = sqrt(target**2 - voltage**2)
-            if value < self._min or value > self._max:
-                logging.getLogger(__name__).error(f"Anti-hysteresis value out of bounds: {value} (min: {self._min}, max: {self._max})")
-            value = min(value, self._max)
-            value = max(value, self._min)
+            if target**2 - voltage**2 < 0:
+                value = 0
+                logging.getLogger(__name__).warning("Anti-hysteresis"
+                f"value out of bounds: {value} (min: {self.min_value}, max: " \
+                f"{self.max_value}). Approximating by 0")
+                value: float = 0
+            else:
+                value = (target**2 - voltage**2)
+            if value < self.min_value or value > self.max_value:
+                logging.getLogger(__name__).error("Anti-hysteresis" 
+                f"value out of bounds: {value} (min: {self.min_value}, max: "
+                f"{self.max_value}). Approximating with the closest limit.")
+            value = min(value, self.max_value)
+            value = max(value, self.min_value)
             self._comm.query(f"DRV:D {HeaterChannel.PHASE_SECTION.value:d} {value:.4f}")
-            sleep(time_steps[i])
-
+            sleep(time_steps[i]/1000)
     @property
     def anti_hyst(self) -> bool:
         """Get the anti-hysteresis flag."""

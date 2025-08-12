@@ -157,6 +157,8 @@ class Laser:
         
         if self._model == "COMET":
             self._sweep_mode = SweepMode(self, calibration)
+        params = calibration["steady"]["anti-hyst"]
+        self._manual_mode.phase_section.set_hyst_params(params[0],params[1])
 
 
     ########## Properties (Getters/Setters) ##########
