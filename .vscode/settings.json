@@ -6,6 +6,7 @@
         "baudrates",
         "bytesize",
         "CPOS",
+        "csvfile",
         "EIGHTBITS",
         "pychilaslasers",
         "signum",

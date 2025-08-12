@@ -4,7 +4,7 @@ Steady mode operation for laser wavelength control.
 This module implements steady mode operation of the laser which allows for tuning to
 wavelengths from the calibration table.
 Authors: RLK, AVR, SDU
-Last Revision: Aug 4, 2025 - Implemented new Communication class for serial communication
+Last Revision: Aug 12, 2025 - Implemented anti-hyst procedure
 """
 
 # ⚛️ Type checking

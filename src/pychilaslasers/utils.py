@@ -25,7 +25,7 @@ class Constants:
     # Steady mode default values
     HARD_CODED_STEADY_CURRENT: float = 295.0
     HARD_CODED_STEADY_TEC_TEMP: float = 25.0
-    HARD_CODED_STEADY_ANTI_HYST: tuple = ([1.0, 2.0, 3.0], [0.1, 0.2, 0.3])
+    HARD_CODED_STEADY_ANTI_HYST: tuple = ([20.0,0.0], [10])
     
     # Sweep mode default values (for COMET model)
     HARD_CODED_SWEEP_CURRENT: float = 280.0

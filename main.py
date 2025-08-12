@@ -39,6 +39,8 @@ print(f"Current wavelength: {laser.sweep.wavelength} nm")
 
 
 #  TODO move step size to calibrated class
+# TODO implement anti-hyst for phase in manual mode
+
 print("No errors!")
 
 print("\nLaser Default Settings:")

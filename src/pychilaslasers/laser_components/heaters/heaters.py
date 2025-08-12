@@ -5,22 +5,27 @@ This module implements heater components that control thermal elements in the la
 Includes individual heater types. These are only available in manual mode.
 <p>
 Authors: SDU
-Last Revision: Aug 4, 2025 - Implemented new Communication class for serial communication
+Last Revision: Aug 12, 2025 - Implemented anti-hyst procedure
 """
 
 # ⚛️ Type checking
 from __future__ import annotations
+from math import sqrt
+from time import sleep
 from typing import TYPE_CHECKING
+
 
 if TYPE_CHECKING:
     from pychilaslasers.laser import Laser
 
 # ✅ Standard library imports
 from abc import abstractmethod
+import logging
 
 # ✅ Local imports
 from pychilaslasers.laser_components.laser_component import LaserComponent
 from pychilaslasers.laser_components.heaters.heater_channels import HeaterChannel
+from pychilaslasers.utils import Constants
 
 
 class Heater(LaserComponent):
@@ -143,6 +148,68 @@ class SmallRing(Heater):
     
 class PhaseSection(Heater):
     """Phase section heater component."""
+    def __init__(self, laser: Laser) -> None:
+        """Initialize the phase section heater component."""
+        super().__init__(laser)
+
+        self._anti_hyst = True
+
+        
+        self._volts: None | list[float] = None
+        self._time_steps: None | list[float]  = None
+
+
+
+    def set_value(self, value: float) -> None:
+        super().set_value(value)
+        # Apply additional function after setting value
+        if self._anti_hyst:
+            self._antihyst(value)
+
+    def _antihyst(self, target : float) -> None:
+        """Apply anti-hysteresis correction to the laser.
+        <p> 
+        Applies a voltage ramping procedure to the phase section heater to
+        minimize hysteresis effects during wavelength changes. The specifics of 
+        this method are laser-dependent and are specified as part of the calibration data. 
+        When calibration data is unavailable, default parameters from the constants class are used
+        """
+
+
+        if not self._volts or not self._time_steps: 
+            voltages:list[float] = Constants.HARD_CODED_STEADY_ANTI_HYST[0]
+            time_steps:list[float] = Constants.HARD_CODED_STEADY_ANTI_HYST[0]
+        else:
+            voltages = self._volts.copy()
+            time_steps = self._time_steps.copy()
+
+
+        for i, voltage in enumerate(voltages):
+            value: float = sqrt(target**2 - voltage**2)
+            if value < self._min or value > self._max:
+                logging.getLogger(__name__).error(f"Anti-hysteresis value out of bounds: {value} (min: {self._min}, max: {self._max})")
+            value = min(value, self._max)
+            value = max(value, self._min)
+            self._comm.query(f"DRV:D {HeaterChannel.PHASE_SECTION.value:d} {value:.4f}")
+            sleep(time_steps[i])
+
+    @property
+    def anti_hyst(self) -> bool:
+        """Get the anti-hysteresis flag."""
+        return self._anti_hyst
+
+    @anti_hyst.setter
+    def anti_hyst(self, value: bool) -> None:
+        """Set the anti-hysteresis flag."""
+        if not isinstance(value, bool):
+            raise ValueError("anti_hyst must be a boolean.")
+        self._anti_hyst = value
+
+
+
+    def set_hyst_params(self,volts:list[float], times: list[float]):
+        self._volts = volts
+        self._time_steps = times
 
     @property
     def channel(self) -> HeaterChannel:

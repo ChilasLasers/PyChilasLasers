@@ -288,7 +288,8 @@ class Laser:
         if previous_mode is LaserMode.SWEEP and self._mode.mode is not LaserMode.SWEEP:
             self._sweep_mode.stop()
 
-        self._mode.apply_defaults()
+        if previous_mode is not self._mode.mode:
+            self._mode.apply_defaults()
         logging.info(f"Laser mode set to {self._mode.mode}")
 
 

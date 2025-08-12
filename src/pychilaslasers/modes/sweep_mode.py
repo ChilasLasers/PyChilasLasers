@@ -16,7 +16,13 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from pychilaslasers.laser import Laser
 
+
+# ✅ Standard library imports
+import logging
+
+
 # ✅ Local imports
+from pychilaslasers.exceptions.laser_error import LaserError
 from pychilaslasers.exceptions.mode_error import ModeError
 from pychilaslasers.modes.calibrated import __Calibrated
 from pychilaslasers.modes.mode import LaserMode
@@ -95,7 +101,13 @@ class SweepMode(__Calibrated):
         """
         self._laser.tec.target = self._default_TEC
         self._laser.diode.current = self._default_current
-        self.set_range(start_wl=self._max_wl, end_wl=self._min_wl)
+        try:
+            self.set_range(start_wl=self._max_wl, end_wl=self._min_wl)
+        except LaserError as e:
+            if "cycler" not in e.message:
+                logging.getLogger(__name__).error(f"Failed to set sweep range: {e}")
+                raise e
+
         self.interval = self._default_interval
 
     def start(self, number_sweeps: int | None = None) -> None:
