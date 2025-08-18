@@ -589,7 +589,7 @@ class TLMLaser(Laser):
         # Clear cycler, all values are set to 0
         self.clear_cycler_table()
         # Turn off status codes to speed up communication
-        self.prefix_mode = False
+        # self.prefix_mode = False
         # Update per entry/row heater values into RAM
         for cycler_entry in range(self._cycler_table_length):
             self.put_cycler_entry(
@@ -616,7 +616,7 @@ class TLMLaser(Laser):
                     logger.info(f"Entry {(cycler_entry + 1):d}/{self._cycler_table_length:d}")
 
         # Turn status codes on as default communication mode
-        self.prefix_mode = True
+        # self.prefix_mode = True
 
         # Adding wavelengths is only supported from firmware version 1.3.8 and higher.
         if add_wavelengths and Version(self.fwv) >= Version("1.3.8"):
