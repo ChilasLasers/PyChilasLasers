@@ -299,7 +299,7 @@ class Communication:
             
 
         # 1. Instruct driver to use new baudrate
-        logger.info(f"Switching baudrates from {self._serial.baudrate} to {new_baudrate}. This will temporarily close the serial connection")
+        logger.info(f"Switching baudrates from {self._serial.baudrate} to {new_baudrate}.")
         self._serial.write(f"SYST:SER:BAUD {new_baudrate:d}\r\n".encode("ascii"))
         logger.debug(f"[baudrate_switch] Writing to serial: SYST:SER:BAUD {new_baudrate:d}")
         # 2. Close serial connection
