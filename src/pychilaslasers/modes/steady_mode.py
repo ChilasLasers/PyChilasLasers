@@ -265,12 +265,12 @@ class _WLChangeMethod(ABC):
         self._calibration_table: dict[float, CalibrationEntry] = calibration_table
         antihyst_parameters: tuple[list[float], list[float]] = anti_hyst_parameters
 
-        self._voltage_squares = antihyst_parameters[0]
+        self._v_phases_squared_antihyst = antihyst_parameters[0]
         self._time_steps = antihyst_parameters[1]
 
-        assert len(self._voltage_squares) != 0 and len(self._time_steps) != 0
-        assert len(self._voltage_squares) == len(self._time_steps) + 1 or len(self._time_steps) == 1
-        self._time_steps: list[float] = [self._time_steps[0]] * (len(self._voltage_squares) - 1) + [0] if len(self._time_steps) == 1 else self._time_steps + [0]
+        assert len(self._v_phases_squared_antihyst) != 0 and len(self._time_steps) != 0
+        assert len(self._v_phases_squared_antihyst) == len(self._time_steps) + 1 or len(self._time_steps) == 1
+        self._time_steps: list[float] = [self._time_steps[0]] * (len(self._v_phases_squared_antihyst) - 1) + [0] if len(self._time_steps) == 1 else self._time_steps + [0]
 
         self._phase_max: float = self._laser._manual_mode.phase_section.max_value
         self._phase_min: float = self._laser._manual_mode.phase_section.min_value
@@ -279,7 +279,7 @@ class _WLChangeMethod(ABC):
 
     ########## Private Methods ##########
 
-    def _antihyst(self) -> None:
+    def _antihyst(self, v_phase: float = None) -> None:
         """Apply anti-hysteresis correction to the laser.
         <p> 
         Applies a voltage ramping procedure to the phase section heater to
@@ -287,22 +287,20 @@ class _WLChangeMethod(ABC):
         this method are laser-dependent and are specified as part of the calibration data.
         """
 
-        target = float(self._calibration_table[self._wavelength].phase_section)
-
-        voltage_squares = self._voltage_squares.copy()
+        if v_phase is None:
+            v_phase = self._comm.query(f"DRV:D? {HeaterChannel.PHASE_SECTION.value:d}")
+        v_phases_squared_antihyst = self._v_phases_squared_antihyst.copy()
         time_steps = self._time_steps.copy()
 
-
-
-        for i, voltage in enumerate(voltage_squares):
-            if target**2 + voltage < 0:
+        for i, v_phase_squared_antihyst in enumerate(v_phases_squared_antihyst):
+            if v_phase**2 + v_phase_squared_antihyst < 0:
                 value = 0
                 logging.getLogger(__name__).warning("Anti-hysteresis " \
                 f"value out of bounds: {value} (min: {self._phase_min}, max: "
                 f"{self._phase_max}). Approximating by 0")
                 value: float = 0
             else:
-                value = sqrt(target**2 + voltage)
+                value = sqrt(v_phase**2 + v_phase_squared_antihyst)
             if value < self._phase_min or value > self._phase_max:
                 logging.getLogger(__name__).error("Anti-hysteresis" 
                 f"value out of bounds: {value} (min: {self._phase_min}, max: "
@@ -387,7 +385,7 @@ class _PreLoad(_WLChangeMethod):
         # Check for mode hop and apply anti-hysteresis if needed
         if self._calibration_table[self._wavelength].mode_index != entry.mode_index:
             if self.anti_hyst_enabled:
-                self._antihyst()
+                self._antihyst(entry.phase_section)
     
     
     @property
