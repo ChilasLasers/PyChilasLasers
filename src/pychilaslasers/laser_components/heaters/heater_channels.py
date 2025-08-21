@@ -6,6 +6,6 @@ from enum import Enum
 
 class HeaterChannel(Enum):
     PHASE_SECTION = 0
-    RING_LARGE = 1
-    RING_SMALL = 2
+    RING_SMALL = 1
+    RING_LARGE = 2
     TUNABLE_COUPLER = 3
