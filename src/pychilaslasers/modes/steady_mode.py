@@ -9,8 +9,6 @@ Last Revision: Aug 12, 2025 - Implemented anti-hyst procedure
 
 # ⚛️ Type checking
 from __future__ import annotations
-import logging
-from math import sqrt
 from typing import TYPE_CHECKING
 
 
@@ -20,6 +18,8 @@ if TYPE_CHECKING:
     from pychilaslasers.utils import CalibrationEntry
 
 # ✅ Standard library imports
+import logging
+from math import sqrt
 from abc import ABC, abstractmethod
 from time import sleep
 

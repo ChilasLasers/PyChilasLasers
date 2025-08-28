@@ -16,10 +16,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from pychilaslasers.laser import Laser
 
-
 # ✅ Standard library imports
 import logging
-
 
 # ✅ Local imports
 from pychilaslasers.exceptions.laser_error import LaserError

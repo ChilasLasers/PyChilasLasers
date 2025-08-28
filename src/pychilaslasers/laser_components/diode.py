@@ -22,9 +22,7 @@ from pychilaslasers.laser_components.laser_component import LaserComponent
 
 class Diode(LaserComponent):
     """Laser diode component for current control.
-    <p>
-    The Diode class encapsulates the control of the laser's diode.
-    <p>
+
     Args:
         laser: The laser instance to control.
     
@@ -65,9 +63,7 @@ class Diode(LaserComponent):
 
     @state.setter
     def state(self, state: bool) -> None:
-        """Set the on/off state of the laser diode.
-        <p>
-        Controls laser emission by enabling or disabling the diode.
+        """Controls laser emission by enabling or disabling the diode.
 
         Args:
             state: True to turn the laser ON, False to turn it OFF.
@@ -76,8 +72,7 @@ class Diode(LaserComponent):
 
     @property
     def current(self) -> float:
-        """Get the current drive current of the laser diode.
-        
+        """
         Returns:
             The current drive current in milliamps.
         """

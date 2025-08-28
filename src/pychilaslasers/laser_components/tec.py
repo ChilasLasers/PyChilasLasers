@@ -34,8 +34,7 @@ class TEC(LaserComponent):
     """
 
     def __init__(self, laser: Laser) -> None:
-        """Initialize the TEC component with laser instance.
-        <p>
+        """
         Sets up the temperature control component by querying the laser hardware
         for its temperature operating limits and configuring the component
         with appropriate units and ranges.
