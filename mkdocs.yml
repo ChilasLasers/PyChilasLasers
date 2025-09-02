@@ -3,10 +3,6 @@ site_name: PyChilasLasers Developer Documentation
 theme:
   name: material
   logo: assets/star.ico
-  palette:
-    scheme: slate
-    primary: custom
-    accent: custom
   features:
     - toc.follow
     - navigation.indexes
@@ -19,6 +15,22 @@ theme:
   font:
     text: Rajdhani Regular
     code: Roboto Mono
+
+  palette:
+
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
 
 extra_css:
   - stylesheets/extra.css
