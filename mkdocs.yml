@@ -3,6 +3,12 @@ site_name: PyChilasLasers Docs
 theme:
   name: material
   logo: assets/star.ico
+  features:
+    - toc.follow
+    - navigation.indexes
+
+
+
 plugins:
   - search
   - mkdocstrings:
@@ -11,14 +17,38 @@ plugins:
         python:
           paths: ["src"]             # <-- make package importable (src layout)
           options:
-            docstring_style: google
-  - api-autonav:
-      modules: ['src/pychilaslasers']
+            docstring_style: google       
+            show_inheritance_diagram: true     
+            group_by_category: true
+            show_category_heading: true
+            show_symbol_type_heading: false
+            show_symbol_type_toc: true
+            merge_init_into_class: true
+            members_order: "source"
+            # summary: true
+            extra:
+              ignore_init_summary: true
   - autorefs
-
 
 watch:
   - src                              # live-reload when code changes
+
+nav:
+  - Home: index.md
+  - Quickstart Guide: quickstart.md
+  - Documentation: 
+    - package/index.md           
+    - package/laser.md
+    - package/modes.md
+    - Laser Components:
+      - package/laser_components/index.md
+      - package/laser_components/heaters.md
+    - package/comm.md
+    - package/exceptions.md
+    - package/utils.md
+  - About: about.md
+  - Licence: licence.md
+    
 
 
 repo_url: https://github.com/ChilasLab/PyChilasLasers

@@ -1,6 +1,3 @@
----
-icon: material/emoticon-happy 
----
 
 # Welcome to Chilas documentation
 
@@ -87,8 +84,6 @@ PyChilasLasers/
 └── README.md                       # Project overview
 ```
 
-
-# [pychilaslasers api](module.md)
 
 
 # TODO

@@ -27,7 +27,7 @@ class ModeError(Exception):
         <p>
         This exception is used to indicate that an operation cannot be performed in the current mode of the laser.
         It provides information about the current mode and the desired mode that would allow the operation to succeed
-        <p>
+        
         Args:
             message (str): The error message.
             current_mode (LaserMode): The current mode of the laser.
