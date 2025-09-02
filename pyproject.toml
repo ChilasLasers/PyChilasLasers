@@ -11,6 +11,13 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "mkdocs>=1.6.1",
+    "mkdocs-api-autonav>=0.3.1",
+    "mkdocs-dracula-theme>=1.0.8",
+    "mkdocs-gen-files>=0.5.0",
+    "mkdocs-literate-nav>=0.6.2",
+    "mkdocs-material>=9.6.18",
+    "mkdocstrings[python]>=0.30.0",
     "pychilaslasers",
     "pytest>=8.4.1",
 ]

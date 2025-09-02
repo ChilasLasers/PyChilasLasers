@@ -1,0 +1,27 @@
+site_name: PyChilasLasers Docs
+
+theme:
+  name: material
+  logo: assets/star.ico
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: ["src"]             # <-- make package importable (src layout)
+          options:
+            docstring_style: google
+  - api-autonav:
+      modules: ['src/pychilaslasers']
+  - autorefs
+
+
+watch:
+  - src                              # live-reload when code changes
+
+
+repo_url: https://github.com/ChilasLab/PyChilasLasers
+repo_name: 'GitHub'
+
+site_author: Chilas B.V.

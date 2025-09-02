@@ -8,14 +8,14 @@ for steady-state and sweeping operations. The module also defines wavelength cha
 and manages the calibration data for different laser models.
 
 Classes:
-    - LaserMode: Enum defining available laser modes
-    - Mode: Abstract base class for all modes
-    - ManualMode: Direct manual control of laser parameters
-    - SteadyMode: Calibrated steady-state wavelength operation
-    - SweepMode: Calibrated sweeping operations
-    - WLChangeMethod: Abstract base for wavelength change methods
-    - PreLoad: Preload-based wavelength change method
-    - CyclerIndex: Cycler index-based wavelength change method
+    LaserMode: Enum defining available laser modes
+    Mode: Abstract base class for all modes
+    ManualMode: Direct manual control of laser parameters
+    SteadyMode: Calibrated steady-state wavelength operation
+    SweepMode: Calibrated sweeping operations
+    WLChangeMethod: Abstract base for wavelength change methods
+    PreLoad: Preload-based wavelength change method
+    CyclerIndex: Cycler index-based wavelength change method
 """
 
 
