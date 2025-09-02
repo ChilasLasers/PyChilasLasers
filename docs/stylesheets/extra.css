@@ -1,0 +1,17 @@
+:root  > * {
+  --md-primary-fg-color:        #f47920;
+  --md-primary-fg-color--light: #f47920;
+  --md-primary-fg-color--dark:  #f47920;
+
+
+}
+
+/* Top bar / header background */
+.md-header {
+  background-color: #551f7a; /* deep indigo hex */
+}
+
+/* Accent color for text/links/highlight */
+:root {
+  --md-accent-fg-color: #ff7043;   /* orange accent */
+}

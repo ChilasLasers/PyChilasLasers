@@ -1,13 +1,37 @@
-site_name: PyChilasLasers Docs
+site_name: PyChilasLasers Developer Documentation
 
 theme:
   name: material
   logo: assets/star.ico
+  palette:
+    scheme: slate
+    primary: custom
+    accent: custom
   features:
     - toc.follow
     - navigation.indexes
+    - navigation.footer
+    - search.highlight
+    - search.share
+    - header.autohide
+  icon:
+    repo: fontawesome/brands/github
+  font:
+    text: Rajdhani Regular
+    code: Roboto Mono
+
+extra_css:
+  - stylesheets/extra.css
+extra:
+  social:
+    - icon: fontawesome/brands/linkedin 
+      link: https://www.linkedin.com/company/chilas/
+    - icon: fontawesome/brands/x-twitter
+      link: https://x.com/ChilasLasers
+  generator: false
 
 
+copyright: Copyright &copy; 2025 Chilas B.V.
 
 plugins:
   - search
@@ -29,6 +53,11 @@ plugins:
             extra:
               ignore_init_summary: true
   - autorefs
+  - gen-files:
+      scripts:
+        - docs/scripts/gendoc.py
+
+
 
 watch:
   - src                              # live-reload when code changes
@@ -48,10 +77,10 @@ nav:
     - package/utils.md
   - About: about.md
   - Licence: licence.md
+  - Readme: readme.md
     
 
 
 repo_url: https://github.com/ChilasLab/PyChilasLasers
-repo_name: 'GitHub'
 
 site_author: Chilas B.V.
