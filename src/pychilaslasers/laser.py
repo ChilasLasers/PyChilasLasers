@@ -406,8 +406,8 @@ class Laser:
 
     def set_mode(self, mode: LaserMode | Mode | str) -> None:
         """Sets the mode of the laser. 
-        <p>
-        This is an alias for the :meth:`mode` property setter.
+        
+        This is an alias for the [mode][pychilaslasers.Laser.mode] property setter.
         """
         self.mode = mode
 
@@ -425,3 +425,4 @@ class Laser:
         This is an alias for setting the system state to False.
         """
         self.system_state = False
+

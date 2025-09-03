@@ -15,7 +15,8 @@ theme:
   font:
     text: Rajdhani Regular
     code: Roboto Mono
-
+  # Documentation and theme
+  custom_dir: 'docs/theme'
   palette:
 
     # Palette toggle for light mode
@@ -40,6 +41,8 @@ extra:
       link: https://www.linkedin.com/company/chilas/
     - icon: fontawesome/brands/x-twitter
       link: https://x.com/ChilasLasers
+    - icon: simple/mailgun
+      link: https://chilasbv.com/contact/
   generator: false
 
 
@@ -68,6 +71,7 @@ plugins:
   - gen-files:
       scripts:
         - docs/scripts/gendoc.py
+  - drawio-exporter
 
 
 
@@ -76,7 +80,6 @@ watch:
 
 nav:
   - Home: index.md
-  - Quickstart Guide: quickstart.md
   - Documentation: 
     - package/index.md           
     - package/laser.md
@@ -87,12 +90,19 @@ nav:
     - package/comm.md
     - package/exceptions.md
     - package/utils.md
-  - About: about.md
-  - Licence: licence.md
-  - Readme: readme.md
+  - Other resources:
+    - Quickstart Guide: quickstart.md
+    - Licence: licence.md
+    - Readme: readme.md
+  - About Chilas: about.md
     
 
 
 repo_url: https://github.com/ChilasLab/PyChilasLasers
 
 site_author: Chilas B.V.
+
+
+# Extensions
+markdown_extensions:
+  - lightgallery:
