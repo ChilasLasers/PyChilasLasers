@@ -1,64 +1,70 @@
-#!/usr/bin/env python3
-"""
-Generate a pretty Markdown tree (like your example) with optional annotations:
-- Skips common junk (venv, __pycache__, .git, build artifacts)
-- Adds the first line of a module/package docstring as a comment (when available)
-- Lets you cap depth and choose roots
-"""
 from __future__ import annotations
-import ast, os, sys
+import ast, sys
 from pathlib import Path
+import mkdocs_gen_files  # only if you’re using mkdocs-gen-files
 
-SKIP_DIRS = {".git", ".venv", "venv", "__pycache__", ".mypy_cache", ".ruff_cache", ".pytest_cache", "site", "dist", "build", "docs","tests"}
+# Things to skip
+SKIP_DIRS = {
+    ".git", ".venv", "venv",
+    "__pycache__", ".mypy_cache", ".ruff_cache", ".pytest_cache",
+    "site", "dist", "build", "docs/_build",
+}
+SKIP_EXTS = {".egg-info"}  # treat as dirs too
 SKIP_FILES = {"uv.lock"}
+
 EMOJI_DIR = "📁 "
 INDENT = "│   "
 ELBOW  = "└── "
 TEE    = "├── "
 
 def first_docline(pyfile: Path) -> str | None:
+    if pyfile.suffix != ".py":
+        return None
     try:
-        text = pyfile.read_text(encoding="utf-8", errors="ignore")
-        mod = ast.parse(text)
-        ds = ast.get_docstring(mod)
-        if ds:
-            line = ds.strip().splitlines()[0].strip()
-            return line
+        ds = ast.get_docstring(ast.parse(pyfile.read_text(encoding="utf-8", errors="ignore")))
+        return ds.strip().splitlines()[0].strip() if ds else None
     except Exception:
-        pass
-    return None
+        return None
 
 def annotate(path: Path) -> str:
-    if path.suffix == ".py":
-        line = first_docline(path)
-        if line:
-            return f"  # {line}"
-    return ""
+    line = first_docline(path)
+    return f"  # {line}" if line else ""
 
-def tree(root: Path, max_depth: int = 6) -> list[str]:
-    lines: list[str] = []
-    def walk(dir: Path, prefix: str, depth: int):
-        if depth < 0: return
-        entries = [e for e in dir.iterdir() if not (e.name in SKIP_FILES or e.name in SKIP_DIRS or e.name.startswith(".")) ]
-        entries.sort(key=lambda p: (p.is_file(), p.name.lower()))
+def build_tree(root: Path, max_depth: int = 10) -> list[str]:
+    lines = [f"{EMOJI_DIR}{root.name}/"]
+    print(root)
+    def walk(d: Path, prefix: str, depth: int):
+        if depth < 0:
+            return
+        entries = []
+        for e in d.iterdir():
+            if e.name in SKIP_FILES:
+                continue
+            if e.is_dir():
+                if e.name in SKIP_DIRS or e.suffix in SKIP_EXTS or e.name.endswith(".egg-info"):
+                    continue
+            entries.append(e)
+
+        entries.sort(key=lambda x: (x.is_file(), x.name.lower()))
+
         for i, e in enumerate(entries):
             connector = ELBOW if i == len(entries)-1 else TEE
             if e.is_dir():
                 lines.append(f"{prefix}{connector} {EMOJI_DIR}{e.name}/")
                 walk(e, prefix + (INDENT if i != len(entries)-1 else "    "), depth-1)
             else:
-                comment = annotate(e)
-                lines.append(f"{prefix}{connector} {e.name}{comment}")
-    lines.append(f"{EMOJI_DIR}{root.name}/")
+                lines.append(f"{prefix}{connector} {e.name}{annotate(e)}")
+
     walk(root, "", max_depth)
     return lines
 
-def main():
-    start = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(".")
-    max_depth = int(os.environ.get("TREE_DEPTH", "10"))
-    lines = tree(start.resolve(), max_depth=max_depth)
-    # Wrap in fenced block
-    print("```\n" + "\n".join(lines) + "\n```")
-
+# Example: print to stdout (standalone)
 if __name__ == "__main__":
-    main()
+    root = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(".")
+    print("```\n" + "\n".join(build_tree(root)) + "\n```")
+else:
+    content = "```\n" + "\n".join(build_tree(Path(__file__).resolve().parents[2].joinpath("src","pychilaslasers"))) + "\n```"
+    with mkdocs_gen_files.open("docs\\project-structure.md", "w", encoding="UTF-8") as f:
+        print(Path(__file__).resolve().parents[2].joinpath("src","pychilaslasers"))
+        f.write(content) 
+ 

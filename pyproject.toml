@@ -16,6 +16,7 @@ dev = [
     "mkdocs-dracula-theme>=1.0.8",
     "mkdocs-drawio-exporter>=0.10.2",
     "mkdocs-gen-files>=0.5.0",
+    "mkdocs-include-markdown-plugin>=7.1.7",
     "mkdocs-literate-nav>=0.6.2",
     "mkdocs-material>=9.6.18",
     "mkdocstrings[python]>=0.30.0",

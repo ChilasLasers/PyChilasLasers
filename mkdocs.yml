@@ -70,7 +70,9 @@ plugins:
   - gen-files:
       scripts:
         - docs/scripts/gendoc.py
+        - docs/scripts/gen_tree.py
   - drawio-exporter
+  - include-markdown
 
 
 
@@ -90,9 +92,8 @@ nav:
     - package/exceptions.md
     - package/utils.md
   - Quickstart Guide: quickstart.md
-  - Other resources:
-    - Licence: licence.md
-    - Readme: readme.md
+  - Licence: licence.md
+  - Readme: readme.md
   - About Chilas: about.md
     
 
