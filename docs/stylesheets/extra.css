@@ -15,3 +15,8 @@
 :root {
   --md-accent-fg-color: #ff7043;   /* orange accent */
 }
+
+/* 
+.md-grid {
+  max-width: 1440px; 
+} */

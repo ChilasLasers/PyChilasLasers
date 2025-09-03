@@ -9,7 +9,7 @@ from __future__ import annotations
 import ast, os, sys
 from pathlib import Path
 
-SKIP_DIRS = {".git", ".venv", "venv", "__pycache__", ".mypy_cache", ".ruff_cache", ".pytest_cache", "site", "dist", "build", "docs/_build"}
+SKIP_DIRS = {".git", ".venv", "venv", "__pycache__", ".mypy_cache", ".ruff_cache", ".pytest_cache", "site", "dist", "build", "docs","tests"}
 SKIP_FILES = {"uv.lock"}
 EMOJI_DIR = "📁 "
 INDENT = "│   "

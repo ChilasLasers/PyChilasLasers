@@ -10,15 +10,14 @@ theme:
     - search.highlight
     - search.share
     - header.autohide
+    - navigation.path
+    - navigation.top
   icon:
     repo: fontawesome/brands/github
   font:
-    text: Rajdhani Regular
+    text: Fira Sans 
     code: Roboto Mono
-  # Documentation and theme
-  custom_dir: 'docs/theme'
   palette:
-
     # Palette toggle for light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
@@ -90,8 +89,8 @@ nav:
     - package/comm.md
     - package/exceptions.md
     - package/utils.md
+  - Quickstart Guide: quickstart.md
   - Other resources:
-    - Quickstart Guide: quickstart.md
     - Licence: licence.md
     - Readme: readme.md
   - About Chilas: about.md
@@ -101,8 +100,3 @@ nav:
 repo_url: https://github.com/ChilasLab/PyChilasLasers
 
 site_author: Chilas B.V.
-
-
-# Extensions
-markdown_extensions:
-  - lightgallery:
