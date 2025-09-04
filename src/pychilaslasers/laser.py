@@ -1,24 +1,22 @@
 """
-This module defines the Laser class for Chilas lasers. 
-<p>
-This acts as the main interface for controlling the laser. Some properties and 
-methods of the laser are accessible at all times, while others are only available 
+This module defines the Laser class for Chilas lasers.
+
+This acts as the main interface for controlling the laser. Some properties and
+methods of the laser are accessible at all times, while others are only available
 in specific operation modes.
-<p>
-The modes of the laser are:
-    1. Manual Mode: Allows manual control of the heater values.
-    2. Steady Mode: Can be used to tune the laser to specific wavelengths according 
+
+!!! tip "The modes of the laser are:"
+    - [ManualMode][pychilaslasers.modes.ManualMode]: Allows manual control of the heater values.
+    - [SteadyMode][pychilaslasers.modes.SteadyMode]: Can be used to tune the laser to specific wavelengths according
        to the calibration data.
-    3. Sweep Mode: Sweep mode is used for COMET lasers to enable the sweep 
+    - [SweepMode][pychilaslasers.modes.SweepMode]: Sweep mode is used for COMET lasers to enable the sweep
        functionality.
-<p>
-Changing the diode current or TEC temperature of the laser is available in all modes 
-however this implies that the calibration of the laser is no longer valid and the 
+
+Changing the diode current or TEC temperature of the laser is available in all modes
+however this implies that the calibration of the laser is no longer valid and the
 laser may not achieve the desired wavelength.
-<p>
 
 **Authors:** RLK, AVR, SDU
-**Last Revision:** Aug 5, 2025 - Add ability to initialize laser without calibration file
 """
 
 # ⚛️ Type checking
@@ -46,30 +44,30 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 
 class Laser:
-    """Laser class for Chilas lasers. 
-    <p> 
-    Contains the main methods for communication with the laser, the logic for changing 
-    and accessing the laser modes, and the properties of the laser. Multiple overloaded 
-    methods are available to interact with the laser. Many of the methods are overloads 
-    of other methods that either provide different ways do the same operation for 
+    """Laser class for Chilas lasers.
+
+    Contains the main methods for communication with the laser, the logic for changing
+    and accessing the laser modes, and the properties of the laser. Multiple overloaded
+    methods are available to interact with the laser. Many of the methods are overloads
+    of other methods that either provide different ways do the same operation for
     convenience.
 
     Usage:
-        Accessing functionality of a specific mode is done through the `mode` property 
-        such as `laser.steady.method_name()` or `laser.sweep.method_name()`. This will 
-        however only work if the laser is in the correct mode. If the laser is not in 
-        the correct mode, an exception will be raised. The current mode of the laser 
+        Accessing functionality of a specific mode is done through the `mode` property
+        such as `laser.steady.method_name()` or `laser.sweep.method_name()`. This will
+        however only work if the laser is in the correct mode. If the laser is not in
+        the correct mode, an exception will be raised. The current mode of the laser
         can be set using the `mode` property as well.
-        <p> 
-        The laser can be turned on and off using the `system_state` property. The laser 
-        can also be triggered to pulse using the `trigger_pulse()` method. The laser 
-        can be set to prefix mode using the `prefix_mode` property. The prefix mode can 
-        be used to speed up communication with the laser by reducing the amount of data 
-        sent over the serial connection however this reduces the amount of information 
+
+        The laser can be turned on and off using the `system_state` property. The laser
+        can also be triggered to pulse using the `trigger_pulse()` method. The laser
+        can be set to prefix mode using the `prefix_mode` property. The prefix mode can
+        be used to speed up communication with the laser by reducing the amount of data
+        sent over the serial connection however this reduces the amount of information
         that is sent back from the laser.
-        <p> 
-        Some laser components such as the TEC and Diode can be accessed in all modes 
-        using the `tec` and `diode` properties respectively. Other components are only 
+
+        Some laser components such as the TEC and Diode can be accessed in all modes
+        using the `tec` and `diode` properties respectively. Other components are only
         available in manual mode.
 
     Attributes:
@@ -80,62 +78,64 @@ class Laser:
         prefix_mode (bool): Whether the laser is in prefix mode or not.
     """
 
-
-    def __init__(self, com_port: str, calibration_file: str | Path | None = None) -> None:
-        """Laser class constructor. Initializes the laser with the given COM port and 
+    def __init__(
+        self, com_port: str, calibration_file: str | Path | None = None
+    ) -> None:
+        """Laser class constructor. Initializes the laser with the given COM port and
         calibration file.
-        <p>
-        Opens the serial connection to the laser, initializes the laser components and 
+
+        Opens the serial connection to the laser, initializes the laser components and
         variables, and sets the initial mode to manual.
 
-        Warning: 
-            During the initialization, **the laser will turn on** and communicate over 
-            the serial connection to gather necessary information about the laser and 
+        Warning:
+            During the initialization, **the laser will turn on** and communicate over
+            the serial connection to gather necessary information about the laser and
             its components such as maximum values for parameters.
 
         Args:
-            com_port: The COM port to which the laser is connected. This should 
-                be a string such as "COM7". To see available COM you may use the 
-                :meth:`pychilaslasers.utils.list_comports` method from the `utils` module.
-            calibration_file (str | Path): The path to the calibration file that was 
+            com_port: The COM port to which the laser is connected. This should
+                be a string such as "COM7". To see available COM you may use the
+                `pychilaslasers.utils.list_comports` method from the `utils` module.
+            calibration_file (str | Path): The path to the calibration file that was
                 provided for the laser.
         """
 
-        self._comm: Communication = Communication(
-            com_port=com_port
-        )        
+        self._comm: Communication = Communication(com_port=com_port)
 
         # Laser identification. Library will not work with non-Chilas lasers.
         if "Chilas" not in (idn := self._comm.query("*IDN?")) and "LioniX" not in idn:
             logger.critical("Laser is not a Chilas device")
             import sys
+
             sys.exit(1)
 
         # Initialize laser components
         self.tec: TEC = TEC(self)
         self.diode: Diode = Diode(self)
 
-        # Initialize modes 
+        # Initialize modes
         self._manual_mode: ManualMode = ManualMode(self)
 
         if calibration_file is not None:
             calibration = read_calibration_file(file_path=calibration_file)
             self._model: str = calibration["model"]
-            self._steady_mode: SteadyMode | None = SteadyMode(self, calibration) 
+            self._steady_mode: SteadyMode | None = SteadyMode(self, calibration)
             self._sweep_mode: SweepMode | None = (
-                SweepMode(self, calibration) if 
-                calibration["model"] == "COMET" else None
+                SweepMode(self, calibration)
+                if calibration["model"] == "COMET"
+                else None
             )
         else:
             self._model: str = "Unknown"
-            self._steady_mode: SteadyMode | None = None 
+            self._steady_mode: SteadyMode | None = None
             self._sweep_mode: SweepMode | None = None
         self._mode: Mode = self._manual_mode
 
-        logger.debug(f"Initialized laser {self._model} on {com_port} with calibration file {calibration_file}")
+        logger.debug(
+            f"Initialized laser {self._model} on {com_port} with calibration file {calibration_file}"
+        )
 
     ########## Main Methods ##########
-
 
     def trigger_pulse(self) -> None:
         """Instructs the laser to send a trigger pulse."""
@@ -146,28 +146,27 @@ class Laser:
         """Calibrates the laser with the given calibration file.
 
         Args:
-            calibration_file (str | Path): The path to the calibration file to be used for 
+            calibration_file (str | Path): The path to the calibration file to be used for
                 calibrating the laser.
         """
         calibration = read_calibration_file(file_path=calibration_file)
         self._model = calibration["model"]
         self._steady_mode = SteadyMode(self, calibration)
-        
+
         if self._model == "COMET":
             self._sweep_mode = SweepMode(self, calibration)
         params = calibration["steady"]["anti-hyst"]
-        self._manual_mode.phase_section.set_hyst_params(params[0],params[1])
-
+        self._manual_mode.phase_section.set_hyst_params(params[0], params[1])
 
     ########## Properties (Getters/Setters) ##########
 
     @property
     def comm(self) -> Communication:
         """Communication object for the laser.
-        <p>
-        This property provides access to the communication object used to interact with 
+
+        This property provides access to the communication object used to interact with
         the laser. It can be used to send commands and queries to the laser.
-        
+
         Returns:
             The communication object for the laser.
         """
@@ -176,9 +175,9 @@ class Laser:
     @property
     def system_state(self) -> bool:
         """System state of the laser.
-        <p>
+
         The property of the laser that indicates whether the laser is on or off.
-        This is a boolean property that can be set to True to turn on the laser 
+        This is a boolean property that can be set to True to turn on the laser
         or False to turn it off.
 
         Returns:
@@ -198,11 +197,10 @@ class Laser:
             return
         self._comm.query(f"SYST:STAT {state:d}")
 
-
     @property
     def mode(self) -> LaserMode:
         """Gets the current mode of the laser.
-        
+
         Returns:
             The current mode of the laser. This can be one of the following:
                 - LaserMode.MANUAL
@@ -212,10 +210,10 @@ class Laser:
         return self._mode.mode
 
     @mode.setter
-    def mode(self, mode: LaserMode|Mode|str) -> None:
+    def mode(self, mode: LaserMode | Mode | str) -> None:
         """Main method for setting the mode of the laser.
-        <p>
-        This method is used for changing the current mode of the laser. The mode 
+
+        This method is used for changing the current mode of the laser. The mode
         can be set to one of the following:
             - ManualMode
             - SteadyMode
@@ -224,24 +222,24 @@ class Laser:
 
         Args:
             mode (LaserMode | Mode | str): The mode to set the laser to. This can be:
-                - An instance of a specific mode class (ManualMode, SteadyMode, 
-                  SweepMode). The mode will NOT be changed to that specific mode 
+                - An instance of a specific mode class (ManualMode, SteadyMode,
+                  SweepMode). The mode will NOT be changed to that specific mode
                   class, but rather the mode will be set to the mode of that class.
                 - A string representing the mode (e.g., "manual", "steady", "sweep")
                   Case-insensitive and allows for common misspellings or partial typing.
-                - An enum value from LaserMode (e.g., LaserMode.MANUAL, 
+                - An enum value from LaserMode (e.g., LaserMode.MANUAL,
                   LaserMode.STEADY, LaserMode.SWEEP)
-                  
+
         Raises:
             ValueError: If the mode is not recognized or is not available for the laser model.
             TypeError: If the mode is not a valid type (not a string, enum, or specific mode instance).
-            ModeError: If the sweep mode is not available 
+            ModeError: If the sweep mode is not available
         """
 
         # Check if the mode is an instance of specific mode classes
-        previous_mode: LaserMode = self._mode.mode 
+        previous_mode: LaserMode = self._mode.mode
         if isinstance(mode, Mode):
-            mode = mode.mode  # Get the mode from the instance  
+            mode = mode.mode  # Get the mode from the instance
 
         # Check if the mode is a string or enum
         if isinstance(mode, str) or isinstance(mode, LaserMode):
@@ -250,39 +248,51 @@ class Laser:
                 mode_mappings = {
                     "manual": LaserMode.MANUAL,  # Exact match
                     "steady": LaserMode.STEADY,  # Exact match
-                    "sweep":  LaserMode.SWEEP,   # Exact match
+                    "sweep": LaserMode.SWEEP,  # Exact match
                     "manuel": LaserMode.MANUAL,  # Common misspelling
-                    "manua":  LaserMode.MANUAL,   # Partial typing
-                    "man":    LaserMode.MANUAL,     # Short form
+                    "manua": LaserMode.MANUAL,  # Partial typing
+                    "man": LaserMode.MANUAL,  # Short form
                     "steadi": LaserMode.STEADY,  # Partial typing
-                    "stead":  LaserMode.STEADY,   # Partial typing
-                    "ste":    LaserMode.STEADY,   # Partial typing
-                    "swep":   LaserMode.SWEEP,     # Common misspelling
-                    "swp":    LaserMode.SWEEP,     # Common misspelling
-                    "sweap":  LaserMode.SWEEP,    # Common misspelling
+                    "stead": LaserMode.STEADY,  # Partial typing
+                    "ste": LaserMode.STEADY,  # Partial typing
+                    "swep": LaserMode.SWEEP,  # Common misspelling
+                    "swp": LaserMode.SWEEP,  # Common misspelling
+                    "sweap": LaserMode.SWEEP,  # Common misspelling
                     "sweepin": LaserMode.SWEEP,  # Partial typing
-                    "sweeping":  LaserMode.SWEEP,    # Exact match
+                    "sweeping": LaserMode.SWEEP,  # Exact match
                 }
 
-                if ( mode := mode.lower() ) in mode_mappings:
+                if (mode := mode.lower()) in mode_mappings:
                     mode = mode_mappings[mode]
                 else:
-                    raise ValueError(f"Unknown mode: {mode}. "
-                                    "Please use 'manual', 'steady', or 'sweep' ")
+                    raise ValueError(
+                        f"Unknown mode: {mode}. "
+                        "Please use 'manual', 'steady', or 'sweep' "
+                    )
             # Check if the mode is a valid mode to enter at this point
             if mode in (LaserMode.STEADY, LaserMode.SWEEP) and not self.calibrated:
-                raise ValueError(f"Calibration data not available, laser cannot enter {mode.name.lower()} mode.")
+                raise ValueError(
+                    f"Calibration data not available, laser cannot enter {mode.name.lower()} mode."
+                )
             if mode is LaserMode.SWEEP and self._sweep_mode is None:
-                raise ModeError(message="Sweep mode is not available for this laser model.", 
-                                current_mode=self.mode)
+                raise ModeError(
+                    message="Sweep mode is not available for this laser model.",
+                    current_mode=self.mode,
+                )
             # Change mode to the corresponding mode instance
-            self._mode = self._sweep_mode if mode is LaserMode.SWEEP else \
-                         self._steady_mode if mode is LaserMode.STEADY else \
-                         self._manual_mode # type: ignore
+            self._mode = (
+                self._sweep_mode
+                if mode is LaserMode.SWEEP
+                else self._steady_mode
+                if mode is LaserMode.STEADY
+                else self._manual_mode
+            )  # type: ignore
         else:
-            raise TypeError(f"Invalid mode type: {type(mode)}. "
-                            "Please use 'ManualMode', 'SteadyMode', 'SweepMode' instances, "
-                            "or a string representing the mode (e.g., 'manual', 'steady', 'sweep').")
+            raise TypeError(
+                f"Invalid mode type: {type(mode)}. "
+                "Please use 'ManualMode', 'SteadyMode', 'SweepMode' instances, "
+                "or a string representing the mode (e.g., 'manual', 'steady', 'sweep')."
+            )
 
         # If we were in sweep mode and are switching to another mode, stop the sweep
         if previous_mode is LaserMode.SWEEP and self._mode.mode is not LaserMode.SWEEP:
@@ -292,12 +302,10 @@ class Laser:
             self._mode.apply_defaults()
         logging.info(f"Laser mode set to {self._mode.mode}")
 
-
-
     @property
     def steady(self) -> SteadyMode:
         """Getter function for the steady mode instance.
-        <p>
+
         This property allows access to the steady mode instance of the laser in a convenient way
         such as `laser.steady.method()`. Steady mode uses calibration data to tune the laser
         to specific wavelengths with high precision. This mode is available for both COMET and
@@ -307,28 +315,33 @@ class Laser:
             This method will not change the mode of the laser, it will only return
             the steady mode instance if the laser is in that mode. To switch to steady mode,
             use `laser.mode = LaserMode.STEADY` or `laser.set_mode("steady")` first.
-        
+
         Returns:
             The steady mode instance with access to wavelength control methods.
-            
+
         Raises:
             ModeError: If the laser is not in steady mode.
-            
+
         Example:
+            ``` python
             >>> laser.mode = LaserMode.STEADY
             >>> laser.steady.set_wavelength(1550.0)  # Set wavelength to 1550nm
-        """       
-        if self.mode != LaserMode.STEADY: 
-            raise ModeError("Laser not in steady mode.", 
-                            current_mode=self.mode, desired_mode=LaserMode.STEADY)
+            ```
+        """
+        if self.mode != LaserMode.STEADY:
+            raise ModeError(
+                "Laser not in steady mode.",
+                current_mode=self.mode,
+                desired_mode=LaserMode.STEADY,
+            )
         return self._steady_mode
-    
+
     @property
     def sweep(self) -> SweepMode:
         """Getter function for the sweep mode instance.
-        <p> 
+
         This property allows access to the sweep mode instance of the laser in a convenient way
-        such as `laser.sweep.method()`. Sweep mode is only available for COMET lasers and 
+        such as `laser.sweep.method()`. Sweep mode is only available for COMET lasers and
         enables sweeping functionality for wavelength scanning applications. This mode uses
         calibration data to perform controlled wavelength sweeps across specified ranges.
 
@@ -336,29 +349,35 @@ class Laser:
             This method will not change the mode of the laser, it will only return
             the sweep mode instance if the laser is in that mode. To switch to sweep mode,
             use `laser.mode = LaserMode.SWEEP` or `laser.set_mode("sweep")` first.
-        
+
         Returns:
             The sweep mode instance with access to sweep control methods.
-            
+
         Raises:
-            ModeError: If the laser is not in sweep mode or sweep mode is not available. 
-            
+            ModeError: If the laser is not in sweep mode or sweep mode is not available.
+
         Example:
+            ``` python
             >>> laser.mode = LaserMode.SWEEP  # Only works for COMET lasers
             >>> laser.sweep.start_wavelength_sweep(1550.0, 1560.0)  # Sweep from 1550nm to 1560nm
+            ```
         """
         if self._sweep_mode is None:
-            raise ModeError("Sweep mode is not available for this laser model.", 
-                            self.mode, desired_mode=LaserMode.SWEEP)
+            raise ModeError(
+                "Sweep mode is not available for this laser model.",
+                self.mode,
+                desired_mode=LaserMode.SWEEP,
+            )
         if self.mode != LaserMode.SWEEP:
-            raise ModeError("Laser not in sweep mode.", 
-                            self.mode, desired_mode=LaserMode.SWEEP)
+            raise ModeError(
+                "Laser not in sweep mode.", self.mode, desired_mode=LaserMode.SWEEP
+            )
         return self._sweep_mode
-    
+
     @property
     def manual(self) -> ManualMode:
         """Getter function for the manual mode instance.
-        <p>        
+
         This property allows access to the manual mode instance of the laser in a convenient way
         such as `laser.manual.method()`. Manual mode is always available and is the default mode.
         In manual mode, you have direct control over individual laser components and can manually
@@ -368,26 +387,27 @@ class Laser:
             This method will not change the mode of the laser, it will only return
             the manual mode instance if the laser is in that mode. To switch to manual mode,
             use `laser.mode = LaserMode.MANUAL` or `laser.set_mode("manual")` first.
-        
+
         Returns:
             The manual mode instance with access to manual control methods.
-            
+
         Raises:
-            NotImplementedError: If the laser is not in manual mode. TODO
-            
+            ModeError: If the laser is not in manual mode.
+
         Example:
+            ``` python
             >>> laser.mode = LaserMode.MANUAL
             >>> laser.manual.set_heater_value(50.0)  # Set heater to 50%
+            ```
         """
         if self.mode != LaserMode.MANUAL:
-            raise ModeError("Laser not in manual mode.", 
-                            self.mode, LaserMode.MANUAL)
+            raise ModeError("Laser not in manual mode.", self.mode, LaserMode.MANUAL)
         return self._manual_mode
 
     @property
     def model(self) -> str:
         """Return the model of the laser.
-        
+
         Returns:
             The model of the laser. May be "COMET" or "ATLAS"
         """
@@ -401,28 +421,26 @@ class Laser:
             True if the laser has calibration data, False otherwise.
         """
         return self._steady_mode is not None or self._sweep_mode is not None
+
     ########## Method Overloads/Aliases ##########
 
-
     def set_mode(self, mode: LaserMode | Mode | str) -> None:
-        """Sets the mode of the laser. 
-        
-        This is an alias for the [mode][pychilaslasers.Laser.mode] property setter.
+        """Sets the mode of the laser.
+
+        This is an alias for the `mode` property setter.
         """
         self.mode = mode
 
-
     def turn_on(self) -> None:
         """Turn on the laser.
-        <p>
+
         This is an alias for setting the system state to True.
         """
         self.system_state = True
 
     def turn_off(self) -> None:
         """Turn off the laser.
-        <p>
+
         This is an alias for setting the system state to False.
         """
         self.system_state = False
-

@@ -57,12 +57,22 @@ plugins:
           options:
             docstring_style: google       
             show_inheritance_diagram: true     
-            group_by_category: true
-            show_category_heading: true
-            show_symbol_type_heading: false
-            show_symbol_type_toc: true
+            group_by_category: true             # funcs with funcs attrs with attrs
+            show_category_heading: true         # for above
             merge_init_into_class: true
             members_order: "source"
+            relative_crossrefs: true    
+            scoped_crossrefs: true
+            backlinkls: tree                      # Not available yet but shows call tree
+            separate_signature: false            
+            show_symbol_type_toc: true            # type shown on left toc
+            show_symbol_type_heading: true        # Show type on headings too 
+            show_root_heading: true
+            show_signature_annotations: true      # Types in signatures
+            docstring_section_style: list
+
+            docstring_options:
+              ignore_init_summary: true
             # summary: true
             extra:
               ignore_init_summary: true
@@ -74,6 +84,14 @@ plugins:
   - drawio-exporter
   - include-markdown
 
+
+
+
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
 
 
 watch:

@@ -3,14 +3,21 @@ name = "pychilaslasers"
 version = "1.0.0"
 description = "Python library for controlling Chilas lasers"
 readme = "README.md"
+authors = [
+  { name = "Chilas B.V.", email = "info@chilas.com" }
+]
+license = { text = "Apache-2.0" }
+
 requires-python = ">=3.13"
 dependencies = [
+    "beautifulsoup4>=4.13.5",
     "packaging>=25.0",
     "pyserial>=3.5",
 ]
 
 [dependency-groups]
 dev = [
+    "beautifulsoup4>=4.13.5",
     "mkdocs>=1.6.1",
     "mkdocs-api-autonav>=0.3.1",
     "mkdocs-dracula-theme>=1.0.8",
@@ -19,6 +26,7 @@ dev = [
     "mkdocs-include-markdown-plugin>=7.1.7",
     "mkdocs-literate-nav>=0.6.2",
     "mkdocs-material>=9.6.18",
+    "mkdocs-simple-hooks>=0.1.5",
     "mkdocstrings[python]>=0.30.0",
     "pychilaslasers",
     "pytest>=8.4.1",

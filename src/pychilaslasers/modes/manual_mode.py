@@ -1,15 +1,14 @@
 """
 Manual mode implementation for direct laser heater control.
-<p>
+
 This module implements manual mode operation for laser control, allowing direct
 manipulation of individual heater channels without calibration constraints.
 Manual mode provides low-level access to all laser heater components for
 advanced users and debugging purposes.
-<p>
+
 **The calibration is not valid during manual mode**
-<p>
-Authors: RLK, AVR, SDU
-Last Revision: Aug 4, 2025 - Implemented new Communication class for serial communication
+
+**Authors**: RLK, AVR, SDU
 """
 
 # ⚛️ Type checking
@@ -30,21 +29,22 @@ from pychilaslasers.laser_components.heaters.heaters import (
 from pychilaslasers.laser_components.heaters.heater_channels import HeaterChannel
 from pychilaslasers.modes.mode import LaserMode, Mode
 
+
 class ManualMode(Mode):
     """Manual laser control mode for direct heater manipulation.
-    <p>
+
     ManualMode provides unrestricted access to all laser heater channels,
     allowing users to manually set voltages without calibration constraints.
     This mode is primarily intended for advanced users, testing, and debugging
     purposes where precise control over individual components is required at the
     expense of calibration.
-    <p>
+
     The mode initializes all heater components and provides both individual
     heater access and a unified interface for driver value setting.
-    
+
     Args:
         laser: The laser instance to control.
-    
+
     Attributes:
         heaters: List of all available heater components.
         phase_section: Phase section heater component.
@@ -55,10 +55,10 @@ class ManualMode(Mode):
 
     def __init__(self, laser: Laser) -> None:
         """Initialize manual mode with laser instance and heater components.
-        <p>
+
         Creates all heater component instances. The laser is temporarily turned on
         during initialization to gather component characteristics.
-        
+
         Args:
             laser: The laser instance to control.
         """
@@ -69,34 +69,35 @@ class ManualMode(Mode):
         self._small_ring: SmallRing = SmallRing(laser)
         self._tunable_coupler: TunableCoupler = TunableCoupler(laser)
         self._laser.turn_off()  # Ensure the laser is off after initializing heaters
-        
+
         self._heaters: list[Heater] = [
             self._phase_section,
             self._large_ring,
             self._small_ring,
-            self._tunable_coupler
+            self._tunable_coupler,
         ]
 
     ########## Main Methods ##########
 
     def apply_defaults(self) -> None:
-        """Apply default settings for manual mode operation.
-        """
+        """Apply default settings for manual mode operation."""
         pass
 
-    def set_driver_value(self, heater_ch: int | HeaterChannel, heater_value: float) -> None:
+    def set_driver_value(
+        self, heater_ch: int | HeaterChannel, heater_value: float
+    ) -> None:
         """Manually set the voltage value of a specific driver channel.
-        <p>
+
         Provides direct low-level access to set heater voltages without
         any validation or safety checks. This method bypasses all calibration
         constraints and allows unrestricted heater control.
-        
+
         Args:
             heater_ch: The heater channel number or HeaterChannel enum.
                 Valid channels are typically 0-3 for the four main heaters.
             heater_value: The voltage value to set in volts.
                 Range depends on laser specifications and hardware limits.
-                
+
         Warning:
             This method performs no validation on the input values.
             Setting inappropriate voltages may result in errors or undefined behavior.
@@ -118,7 +119,7 @@ class ManualMode(Mode):
     @phase_section.setter
     def phase_section(self, value: float) -> None:
         """Set the phase section heater value.
-        
+
         Args:
             value: The heater drive value to set.
         """
@@ -132,7 +133,7 @@ class ManualMode(Mode):
     @large_ring.setter
     def large_ring(self, value: float) -> None:
         """Set the large ring heater value.
-        
+
         Args:
             value: The heater drive value to set.
         """
@@ -146,7 +147,7 @@ class ManualMode(Mode):
     @small_ring.setter
     def small_ring(self, value: float) -> None:
         """Set the small ring heater value.
-        
+
         Args:
             value: The heater drive value to set.
         """
@@ -160,7 +161,7 @@ class ManualMode(Mode):
     @tunable_coupler.setter
     def tunable_coupler(self, value: float) -> None:
         """Set the tunable coupler heater value.
-        
+
         Args:
             value: The heater drive value to set.
         """
@@ -171,9 +172,9 @@ class ManualMode(Mode):
     @property
     def heaters(self) -> list[Heater]:
         """Get all heater components as a convenient list.
-        <p>
+
         Alias that provides all individual heater components in a single list.
-        
+
         Returns:
             List containing:
                 0. phase_section
@@ -183,4 +184,3 @@ class ManualMode(Mode):
                 In this order for easy iteration and access.
         """
         return self._heaters
-    

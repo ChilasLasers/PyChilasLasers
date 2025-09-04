@@ -205,7 +205,7 @@ from serial.tools.list_ports import comports
 @staticmethod
 def list_comports() -> list[str]:
     """Lists all available COM ports on the system.
-    :py:func:`serial.tools.list_ports.comports` is used to list all available
+    `serial.tools.list_ports.comports` is used to list all available
     ports. In that regard this method is but a wrapper for it.
 
     Returns:
