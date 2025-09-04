@@ -9,13 +9,6 @@ A class diagram of the (almost) complete system is provided below to help unders
 ![Class diagram not found:(](assets/diagrams/Class_diagram.drawio)
 
 
-## 📁 Project Structure
-
-
-{% include-markdown "project-structure.md" %}
-
-
-
 # TODO
 
 - [ ] Make class diagram expand
@@ -23,8 +16,6 @@ A class diagram of the (almost) complete system is provided below to help unders
 - [ ] Add contact page
 - [ ] Write getting started guide
 - [ ] Deploy
-- [ ] 
-[Google Docs Devdocs update](https://mkdocstrings.github.io/griffe/reference/docstrings/#google-sections) 
-- [ ] 
-[drawio](https://github.com/LukeCarrier/mkdocs-drawio-exporter)
 - [ ] Check package metadata on all init
+
+## 📁 Project Structure

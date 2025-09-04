@@ -5,12 +5,12 @@ import mkdocs_gen_files  # only if you’re using mkdocs-gen-files
 
 # Things to skip
 SKIP_DIRS = {
-    ".git", ".venv", "venv",
+    ".git", ".venv", "venv",".vscode",
     "__pycache__", ".mypy_cache", ".ruff_cache", ".pytest_cache",
-    "site", "dist", "build", "docs/_build",
+    "site", "dist", "build", "docs","examples","tests",".env"
 }
 SKIP_EXTS = {".egg-info"}  # treat as dirs too
-SKIP_FILES = {"uv.lock"}
+SKIP_FILES = {"uv.lock",".env"}
 
 EMOJI_DIR = "📁 "
 INDENT = "│   "
@@ -32,7 +32,6 @@ def annotate(path: Path) -> str:
 
 def build_tree(root: Path, max_depth: int = 10) -> list[str]:
     lines = [f"{EMOJI_DIR}{root.name}/"]
-    print(root)
     def walk(d: Path, prefix: str, depth: int):
         if depth < 0:
             return
@@ -63,8 +62,7 @@ if __name__ == "__main__":
     root = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(".")
     print("```\n" + "\n".join(build_tree(root)) + "\n```")
 else:
-    content = "```\n" + "\n".join(build_tree(Path(__file__).resolve().parents[2].joinpath("src","pychilaslasers"))) + "\n```"
-    with mkdocs_gen_files.open("docs\\project-structure.md", "w", encoding="UTF-8") as f:
-        print(Path(__file__).resolve().parents[2].joinpath("src","pychilaslasers"))
+    content = "```\n" + "\n".join(build_tree(Path(__file__).resolve().parents[2].joinpath())) + "\n```"
+    with mkdocs_gen_files.open("index.md", mode="a", encoding="UTF-8") as f:
         f.write(content) 
- 
+  

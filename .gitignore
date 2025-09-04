@@ -137,6 +137,8 @@ ENV/
 env.bak/
 venv.bak/
 
+docs/project-structure.md
+
 # Spyder project settings
 .spyderproject
 .spyproject
@@ -185,3 +187,4 @@ docs/uml_images/
 
 *.xml
 *.iml
+docs/project-structure.md

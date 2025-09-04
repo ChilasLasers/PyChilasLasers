@@ -1,6 +1,5 @@
 """
 PyChilasLasers Module
-<p>
 This module provides functionality for controlling and interfacing with laser systems.
 
 Modules:
