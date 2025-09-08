@@ -64,6 +64,9 @@ div.doc-contents:not(.first) {
   margin-top: 7%;
 }
 
+/* .md-nav__title{
+  display: none;
+} */
 
 /* 
 .md-grid {

@@ -1,224 +1,195 @@
-# PyChilasLasers quickstart
+# PyChilasLasers Quickstart Guide
 
-To facilitate custom laser contol, the ATLAS tunable laser comes with a Python library package called PyChilasLasers. This package is a **Python library for controlling Chilas laser systems**, specifically designed for **ATLAS tunable laser modules**. The package provides a comprehensive, object-oriented interface for laser control.
+This guide is meant as a starting point for new users to get accustomed to the library,
+it's usual operation and help become productive with it quickly. It briefly highlights the library's 
+capabilities, then walks through installation, initialization, and a step‑by‑step demo.
 
-  
 
-## Package overview
+## Key Features
 
-The package contains the following:
+**Operating Modes**
 
-- a demo file (demo.py) to show an example of how the library may be used
-- the actual pyChilasLasers package, which contains the library
-- a docs folder, which contains the code documentation in HTML format for reference.
-- a Python project file (pyproject.toml)
+- **Steady Mode ([`OperatingMode.STEADY`][pychilaslasers.modes.SteadyMode])** – Uses calibration table entries for precise wavelength tuning.
+- **Manual Mode ([`OperatingMode.MANUAL`][pychilaslasers.modes.ManualMode])** – Direct control of individual heater voltages.
+- **Sweep Mode ([`OperatingMode.SWEEP`][pychilaslasers.modes.SweepMode])** – High‑speed, high‑resolution sweeping across the calibrated wavelength range.
 
-  
+!!! warning
+    Sweep mode (and all sweeping operations) is only available on COMET devices.
 
-## Class hierarchy
+**Wavelength Control**
 
-![[inheritance-8cebaa4c7740b9ffeb31ebd2b097d2f57e3c078a.png]]
+- **Absolute tuning** – Set a specific wavelength in nanometers.
+- **Relative tuning** – Apply an offset (step) from the current wavelength.
 
-  
+**Other Features**
 
-The package follows a hierarchical design with increasingly specialized functionality:
+- **Trigger pulse generation** for synchronization with external equipment.
 
-  
+---
 
-**lasers.py** - Laser class to support serial communication with the laser driver
+## Installation
 
-- Serial communication management
+???+ example inline end 
+    ```powershell
+    > pip install pychilaslasers
+    > uv add pychilaslasers
+    ```
 
-- Error handling and status monitoring
+The `pychilaslasers` library can be installed into the project or computer using 
+your python package manager of choice directly from the [Python Package Index Pypi](https://pypi.org/project/pychilaslasers)
 
-- Low-level laser operations (system state, TEC temperature, diode current, heater voltages)
 
-  
+## Initialization
 
-**lasers_tlm.py** - TLMLaser class for specific functionality for the electronic driver (Tunable Laser Module)
+With the library installed, connect the laser to the computer and import the library
+into the python script to begin using it. The main use of the library is using the 
+[`Laser`][pychilaslasers.Laser] class. This class is an abstraction of the laser as 
+a python object and encapsulates all of the required logic for operation.
 
-- Management of the stored look-up table for laser calibration
 
-- Temperature monitoring and control
+??? info inline end
+    The laser can also be initialized without a calibration file restricting it's
+    operation to manual mode exclusively. Calibration can be performed later using
+    [`Laser.calibrate()`][pychilaslasers.Laser.calibrate].
 
-  
+??? tip "How do you know what com ports are available?"
+    The included utils module provides a [`list_comports()`][pychilaslasers.utils.list_comports]
+    method that can be used to discover available comports.
+    !!! example
+        ```python
+        >>> from pychilaslasers import utils
+        >>> print(utils.list_comports())
+        ```
 
-**atlas_laser.py** - ATLAS laser class for wavelength control of the ATLAS tunable laser
+Power the laser on by pressing the side button and turning the key to the right 
+position. The yellow LED on the adapter should turn on! Then create a laser instance
+by supplying the COM port and calibration file path:
 
-- Two operating modes (STEADY and MANUAL)
 
-- The STEADY operating mode enables wavelength tuning based on the pre-calibrated wavelength look-up table
+??? example
+    ```python
+    >>> from pychilaslasers import Laser
+    >>> laser = Laser(com_port="COM1", calibration_file="Path/to/calibration/file")
+    ```
 
-- The MANUAL operating mode enables unrestricted laser control without using the look-up table
+---
 
-- Anti-hysteresis functionality to support accurate wavelength setting
+## Quick Start Using the Demo File
 
-- Generation of a trigger signal upon wavelength setting
+The [demo file](https://github.com/ChilasLasers/PyChilasLasers/tree/docs/examples/basic_usage.py) file demonstrates a typical workflow for laser operation.
 
-  
-  
-
-## Key Features of the ATLAS laser class
-
-  
-
-**Dual Operating Modes:**
-
-- **Steady Mode (`OperatingMode.STEADY`)**: Uses the calibration table entries for wavelength tuning
-
-- **Manual Mode (`OperatingMode.MANUAL`)**: Provides direct control over individual heater voltages
-
-  
-
-**Wavelength Control:**
-
-- **Absolute wavelength tuning** (`set_wavelength_abs()`) - tune to a specific wavelength in nanometers
-
-- **Relative wavelength tuning** (`set_wavelength_rel()`) - tune by a wavelength offset from current
-
-- **Index-based tuning** (`set_wavelength_abs_idx()`) - tune using calibration table indices
-
-  
-
-**Other:**
-
-- **Wavelength lookup** - bidirectional conversion between wavelengths and calibration table indices
-
-- **Trigger pulse generation** - generation of a trigger signal for synchronization with other equipment
-
-  
-
-## Quick start using the demo file
-
-  
-
-To operate an ATLAS laser using the PyChilasLasers library, an `AtlasLaser` object must be created, a calibration file loaded, and the appropriate operating mode configured. The demo_atlas.py file demonstrates a typical workflow for Atlas laser operation.
-
-The demo illustrates the standard workflow: establish connection → load calibration → activate system → perform wavelength operations → shutdown safely. User prompts are included between operations to allow step-by-step observation of the laser's behavior.
-
-  
-
-**1. Initial Setup and Connection**
-
-The demo starts by creating an `AtlasLaser` object and configuring it to communicate with the hardware on COM port 5. The right COM port number can be found after connecting the laser device to the computer and checking the number of the added COM port in the Windows Device Manager. After establishing the initial connection, the communication speed is optimized by increasing the baudrate to 460800.
-
-  
-
-```python
-
-# Create laser object and establish connection
-
-laser = AtlasLaser()
-
-laser.port = "COM5"
-
-laser.open_connection()
-
-laser.baudrate = 460800  # Optimize for faster communication
-
+```mermaid
+graph LR
+  A[establish connection] -->  C[activate system];
+  C --> D[perform operations];
+  D --> E[shutdown safely];
 ```
+User prompts are included between operations to allow step-by-step observation of the laser's behavior.
 
-  
 
-**2. Load Calibration and Activate System**
+### 1. Initial Setup and Connection
 
-The demo loads a calibration file using the `open_file_cycler_table` function. The system is then powered on and configured for steady-state operation mode.
 
-  
 
-```python
+The demo starts by creating an [`Laser`][pychilaslasers.Laser] object and configuring it to communicate
+with the hardware on a an available com port queried from the user. The path to 
+the provided settings file must be provided by the user for the demo to work.
 
-# Load the pre-calibrated lookup table by specifying its path.
+??? info "Mode selection flexibility"
+    You can set the operating mode using the enum, a string, or a mode object—whichever is most convenient.
 
-fp_lut = Path(r"D:\\settings.csv")
+!!! example
+    ```python
+    # Instantiate laser
+    laser = Laser(com_port=address, calibration_file=fp_lut)
 
-laser.open_file_cycler_table(fp_lut)
+    # Verify connection / system state
+    print(f"Connection state: {laser.system_state}")
+    ```
 
-  
+### 2. Select Mode & Enable Output
 
-# Power on the laser and set it to steady mode
+Power the system and select [`SteadyMode`][pychilaslasers.modes.SteadyMode] via its [`LaserMode`][pychilaslasers.modes.LaserMode] value. Steady Mode is the primary mode for ATLAS devices.
 
-laser.system_state = True
+!!! example
+    ```python
+    # Turn system on
+    laser.system_state = True
 
-laser.operation_mode = OperatingMode.STEADY
+    # Enter steady mode
+    laser.mode = mode.LaserMode.STEADY
+    ```
 
-```
+### 3. Wavelength Control Examples
 
-  
+Two approaches are demonstrated: setting an absolute wavelength and applying relative (incremental) adjustments.
 
-**3. Wavelength Control Examples**
+!!! example
+    ```python
+    # Absolute set (example value)
+    laser.steady.wavelength = 1598.000  # nm
 
-The demo demonstrates three different approaches to wavelength control: setting an absolute wavelength of 1545.000 nm, jumping directly to calibration table entry 2123, and making relative adjustments of +0.004 nm and -1.000 nm from the current position.
+    # Relative increase (+0.004 nm)
+    laser.steady.set_wl_relative(0.004)
 
-  
+    # Relative decrease (-1.000 nm)
+    laser.steady.set_wl_relative(-1.000)
+    ```
 
-```python
+### 4. Monitor Current Wavelength
 
-# Direct wavelength setting
+Access the current wavelength directly via the steady mode interface:
 
-wavelength = laser.set_wavelength_abs(wl=1545.000)
+!!! example
+    ```python
+    print(f"Current wavelength: {laser.steady.wavelength} nm")
+    ```
 
-  
+### 5. COMET‑Only Features (Sweep Mode)
 
-# Index-based tuning using calibration table entries
+On COMET devices, the script optionally runs the [sweeping demo](https://github.com/ChilasLasers/PyChilasLasers/tree/docs/examples/basic_usage_sweeping.py) showcasing Sweep Mode.
 
-wavelength = laser.set_wavelength_abs_idx(2123)
+!!! tip "Not using a COMET? You can skip this section."
 
-  
+Switch to Sweep Mode (string form shown here):
 
-# Relative wavelength adjustments
+??? example
+    ```python
+    laser.mode = "sweeping"
+    ```
 
-laser.set_wavelength_rel(wl_delta=0.004)   # +0.004 nm step
+Sweep Mode exposes two categories of wavelength bounds:
 
-laser.set_wavelength_rel(wl_delta=-1.000)  # -1.000 nm step
+1. Device limits (`min_wavelength`, `max_wavelength`)
+2. Active sweep range (`start_wavelength`, `end_wavelength`)
 
-```
+Both of these can be accessed as python proprieties
 
-  
 
-**4. Wavelength Monitoring**
+!!! example
+    ```python
+    start_wavelength: float = laser.sweep.start_wavelength
+    end_wavelength: float = laser.sweep.end_wavelength
 
-The demo shows how to query the laser's actual wavelength and how to look up wavelength values from the calibration table without changing the laser's settings.
+    laser.sweep.start_wavelength = 1508
 
-  
+    # Device capability limits
+    min_wl = laser.sweep.min_wavelength
+    max_wl = laser.sweep.max_wavelength
+    ```
 
-```python
+You can also configure the sweep interval (time between successive wavelengths) and control execution with [`start()`][pychilaslasers.modes.SweepMode.start] / [`stop()`][pychilaslasers.modes.SweepMode.stop].
 
-# Check actual wavelength
+---
 
-current_wl = laser.get_wavelength()
+## Additional Capabilities
 
-  
+Beyond wavelength tuning and sweeping, PyChilasLasers provides:
 
-# Look up wavelength for specific calibration index
+- Manual heater control
+- Trigger pulse generation
+- Anti‑hysteresis algorithms
+- Temperature monitoring
 
-index_wl = laser.get_wavelength_idx(2123)
-
-```
-
-  
-
-**5. Safe Shutdown**
-
-The demo concludes by properly shutting down the laser system and closing the communication connection.
-
-  
-
-```python
-
-# Turn off laser and close connection
-
-laser.system_state = False
-
-laser.close_connection()
-
-```
-
-  
-
-## Additional capabilities
-
-  
-
-The demo above demonstrates Atlas laser wavelength tuning using the pre-calibrated look-up table. In addition, the PyChilasLasers library provides extensive functionality including manual heater control, trigger pulse generation, anti-hysteresis algorithms, temperature monitoring, and advanced feedback control systems. For the complete documentation, we refer to the docs folder, which contains the code documentation in HTML format.
+Continue exploring in the [Package Reference](/package) section for comprehensive API documentation.
 
