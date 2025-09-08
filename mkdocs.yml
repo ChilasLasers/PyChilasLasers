@@ -1,4 +1,4 @@
-site_name: PyChilasLasers Developer Documentation
+site_name: PyChilasLasers Documentation
 
 theme:
   name: material
@@ -74,8 +74,6 @@ plugins:
             docstring_options:
               ignore_init_summary: true
             # summary: true
-            extra:
-              ignore_init_summary: true
   - autorefs
   - gen-files:
       scripts:
@@ -98,6 +96,7 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
 watch:
   - src                              # live-reload when code changes
+  - README.md
 
 nav:
   - Home: index.md
@@ -118,6 +117,10 @@ nav:
     
 
 
-repo_url: https://github.com/ChilasLab/PyChilasLasers
+repo_url: https://github.com/ChilasLasers/PyChilasLasers
+site_url: https://ChilasLasers.github.io/PyChilasLasers/
+edit_uri: blob/docs/docs/
+
 
 site_author: Chilas B.V.
+

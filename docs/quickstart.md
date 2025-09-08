@@ -191,5 +191,5 @@ Beyond wavelength tuning and sweeping, PyChilasLasers provides:
 - Anti‑hysteresis algorithms
 - Temperature monitoring
 
-Continue exploring in the [Package Reference](/package) section for comprehensive API documentation.
+Continue exploring in the [Package Reference](/package/index.md) section for comprehensive API documentation.
 
