@@ -63,7 +63,7 @@ plugins:
             members_order: "source"
             relative_crossrefs: true    
             scoped_crossrefs: true
-            backlinkls: tree                      # Not available yet but shows call tree
+            backlinks: tree                      # Not available yet but shows call tree
             separate_signature: false            
             show_symbol_type_toc: true            # type shown on left toc
             show_symbol_type_heading: true        # Show type on headings too 
