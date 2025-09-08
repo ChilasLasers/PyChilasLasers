@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 address: str = select_com_port()
 # Path to calibration file/LookUpTable (lut)
-fp_lut = Path(r"G:\9500-9999 Laboratory workspace (PUBLIC)\Calibration files\MAC077\20250121_MAC077_TLM10_15nm_8pm_280mA_PhaseFit.csv")
+fp_lut = Path("path/to/file")
 
 
 # Initiate laser object

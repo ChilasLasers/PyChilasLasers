@@ -11,7 +11,7 @@ from pathlib import Path
 from pychilaslasers import Laser
 
 
-fp_lut = Path(r"C:\Users\labuser\20250124_MAP2059_TLM4_50nm_5pm_Full_280mA_PhaseFit_Headers.csv")
+fp_lut = Path("path/to/file")
 
 # Change logging level to change the verbosity of the terminal output.
 # Debug will print all the serial commands and responses sent to the laser.

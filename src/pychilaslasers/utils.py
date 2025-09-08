@@ -214,9 +214,3 @@ def list_comports() -> list[str]:
     """
     return sorted([port.device for port in comports()])
 
-
-if __name__ == "__main__":
-    dic = read_calibration_file("C:\\Users\\Sebastian\\Documents\\Projects\\PyChilasLasers\\tests\\calibrationFiles\\comet1_with_settings.csv")
-    dic["steady"].pop("calibration")
-    dic["sweep"].pop("wavelengths")
-    pprint.pprint(dic)
