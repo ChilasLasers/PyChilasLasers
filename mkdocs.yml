@@ -1,0 +1,122 @@
+site_name: PyChilasLasers Documentation
+
+theme:
+  name: material
+  logo: assets/star.ico
+  features:
+    - toc.follow
+    - navigation.indexes
+    - navigation.footer
+    - search.highlight
+    - search.share
+    - header.autohide
+    - navigation.path
+    - navigation.top
+  icon:
+    repo: fontawesome/brands/github
+  font:
+    text: Fira Sans 
+    code: Roboto Mono
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+
+extra_css:
+  - stylesheets/extra.css
+extra:
+  social:
+    - icon: fontawesome/brands/linkedin 
+      link: https://www.linkedin.com/company/chilas/
+    - icon: fontawesome/brands/x-twitter
+      link: https://x.com/ChilasLasers
+    - icon: simple/mailgun
+      link: https://chilasbv.com/contact/
+  generator: false
+
+
+copyright: Copyright &copy; 2025 Chilas B.V.
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: ["src"]             # <-- make package importable (src layout)
+          options:
+            docstring_style: google       
+            show_inheritance_diagram: true     
+            group_by_category: true             # funcs with funcs attrs with attrs
+            show_category_heading: true         # for above
+            merge_init_into_class: true
+            members_order: "source"
+            relative_crossrefs: true    
+            scoped_crossrefs: true
+            backlinks: tree                      # Not available yet but shows call tree
+            separate_signature: false            
+            show_symbol_type_toc: true            # type shown on left toc
+            show_symbol_type_heading: true        # Show type on headings too 
+            show_root_heading: true
+            show_signature_annotations: true      # Types in signatures
+            docstring_section_style: list
+
+            docstring_options:
+              ignore_init_summary: true
+            # summary: true
+  - autorefs
+  - gen-files:
+      scripts:
+        - docs/scripts/gendoc.py
+        - docs/scripts/gen_tree.py
+
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+watch:
+  - src                              # live-reload when code changes
+  - README.md
+
+nav:
+  - Home: index.md
+  - Package Reference: 
+    - package/index.md
+    - Class Diagram: assets/diagrams/Class_diagram.drawio   
+    - package/laser.md
+    - package/modes.md
+    - Laser Components:
+      - package/laser_components/index.md
+      - package/laser_components/heaters.md
+    - package/comm.md
+    - package/exceptions.md
+    - package/utils.md
+  - Quickstart Guide: quickstart.md
+  - Licence: LICENSE.md
+  - Readme: README.md
+  - About Chilas: about.md
+    
+
+
+repo_url: https://github.com/ChilasLasers
+site_url: https://ChilasLasers.github.io/PyChilasLasers/
+edit_uri: blob/docs/docs/
+
+
+site_author: Chilas B.V.
+

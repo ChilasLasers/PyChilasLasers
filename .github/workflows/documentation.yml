@@ -1,0 +1,55 @@
+name: Upload Documentation
+on:
+  push:
+    branches:
+      - master
+      - main
+permissions:
+  contents: write
+  id-token: write
+  pages: write
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # setup repo, python and uv 
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v3
+
+      - name: Configure Git Credentials
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+      
+      - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
+
+      - uses: actions/cache@v4
+        with:
+          key: mkdocs-material-${{ env.cache_id }}
+          path: .cache
+          restore-keys: |
+            mkdocs-material-
+      
+      - name: Install documentation dependencies
+        run: uv sync --group docs
+
+      - name: Build documentation
+        run: |
+          uv run mkdocs build --clean
+          
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4 
+
+      - name: Save build cache
+        uses: actions/cache/save@v4
+        with:
+          key: mkdocs-material-${{ hashfiles('.cache/**') }}
+          path: ~/.cache

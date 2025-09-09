@@ -1,11 +1,10 @@
 """
 Heater component classes.
-<p>
+
 This module implements heater components that control thermal elements in the laser.
 Includes individual heater types. These are only available in manual mode.
-<p>
-Authors: SDU
-Last Revision: Aug 12, 2025 - Implemented anti-hyst procedure
+
+**Authors**: SDU
 """
 
 # ⚛️ Type checking
@@ -29,10 +28,10 @@ from pychilaslasers.utils import Constants
 
 class Heater(LaserComponent):
     """Base class for laser heater components.
-    <p>
+
     Provides common functionality for all heater types including
     value setting and channel management.
-    
+
     Attributes:
         channel: The heater channel identifier.
         value: The current heater drive value.
@@ -43,10 +42,10 @@ class Heater(LaserComponent):
 
     def __init__(self, laser: Laser) -> None:
         """Initialize the heater component.
-        <p>
+
         Sets up the heater with its operating limits and units by
         querying the laser hardware.
-        
+
         Args:
             laser: The laser instance to control.
         """
@@ -61,10 +60,10 @@ class Heater(LaserComponent):
     @abstractmethod
     def channel(self) -> HeaterChannel:
         """Get the heater channel identifier.
-        <p>
+
         Must be implemented by subclasses to specify which
         heater channel this component controls.
-        
+
         Returns:
             The channel identifier for this heater.
         """
@@ -85,7 +84,7 @@ class Heater(LaserComponent):
 
         Args:
             value: The heater drive value to set.
-            
+
         Raises:
             ValueError: If value is not a number or outside valid range.
         """
@@ -93,7 +92,9 @@ class Heater(LaserComponent):
         if not isinstance(value, (int, float)):
             raise ValueError("Heater value must be a number.")
         if value < self._min or value > self._max:
-            raise ValueError(f"Heater value {value} not valid: must be between {self._min} and {self._max} {self._unit}.")
+            raise ValueError(
+                f"Heater value {value} not valid: must be between {self._min} and {self._max} {self._unit}."
+            )
 
         self._comm.query(f"DRV:D {self.channel.value:d} {value:.3f}")
 
@@ -101,8 +102,8 @@ class Heater(LaserComponent):
 
     def get_value(self) -> float:
         """
-        Alias for the :attr:`value` property getter.
-        
+        Alias for the `value` property getter.
+
         Returns:
             The current heater drive value.
         """
@@ -110,11 +111,11 @@ class Heater(LaserComponent):
 
     def set_value(self, value: float) -> None:
         """
-        Alias for the :attr:`value` property setter.
+        Alias for the `value` property setter.
 
         Args:
             value: The heater drive value to set.
-            
+
         Raises:
             ValueError: If value is not a number or outside valid range.
         """
@@ -168,10 +169,10 @@ class PhaseSection(Heater):
 
     def _antihyst(self, target: float) -> None:
         """Apply anti-hysteresis correction to the laser.
-        <p> 
+
         Applies a voltage ramping procedure to the phase section heater to
-        minimize hysteresis effects during wavelength changes. The specifics of 
-        this method are laser-dependent and are specified as part of the calibration data. 
+        minimize hysteresis effects during wavelength changes. The specifics of
+        this method are laser-dependent and are specified as part of the calibration data.
         When calibration data is unavailable, default parameters from the constants class are used
         """
 
@@ -182,21 +183,29 @@ class PhaseSection(Heater):
             voltage_squares = self._volts.copy()
             time_steps = self._time_steps.copy()
 
-        time_steps: list[float] = [time_steps[0]] * (len(voltage_squares) - 1) + [0] if len(time_steps) == 1 else time_steps + [0]
+        time_steps: list[float] = (
+            [time_steps[0]] * (len(voltage_squares) - 1) + [0]
+            if len(time_steps) == 1
+            else time_steps + [0]
+        )
 
         for i, voltage in enumerate(voltage_squares):
-            if target ** 2 + voltage < 0:
+            if target**2 + voltage < 0:
                 value = 0
-                logging.getLogger(__name__).warning("Anti-hysteresis"
-                                                    f"value out of bounds: {value} (min: {self.min_value}, max: "
-                                                    f"{self.max_value}). Approximating by 0")
+                logging.getLogger(__name__).warning(
+                    "Anti-hysteresis"
+                    f"value out of bounds: {value} (min: {self.min_value}, max: "
+                    f"{self.max_value}). Approximating by 0"
+                )
                 value: float = 0
             else:
-                value = sqrt(target ** 2 + voltage)
+                value = sqrt(target**2 + voltage)
             if value < self.min_value or value > self.max_value:
-                logging.getLogger(__name__).error("Anti-hysteresis"
-                                                  f"value out of bounds: {value} (min: {self.min_value}, max: "
-                                                  f"{self.max_value}). Approximating with the closest limit.")
+                logging.getLogger(__name__).error(
+                    "Anti-hysteresis"
+                    f"value out of bounds: {value} (min: {self.min_value}, max: "
+                    f"{self.max_value}). Approximating with the closest limit."
+                )
                 value = min(value, self.max_value)
                 value = max(value, self.min_value)
             self._comm.query(f"DRV:D {HeaterChannel.PHASE_SECTION.value:d} {value:.4f}")
