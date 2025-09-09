@@ -8,7 +8,12 @@
       "options": {
         "shell": {
           "executable": "powershell.exe",
-          "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command"]
+          "args": [
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command"
+          ]
         }
       },
       "presentation": {
@@ -29,7 +34,12 @@
       "options": {
         "shell": {
           "executable": "powershell.exe",
-          "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command"]
+          "args": [
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command"
+          ]
         }
       },
       "presentation": {
@@ -38,14 +48,17 @@
         "clear": true,
         "panel": "shared",
         "group": "run-and-clean"
-      }
+      },
+      "problemMatcher": []
     },
     {
       "label": "Run and clean",
-      "dependsOn": ["Run Program", "Clean pycache"],
+      "dependsOn": [
+        "Run Program",
+        "Clean pycache"
+      ],
       "dependsOrder": "sequence",
       "group": "build"
     }
   ]
 }
-
