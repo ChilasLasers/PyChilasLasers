@@ -205,7 +205,7 @@ from serial.tools.list_ports import comports
 @staticmethod
 def list_comports() -> list[str]:
     """Lists all available COM ports on the system.
-    :py:func:`serial.tools.list_ports.comports` is used to list all available
+    `serial.tools.list_ports.comports` is used to list all available
     ports. In that regard this method is but a wrapper for it.
 
     Returns:
@@ -214,9 +214,3 @@ def list_comports() -> list[str]:
     """
     return sorted([port.device for port in comports()])
 
-
-if __name__ == "__main__":
-    dic = read_calibration_file("C:\\Users\\Sebastian\\Documents\\Projects\\PyChilasLasers\\tests\\calibrationFiles\\comet1_with_settings.csv")
-    dic["steady"].pop("calibration")
-    dic["sweep"].pop("wavelengths")
-    pprint.pprint(dic)

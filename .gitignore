@@ -126,6 +126,7 @@ celerybeat.pid
 
 # SageMath parsed files
 *.sage.py
+uv.lock
 
 # Environments
 .env
@@ -135,6 +136,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+docs/project-structure.md
 
 # Spyder project settings
 .spyderproject
@@ -184,3 +187,4 @@ docs/uml_images/
 
 *.xml
 *.iml
+docs/project-structure.md

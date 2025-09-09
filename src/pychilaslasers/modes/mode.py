@@ -5,8 +5,7 @@ This module defines the core interfaces and types for laser mode implementations
 It provides the base Mode class that all specific modes inherit from, as well as
 the LaserMode enumeration for type-safe mode identification.
 
-Authors: RLK, AVR, SDU
-Last Revision: Aug 4, 2025 - Implemented new Communication class for serial communication
+**Authors**: RLK, AVR, SDU
 """
 
 # ⚛️ Type checking
@@ -42,19 +41,14 @@ class LaserMode(Enum):
 
 class Mode(ABC):
     """Abstract base class for laser modes.
-    <p>
+    
     This class defines the basic structure and properties that all laser modes 
     should implement. It provides a common interface for interacting with different 
     laser modes, such as manual, sweep, and steady modes.
-    <p>
+    
     A laser mode is an abstract operational state of the laser that adds functionality 
     and defines how it behaves, the operations available, and the settings required 
     for its operation.
-
-    Warning:
-        The class is marked as abstract (using ABC) and should not be instantiated 
-        directly. Instead, subclasses should implement the required methods and 
-        properties.
     """
 
     def __init__(self, laser: Laser) -> None:
