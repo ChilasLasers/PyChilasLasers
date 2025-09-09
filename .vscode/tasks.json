@@ -1,0 +1,51 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Program",
+      "type": "shell",
+      "command": "uv run main.py",
+      "options": {
+        "shell": {
+          "executable": "powershell.exe",
+          "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command"]
+        }
+      },
+      "presentation": {
+        "echo": false,
+        "reveal": "never",
+        "showReuseMessage": false,
+        "clear": true,
+        "focus": true,
+        "panel": "shared",
+        "close": true,
+        "group": "run-and-clean"
+      }
+    },
+    {
+      "label": "Clean pycache",
+      "type": "shell",
+      "command": "Get-ChildItem -Recurse -Directory -Filter '__pycache__' | ForEach-Object { Remove-Item -Recurse -Force $_.FullName; if ((Get-ChildItem $_.Parent.FullName).Count -eq 0) { Remove-Item $_.Parent.FullName } }",
+      "options": {
+        "shell": {
+          "executable": "powershell.exe",
+          "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command"]
+        }
+      },
+      "presentation": {
+        "reveal": "never",
+        "close": true,
+        "clear": true,
+        "panel": "shared",
+        "group": "run-and-clean"
+      }
+    },
+    {
+      "label": "Run and clean",
+      "dependsOn": ["Run Program", "Clean pycache"],
+      "dependsOrder": "sequence",
+      "group": "build"
+    }
+  ]
+}
+

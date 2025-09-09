@@ -1,5 +1,19 @@
 {
     "cSpell.words": [
+        "ABRT",
+        "antihyst",
+        "antihysteresis",
+        "baudrates",
+        "bytesize",
+        "CPOS",
+        "csvfile",
+        "EIGHTBITS",
+        "pychilaslasers",
+        "signum",
+        "stopbits",
         "viewcode"
+    ],
+    "python.analysis.extraPaths": [
+        "./src/pychilaslasers"
     ]
 }
