@@ -1,7 +1,8 @@
 """
 Class representing errors received from the laser
-
-**Authors**: SDU
+<p>
+Authors: SDU
+Last Revision: Aug 4, 2025 - Created the LaserError class
 """
 
 
@@ -10,7 +11,7 @@ class LaserError(Exception):
         """Class representing errors received from the laser.
 
         Args:
-            code (str): The error code sent by the laser. Typically a 1 but kept
+            code (str): The error code sent by the laser. Typically a 1 but kept 
                 abstract to allow for future expansion.
             message (str): The error message.
         """

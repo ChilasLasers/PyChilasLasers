@@ -1,15 +1,16 @@
-# SPDX-License-Identifier:  Apache-2.0
 """
-Package for controlling laser products from Chilas Lasers. 
-
-Modules:
-    laser: Contains the main [Laser][pychilaslasers.Laser] class for laser control.
-    modes: Contains laser modes which encompass specific laser behaviors as well as enums used interacting with these modes.
-    laser_components: Contains classes for various laser components such as TEC, diode, and drivers.
-    comm: Handles the communication over the serial connection
-    utils: Contains utility functions and data structures for calibration and other operations.
-
-These classes are used to encapsulate the behavior, properties and state of these components. Interaction with the laser should be done through the [Laser][pychilaslasers.Laser] class.
+PyChilasLasers Module
+<p>
+This module provides functionality for controlling and interfacing with laser systems.
+<p>
+The package has the following structure:
+- `laser.py`: Contains the main `Laser` class for laser control.
+- `utils.py`: Contains utility functions and data structures for calibration and other operations.
+- `modes/`: Contains laser modes which encompass specific laser behaviors as well as enums used interacting with these modes.
+- `laser_components/`: Contains classes for various laser components such as TEC, diode, and drivers.
+These classes are used to encapsulate the behavior, properties and state of these components.
+<p>
+Interaction with the laser should be done through the `Laser` class.
 """
 
 from .laser import Laser
@@ -20,10 +21,7 @@ __all__: list[str] = [
     "__version__"
 ]
 
-
-from importlib.metadata import version, PackageNotFoundError
-
-try:
-    __version__ = version("pychilaslasers")
-except PackageNotFoundError:
-    __version__ = "0.0.0"  # fallback for local dev
+# Package metadata
+__version__ = "1.0.0"
+__author__ = "Chilas B.V."
+__email__ = "info@chilasbv.com"

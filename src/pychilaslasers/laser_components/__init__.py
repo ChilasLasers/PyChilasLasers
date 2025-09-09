@@ -1,17 +1,18 @@
 """
 Laser hardware components package.
-
+<p>
 This package provides classes for controlling and interfacing with various
-laser hardware components including diode, TEC and heating elements. It offers
+laser hardware components including diodes, (TEC) and heating elements. It offers
 both low-level component access and high-level abstractions for laser control operations.
-
-Modules:
-    LaserComponent: Base class for all laser hardware components
-    Diode: Laser diode control and monitoring
-    TEC: Temperature control functionality
-    heaters: Phase section, ring heaters, and tunable coupler
-   
-**Authors**: SDU
+<p>
+The package includes:
+- **LaserComponent**: Base class for all laser hardware components
+- **Diode**: Laser diode control and monitoring
+- **TEC**: Temperature control functionality
+- **Heater components**: Phase section, ring heaters, and tunable coupler
+<p>
+Authors: SDU
+Last Revision: July 30, 2025 - Enhanced documentation and improved code formatting
 """
 
 from .laser_component import LaserComponent

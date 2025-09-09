@@ -1,12 +1,13 @@
 """
 Abstract base class for laser hardware components.
-
+<p>
 This module defines the common interface that all laser hardware components
-must implement. This encapsulation allows for abstracticizing the internals of
+must implement. This encapsulation allows for abstracticizing the internals of 
 the laser in such a way as to allow for better visualization of their state and
 possible operations.
-
-**Authors**: SDU
+<p>
+Authors: SDU
+Last Revision: Aug 4, 2025 - Implemented new Communication class for serial communication
 """
 
 # ⚛️ Type checking
@@ -21,14 +22,13 @@ if TYPE_CHECKING:
 # ✅ Standard library imports
 from abc import ABC, abstractmethod
 
-
 class LaserComponent(ABC):
     """Abstract base class for all laser hardware components.
-
+    <p>
     This class defines the common interface that all laser components must
     implement. It provides standardized access to component values, operating
     ranges, and units of measurement.
-
+    
     Attributes:
         value: The current value of the component (implementation-dependent).
         min_value: The minimum allowable value for this component.
@@ -48,7 +48,7 @@ class LaserComponent(ABC):
     @property
     @abstractmethod
     def value(self) -> float:
-        """
+        """        
         Returns:
             The current value of the component in appropriate units.
         """
@@ -72,7 +72,7 @@ class LaserComponent(ABC):
 
     @property
     def unit(self) -> str:
-        """
+        """        
         Returns:
             The unit string (e.g., "mA", "°C", "V") for this component.
         """
