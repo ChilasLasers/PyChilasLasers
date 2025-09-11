@@ -132,7 +132,6 @@ jobs:
       - id: version
         run: echo "tag=v${{ needs.details.outputs.new_version }}a" >> $GITHUB_OUTPUT
 
-
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
