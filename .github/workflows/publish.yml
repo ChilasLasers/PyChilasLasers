@@ -23,9 +23,9 @@ jobs:
         with:
           fetch-depth: 0
           
-      - name: Exit if not on master branch
-        if: endsWith(github.ref, 'main') == false
-        run: exit -1
+      # - name: Exit if not on master branch
+      #   if: endsWith(github.ref, 'main') == false
+      #   run: exit -1
 
       - name: setup-uv
         uses: astral-sh/setup-uv@v6
