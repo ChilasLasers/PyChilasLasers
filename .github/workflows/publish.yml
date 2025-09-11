@@ -24,9 +24,9 @@ jobs:
         with:
           fetch-depth: 0
           
-      # - name: Exit if not on master branch
-      #   if: endsWith(github.ref, 'main') == false
-      #   run: exit -1
+      - name: Exit if not on master branch
+        if: endsWith(github.ref, 'main') == false
+        run: exit -1
 
       - name: setup-uv
         uses: astral-sh/setup-uv@v6
@@ -141,11 +141,6 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-
-      - name: some information
-        run: |
-          echo $(git status)
-          cat ./pyproject.toml
 
       - name: Build source and wheel distribution
         run: uv build

@@ -4,14 +4,17 @@
 Python library for controlling <b>Chilas</b> Atlas and Comet tunable lasers.
 
 <div align="center">
-	<img src="https://github.com/ChilasLasers/PyChilasLasers/blob/actions/docs/assets/Chilas-logo-color.png" alt="Chilas Logo" width=50% />
+	<img src="https://raw.githubusercontent.com/ChilasLasers/PyChilasLasers/refs/heads/main/docs/assets/Chilas-logo-color.png" alt="Chilas Logo" width=50% />
 </div>
 
 
 ---
 
 [![PyPI Version](https://img.shields.io/pypi/v/pychilaslasers.svg)](https://pypi.org/project/pychilaslasers) 
-![Python Version](https://img.shields.io/pypi/pyversions/pychilaslasers.svg) 
+![Python Version from PEP 621 TOML](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2FChilasLasers%2FPyChilasLasers%2Frefs%2Fheads%2Fmain%2Fpyproject.toml)
+![GitHub Release](https://img.shields.io/github/v/release/ChilasLasers/PyChilasLasers)
+![Pepy Total Downloads](https://img.shields.io/pepy/dt/pychilaslasers)
+![GitHub contributors](https://img.shields.io/github/contributors/ChilasLasers/PyChilasLasers)
 ![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)
 
 
