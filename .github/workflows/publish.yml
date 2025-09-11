@@ -116,7 +116,7 @@ jobs:
               branch=$(git branch -r --contains ${{ github.ref }} --format "%(refname:lstrip=3)")
               git push origin HEAD:$branch
               git tag v"$NEW_VERSION"a
-              git push origin HEAD:v"$NEW_VERSION"a
+              git push origin v"$NEW_VERSION"a
             else
               echo "pyproject.toml not changed after uv version (already up-to-date)"
             fi
