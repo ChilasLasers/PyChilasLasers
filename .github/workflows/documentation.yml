@@ -16,9 +16,11 @@ jobs:
     steps:
       # setup repo, python and uv 
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-      - uses: astral-sh/setup-uv@v3
-
+      - name: setup-uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          
       - name: Configure Git Credentials
         run: |
           git config user.name github-actions[bot]
