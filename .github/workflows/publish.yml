@@ -1,0 +1,183 @@
+name: Publish release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+rc"
+
+env:
+  PACKAGE_NAME: "pychilaslasers"
+
+jobs:
+  details:
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.release.outputs.new_version }}
+      suffix: ${{ steps.release.outputs.suffix }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      toml_version: ${{ steps.release.outputs.toml_version }}
+      release_version: ${{ steps.release.outputs.release_version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      # - name: Exit if not on main branch
+      #   if: endsWith(github.ref, 'main') == false
+      #   run: exit -1
+
+      - name: setup-uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Extract tag and Details
+        id: release
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            TAG_NAME=${GITHUB_REF#refs/tags/}
+            NEW_VERSION=$(echo "$TAG_NAME" | awk -F'-' '{gsub(/^v/, "", $1); print $1}')
+            SUFFIX=$(echo $TAG_NAME | grep -oP '[a-z]+[0-9]+' || echo "")
+            TOML_VERSION=$(uv version --short)
+            RELEASE_VERSION=$(echo "$NEW_VERSION" | sed 's/rc$//')
+            echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+            echo "suffix=$SUFFIX" >> "$GITHUB_OUTPUT"
+            echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
+            echo "toml_version=$TOML_VERSION" >> "$GITHUB_OUTPUT"
+            echo "release_version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
+            echo "Version is $NEW_VERSION"
+            echo "Suffix is $SUFFIX"
+            echo "Tag name is $TAG_NAME"
+            echo "Toml version is $TOML_VERSION"
+            echo "Release version is $RELEASE_VERSION"
+          else
+            echo "No tag found"
+            exit 1
+          fi
+
+  check_versions:
+    needs: details
+    runs-on: ubuntu-latest    
+    permissions:
+      contents: write  
+    outputs:
+      branch: ${{ steps.detect.outputs.branch }}
+    steps:
+      - name: Fetch information from PyPI
+        run: |
+          response=$(curl -s https://pypi.org/pypi/${{ env.PACKAGE_NAME }}/json || echo "{}")
+          latest_previous_version=$(echo $response | jq --raw-output "select(.releases != null) | .releases | keys_unsorted | last")
+          if [ -z "$latest_previous_version" ]; then
+            echo "Package not found on PyPI."
+            latest_previous_version="0.0.0"
+          fi
+          echo "Latest version on PyPI: $latest_previous_version"
+          echo "latest_previous_version=$latest_previous_version" >> $GITHUB_ENV
+
+      - name: Compare versions with PyPI and pyproject.toml and exit if not newer
+        run: |
+          RELEASE_VERSION=${{ needs.details.outputs.release_version }}
+          TOML_VERSION=${{ needs.details.outputs.toml_version }}
+          LATEST_VERSION=$latest_previous_version
+          if [ "$(printf '%s\n' "$LATEST_VERSION" "$RELEASE_VERSION" "$TOML_VERSION"| sort -rV | head -n 1)" != "$RELEASE_VERSION" ] || [ "$RELEASE_VERSION" == "$LATEST_VERSION" ]; then
+            echo "The new version $RELEASE_VERSION is not greater than the latest version $LATEST_VERSION on PyPI or version in pyproject.tmol file $TOML_VERSION"
+            exit 1
+          else
+            echo "The new version $RELEASE_VERSION is greater than the latest version $LATEST_VERSION on PyPI and pyproject.toml file $TOML_VERSION."
+          fi
+
+      - name: setup-uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: update pyproject.toml
+        id: toml
+        run: |
+          NEW_VERSION=${{ needs.details.outputs.new_version }}
+          TOML_VERSION=${{ needs.details.outputs.toml_version }}
+          RELEASE_VERSION=${{ needs.details.outputs.release_version }}
+          echo "toml_version $TOML_VERSION"
+          echo "new version $NEW_VERSION"
+          echo "new version $RELEASE_VERSION"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ "$TOML_VERSION" != "$RELEASE_VERSION" ];then
+            uv version $RELEASE_VERSION
+            if ! git diff --quiet pyproject.toml; then
+              git fetch
+              git add pyproject.toml
+              git commit -m "chore(CICD): update pyproject.toml"
+              git push origin HEAD:main
+            else
+              echo "pyproject.toml not changed after uv version (already up-to-date)"
+            fi
+          else
+            echo "No version bump needed ($TOML_VERSION == $RELEASE_VERSION)"
+          fi
+          echo "Tagging"
+          git tag v"$RELEASE_VERSION"
+          git push origin v"$RELEASE_VERSION"
+          
+  build_and_publish:
+    needs: [details, check_versions]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - id: version
+        run: echo "tag=v${{ needs.details.outputs.release_version }}" >> $GITHUB_OUTPUT
+
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ steps.version.outputs.tag }}
+
+      - name: setup-uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Build source and wheel distribution
+        run: uv build
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        run: uv publish
+
+  github_release:
+    name: Create GitHub Release
+    needs: [build_and_publish, details,check_versions]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - id: version
+        run: echo "tag=v${{ needs.details.outputs.release_version }}" >> $GITHUB_OUTPUT
+
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ steps.version.outputs.tag }}
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v5
+        with:
+          name: dist
+          path: dist/
+
+      - name: Create GitHub Release
+        id: create_release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create ${{ steps.version.outputs.tag }} dist/* --title ${{ steps.version.outputs.tag }} --generate-notes

@@ -1,17 +1,20 @@
 
-# <img src="docs/assets/star.ico" alt="Star icon" height="20" /> PyChilasLasers
+# <img src="https://raw.githubusercontent.com/ChilasLasers/PyChilasLasers/refs/heads/main/docs/assets/star.ico" alt="Star icon" height="20" /> PyChilasLasers
 
 Python library for controlling <b>Chilas</b> Atlas and Comet tunable lasers.
 
 <div align="center">
-	<img src="https://github.com/ChilasLasers/PyChilasLasers/blob/actions/docs/assets/Chilas-logo-color.png" alt="Chilas Logo" width=50% />
+	<img src="https://raw.githubusercontent.com/ChilasLasers/PyChilasLasers/refs/heads/main/docs/assets/Chilas-logo-color.png" alt="Chilas Logo" width=50% />
 </div>
 
 
 ---
 
 [![PyPI Version](https://img.shields.io/pypi/v/pychilaslasers.svg)](https://pypi.org/project/pychilaslasers) 
-![Python Version](https://img.shields.io/pypi/pyversions/pychilaslasers.svg) 
+![Python Version from PEP 621 TOML](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2FChilasLasers%2FPyChilasLasers%2Frefs%2Fheads%2Fmain%2Fpyproject.toml)
+![GitHub Release](https://img.shields.io/github/v/release/ChilasLasers/PyChilasLasers)
+![Pepy Total Downloads](https://img.shields.io/pepy/dt/pychilaslasers)
+![GitHub contributors](https://img.shields.io/github/contributors/ChilasLasers/PyChilasLasers)
 ![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)
 
 
@@ -68,7 +71,7 @@ print(laser.wavelength)
 <table>
 <tr>
 <td width="42%" valign="top">
-<img src="docs/assets/Chilas-Lasers-Comet-Atlas-Polaris-1024x683.webp" alt="Chilas Laser Modules (COMET / ATLAS / POLARIS)" style="max-width:100%;border-radius:4px;" />
+<img src="https://raw.githubusercontent.com/ChilasLasers/PyChilasLasers/refs/heads/main/docs/assets/Chilas-Lasers-Comet-Atlas-Polaris-1024x683.webp" alt="Chilas Laser Modules (COMET / ATLAS / POLARIS)" style="max-width:100%;border-radius:4px;" />
 </td>
 <td valign="top">
 Chilas is a laser manufacturer of widely tunable, narrow linewidth lasers based on state-of-the-art photonic integrated circuit (PIC) technology. With high laser performance delivered by compact modules, Chilas’ lasers power innovations worldwide, enabling cutting-edge applications in coherent optical communication, fiber sensing, LiDAR, quantum key distribution, microwave photonics, and beyond. Chilas is a privately held company (founded 2018) headquartered in Enschede, The Netherlands.
