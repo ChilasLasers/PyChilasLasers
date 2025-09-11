@@ -1,6 +1,6 @@
 [project]
 name = "pychilaslasers"
-version = "0.0.19"
+version = "0.0.20"
 description = "Python library for controlling Chilas lasers"
 readme = "README.md"
 authors = [
