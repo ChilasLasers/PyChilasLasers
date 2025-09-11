@@ -135,7 +135,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-          ref: ${{ steps.version.outputs.tag }}
+          ref: ${{ steps.version.outputs.tag }}a
 
       - name: setup-uv
         uses: astral-sh/setup-uv@v6
@@ -166,11 +166,13 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v5
+      - id: version
+        run: echo "tag=v${{ needs.details.outputs.new_version }}a" >> $GITHUB_OUTPUT
+
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-          ref: ${{ needs.check_versions.outputs.branch }}
+          ref: ${{ steps.version.outputs.tag }}a
 
       - name: Download artifacts
         uses: actions/download-artifact@v5
