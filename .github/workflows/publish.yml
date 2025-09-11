@@ -101,6 +101,7 @@ jobs:
           echo "branch=$branch" >> $GITHUB_OUTPUT
 
       - name: update pyproject.toml
+        id: toml
         run: |
           NEW_VERSION=${{ needs.details.outputs.new_version }}
           TOML_VERSION=${{ needs.details.outputs.toml_version }}
@@ -119,6 +120,7 @@ jobs:
               git push origin HEAD:$branch
               git tag v"$NEW_VERSION"a
               git push origin v"$NEW_VERSION"a
+              echo "new_tag=v"$NEW_VERSION"a" >> $GITHUB_OUTPUT
             else
               echo "pyproject.toml not changed after uv version (already up-to-date)"
             fi
@@ -132,6 +134,9 @@ jobs:
     permissions:
       id-token: write
     steps:
+      - run: echo ${{ needs.check_versions.outputs.branch }}
+      - run: echo "v${{ needs.details.outputs.new_version }}a"
+
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
