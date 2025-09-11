@@ -113,8 +113,11 @@ jobs:
               git add pyproject.toml
               git commit -m "chore: bump version to v$NEW_VERSION [skip ci]"
               branch=$(git branch -r --contains ${{ github.ref }} --format "%(refname:lstrip=3)")
+
               git push origin HEAD:$branch
               git tag v$NEW_VERSION
+              git push --delete origin v$NEW_VERSION 2> /dev/null
+              git tag -d v$NEW_VERSION 2> /dev/null
               git push origin HEAD:v$NEW_VERSION
             else
               echo "pyproject.toml not changed after uv version (already up-to-date)"
