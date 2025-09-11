@@ -18,6 +18,7 @@ jobs:
       new_version: ${{ steps.release.outputs.new_version }}
       suffix: ${{ steps.release.outputs.suffix }}
       tag_name: ${{ steps.release.outputs.tag_name }}
+      toml_version: ${{ steps.release.outputs.toml_version }}
     steps:
       - uses: actions/checkout@v4
         with:
