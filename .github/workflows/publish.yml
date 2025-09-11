@@ -59,6 +59,8 @@ jobs:
     runs-on: ubuntu-latest    
     permissions:
       contents: write  
+    outputs:
+      branch: ${{ steps.detect.outputs.branch }}
     steps:
       - name: Fetch information from PyPI
         run: |
