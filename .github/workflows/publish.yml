@@ -105,24 +105,24 @@ jobs:
           echo "toml_version $TOML_VERSION"
           echo "new version $NEW_VERSION"
           echo "new version $RELEASE_VERSION"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if [ "$TOML_VERSION" != "$RELEASE_VERSION" ];then
             uv version $RELEASE_VERSION
             if ! git diff --quiet pyproject.toml; then
-              git config user.name "github-actions[bot]"
-              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
               git fetch
               git add pyproject.toml
-              git commit -m "chore: bump pyproject.tmol file version to v$RELEASE_VERSION [skip ci]"
+              git commit -m "chore: bump pyproject.tmol file version to v$RELEASE_VERSION"
               branch=$(git branch -r --contains ${{ github.ref }} --format "%(refname:lstrip=3)")
               git push origin HEAD:$branch
-              git tag v"$RELEASE_VERSION"
-              git push origin v"$RELEASE_VERSION"
             else
               echo "pyproject.toml not changed after uv version (already up-to-date)"
             fi
           else
             echo "No version bump needed ($TOML_VERSION == $RELEASE_VERSION)"
           fi
+          git tag v"$RELEASE_VERSION"
+          git push origin v"$RELEASE_VERSION"
 
   build_and_publish:
     needs: [details, check_versions]
