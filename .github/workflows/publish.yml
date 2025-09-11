@@ -87,6 +87,8 @@ jobs:
           
       - name: check pyproject.toml
         run: |
+          echo "toml_version $TOML_VERSION"
+          echo "new version $NEW_VERSION"
           if [ "$TOML_VERSION" != "$NEW_VERSION" ];then
             uv version $NEW_VERSION
             if ! git diff --quiet pyproject.toml; then
@@ -105,6 +107,8 @@ jobs:
   build_and_publish:
     needs: [details, check_versions]
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     steps:
       - uses: actions/checkout@v5
         with:
