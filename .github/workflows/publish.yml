@@ -94,11 +94,6 @@ jobs:
         with:
           fetch-depth: 0
           
-      - name: Get Branch
-        id: branch
-        run: |
-          branch=$(git branch -r --contains ${{ github.ref }} --format "%(refname:lstrip=3)")
-          echo "branch=$branch" >> $GITHUB_OUTPUT
 
       - name: update pyproject.toml
         id: toml
@@ -134,13 +129,18 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - run: echo ${{ needs.check_versions.outputs.branch }}
-      - run: echo "v${{ needs.details.outputs.new_version }}a"
+      - id: version
+        run: echo "tag=v${{ needs.details.outputs.new_version }}a" >> $GITHUB_OUTPUT
 
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-          ref: ${{ needs.check_versions.outputs.branch }}
+          ref: "v${{ needs.details.outputs.new_version }}a"
+
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ steps.version.outputs.tag }}
 
       - name: setup-uv
         uses: astral-sh/setup-uv@v6
