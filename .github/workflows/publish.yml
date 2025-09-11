@@ -87,6 +87,8 @@ jobs:
           
       - name: check pyproject.toml
         run: |
+          NEW_VERSION=${{ needs.details.outputs.new_version }}
+          TOML_VERSION=${{ needs.details.outputs.toml_version }}
           echo "toml_version $TOML_VERSION"
           echo "new version $NEW_VERSION"
           if [ "$TOML_VERSION" != "$NEW_VERSION" ];then
