@@ -4,7 +4,7 @@
 Python library for controlling <b>Chilas</b> Atlas and Comet tunable lasers.
 
 <div align="center">
-	<img src="docs/assets/Chilas-logo-color.png" alt="Chilas Logo" width=50% />
+	<img src="https://github.com/ChilasLasers/PyChilasLasers/blob/actions/docs/assets/Chilas-logo-color.png" alt="Chilas Logo" width=50% />
 </div>
 
 
