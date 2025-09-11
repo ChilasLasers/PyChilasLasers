@@ -86,6 +86,10 @@ jobs:
         with:
           enable-cache: true
           
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
       - name: check pyproject.toml
         run: |
           NEW_VERSION=${{ needs.details.outputs.new_version }}
