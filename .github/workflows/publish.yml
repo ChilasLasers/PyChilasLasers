@@ -95,7 +95,6 @@ jobs:
         with:
           fetch-depth: 0
           
-
       - name: update pyproject.toml
         id: toml
         run: |
@@ -123,7 +122,7 @@ jobs:
           fi
           git tag v"$RELEASE_VERSION"
           git push origin v"$RELEASE_VERSION"
-
+          
   build_and_publish:
     needs: [details, check_versions]
     runs-on: ubuntu-latest
