@@ -38,7 +38,7 @@ jobs:
         run: |
           if [ "${{ github.ref_type }}" = "tag" ]; then
             TAG_NAME=${GITHUB_REF#refs/tags/}
-            NEW_VERSION=$(echo $TAG_NAME | awk -F'-' '{print $1}')
+            NEW_VERSION=$(echo "$TAG_NAME" | awk -F'-' '{gsub(/^v/, "", $1); print $1}')
             SUFFIX=$(echo $TAG_NAME | grep -oP '[a-z]+[0-9]+' || echo "")
             TOML_VERSION=$(uv version --short)
             echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
