@@ -191,7 +191,7 @@ class PhaseSection(Heater):
             voltage_squares = self._volts.copy()
             time_steps = self._time_steps.copy()
 
-        time_steps: list[float] = (
+        time_steps = (
             [time_steps[0]] * (len(voltage_squares) - 1) + [0]
             if len(time_steps) == 1
             else [*time_steps, 0]
@@ -199,15 +199,16 @@ class PhaseSection(Heater):
 
         for i, voltage in enumerate(voltage_squares):
             if target**2 + voltage < 0:
-                value = 0
+                value: float = 0
                 logging.getLogger(__name__).warning(
                     "Anti-hysteresis"
                     f"value out of bounds: {value} (min: {self.min_value}, max: "
                     f"{self.max_value}). Approximating by 0"
                 )
-                value: float = 0
+                value = 0
             else:
                 value = sqrt(target**2 + voltage)
+
             if value < self.min_value or value > self.max_value:
                 logging.getLogger(__name__).error(
                     "Anti-hysteresis"

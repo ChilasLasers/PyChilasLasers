@@ -82,7 +82,7 @@ class SteadyMode(__Calibrated):
             )
         else:
             # Default to cycler index method for ATLAS
-            self._change_method: _WLChangeMethod = _CyclerIndex(
+            self._change_method = _CyclerIndex(
                 steady_mode=self,
                 laser=laser,
                 calibration_table=self._calibration,
@@ -283,15 +283,15 @@ class _WLChangeMethod(ABC):
         self._calibration_table: dict[float, CalibrationEntry] = calibration_table
         antihyst_parameters: tuple[list[float], list[float]] = anti_hyst_parameters
 
-        self._v_phases_squared_antihyst = antihyst_parameters[0]
-        self._time_steps = antihyst_parameters[1]
+        self._v_phases_squared_antihyst: list[float] = antihyst_parameters[0]
+        self._time_steps: list[float] = antihyst_parameters[1]
 
         assert len(self._v_phases_squared_antihyst) != 0 and len(self._time_steps) != 0
         assert (
             len(self._v_phases_squared_antihyst) == len(self._time_steps) + 1
             or len(self._time_steps) == 1
         )
-        self._time_steps: list[float] = (
+        self._time_steps = (
             [self._time_steps[0]] * (len(self._v_phases_squared_antihyst) - 1) + [0]
             if len(self._time_steps) == 1
             else [*self._time_steps, 0]
@@ -313,19 +313,19 @@ class _WLChangeMethod(ABC):
         data.
         """
         if v_phase is None:
-            v_phase = self._comm.query(f"DRV:D? {HeaterChannel.PHASE_SECTION.value:d}")
+            v_phase = float(self._comm.query(f"DRV:D? "
+                                             f"{HeaterChannel.PHASE_SECTION.value:d}"))
         v_phases_squared_antihyst = self._v_phases_squared_antihyst.copy()
         time_steps = self._time_steps.copy()
 
         for i, v_phase_squared_antihyst in enumerate(v_phases_squared_antihyst):
             if v_phase**2 + v_phase_squared_antihyst < 0:
-                value = 0
+                value:float = 0
                 logging.getLogger(__name__).warning(
                     "Anti-hysteresis "
                     f"value out of bounds: {value} (min: {self._phase_min}, max: "
                     f"{self._phase_max}). Approximating by 0"
                 )
-                value: float = 0
             else:
                 value = sqrt(v_phase**2 + v_phase_squared_antihyst)
             if value < self._phase_min or value > self._phase_max:
@@ -383,6 +383,8 @@ class _PreLoad(_WLChangeMethod):
         This method is specifically designed for COMET laser models.
 
     """
+
+    _step_size:int
 
     def set_wl(self, wavelength: float) -> None:
         """Set wavelength using preloaded calibration wavelengths.

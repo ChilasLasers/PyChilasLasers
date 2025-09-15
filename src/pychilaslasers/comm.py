@@ -219,7 +219,7 @@ class Communication:
 
     def _initialize_variables(self) -> None:
         """Initialize private variables."""
-        self._previous_command: str = "None"
+        self._previous_command = "None"
 
     ########## Properties (Getters/Setters) ##########
 
