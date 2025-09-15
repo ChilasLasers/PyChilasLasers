@@ -1,0 +1,39 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: Ruff check (auto-fix)
+        entry: uvx ruff check --fix --config pyproject.toml --force-exclude
+        language: system
+        types: [python]
+        pass_filenames: true
+
+      - id: ruff-format
+        name: Ruff format
+        entry: uvx ruff format --config pyproject.toml 
+        language: system
+        types: [python]
+        pass_filenames: true
+
+      - id: mypy
+        name: Mypy type checking
+        entry: uvx mypy --config-file pyproject.toml src
+        language: system
+        pass_filenames: false
+
+      - id: pytest
+        name: Run pytest
+        entry: uvx pytest -vv
+        language: system
+        pass_filenames: false
+
+  # Enforce Conventional Commits on the commit message itself
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v2.3.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        # optional: restrict allowed types to exactly what you use
+        args: [
+          "--types", "feat,fix,docs,style,refactor,test,chore,perf,ci,build"
+        ]

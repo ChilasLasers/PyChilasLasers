@@ -1,0 +1,43 @@
+name: Check code formatting
+
+on:  
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      # setup repo, python and uv 
+      - uses: actions/checkout@v4
+      - name: setup-uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Sync uv
+        run: uv sync --group dev
+
+      - name: Check Linting
+        run: uvx ruff check --output-format=github
+
+      - name: Check Formatting
+        run: uvx ruff format --check --diff
+
+      - name: Check typing 
+        run: uvx mypy src
+
+      - name: Check project structure
+        run: uvx pytest -vv  --junitxml=junit/test-results.xml
+
+        
+      - name: Upload pytest test results
+        uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: pytest-results-${{ matrix.python-version }}
+          path: junit/test-results-${{ matrix.python-version }}.xml

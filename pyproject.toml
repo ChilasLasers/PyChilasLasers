@@ -49,7 +49,9 @@ mypy_path = ["src"]
 exclude = [
     "utils.py",
     "docs/",
-    "examples/"
+    "examples/",
+    "tests/",
+    "test/"
 ]
 
 [tool.ruff.lint]
