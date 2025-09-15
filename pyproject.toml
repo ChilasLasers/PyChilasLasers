@@ -41,11 +41,27 @@ reportAttributeAccessIssue = "warning"
 
 [tool.ruff]
 
-lint.select = ["D100", "D101", "D102", "D103", "D104", "D105", "D107","F","E","W",
-"I","UP","B","D","RUF"]
-
-
 exclude = [
     "utils.py",
-    "docs/"
+    "docs/",
+    "examples/"
 ]
+
+[tool.ruff.lint]
+
+select = ["D100", "D101", "D102", "D103", "D104", "D105", "D107","F","E","W",
+"I","UP","B","D","RUF"]
+
+# Ignore one side of each conflict:
+ignore = [
+  "D203",  # prefer D211 (no blank line before class)
+  "D213",  # prefer D212 (summary on first line)
+]
+
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+# Optional: Ruff formatter settings
+indent-style = "space"

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-"""
-Demo script for pychilaslasers library.
+"""Demo script for pychilaslasers library.
 
 This demo script follows a typical usage of the library. It initializes a laser, powers it on
 performs some common operations with it before safely shutting it down.
@@ -51,12 +50,12 @@ print(f"New wavelength is {laser.steady.set_wl_relative(-1.000)}")
 
 input("Press Enter to continue...")
 
-# Emit a trigger pulse 
+# Emit a trigger pulse
 laser.trigger_pulse()
 
 
 if laser.model == "COMET":
-    run_sweeping_example(laser) 
+    run_sweeping_example(laser)
 
 # Turn off the laser
 laser.system_state = False

@@ -1,5 +1,4 @@
-"""
-Class representing errors received from the laser
+"""Class representing errors received from the laser.
 
 **Authors**: SDU
 """
@@ -13,9 +12,13 @@ class LaserError(Exception):  # noqa: D101
             code (str): The error code sent by the laser. Typically a 1 but kept
                 abstract to allow for future expansion.
             message (str): The error message.
+
         """
         self.code: str = code
         self.message: str = message
 
     def __str__(self) -> str:  # noqa: D105
-        return f"LaserError {self.code}: The laser has responded with an error {self.message}"
+        return (
+            f"LaserError {self.code}: "
+            f"The laser has responded with an error {self.message}"
+        )

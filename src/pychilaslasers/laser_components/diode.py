@@ -1,5 +1,4 @@
-"""
-Laser diode component
+"""Laser diode component.
 
 This module implements the laser diode component that controls the laser's
 emission by managing the drive current and on/off state. Handles
@@ -10,6 +9,7 @@ laser enable/disable operations as well as current adjustments.
 
 # ⚛️ Type checking
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -32,6 +32,7 @@ class Diode(LaserComponent):
         min_value: Minimum current (always 0.0 mA).
         max_value: Maximum current.
         unit: Current unit (mA).
+
     """
 
     def __init__(self, laser: Laser) -> None:
@@ -43,6 +44,7 @@ class Diode(LaserComponent):
 
         Args:
             laser: The laser instance to control.
+
         """
         super().__init__(laser=laser)
         self._min: float = 0.0
@@ -57,23 +59,27 @@ class Diode(LaserComponent):
 
         Returns:
             True if the laser diode is ON, False if OFF.
+
         """
         return bool(int(self._comm.query("LSR:STAT?")))
 
     @state.setter
     def state(self, state: bool) -> None:
-        """Controls laser emission by enabling or disabling the diode.
+        """Enable or disable laser emission by controlling the diode.
 
         Args:
             state: True to turn the laser ON, False to turn it OFF.
+
         """
         self._comm.query(f"LSR:STAT {state:d}")
 
     @property
     def current(self) -> float:
-        """
+        """Returns the current drive current in milliamps.
+
         Returns:
             The current drive current in milliamps.
+
         """
         return float(self._comm.query("LSR:ILEV?"))
 
@@ -86,13 +92,15 @@ class Diode(LaserComponent):
 
         Raises:
             ValueError: If current is not a number or is outside the valid range.
+
         """
         # Validate the value
         if not isinstance(current_ma, (int, float)):
             raise ValueError("Current must be a number.")
         if current_ma < self._min or current_ma > self._max:
             raise ValueError(
-                f"Current value {current_ma} not valid: must be between {self._min} and {self._max} mA."
+                f"Current value {current_ma} not valid: must be between {self._min} "
+                f"and {self._max} mA."
             )
 
         self._comm.query(f"LSR:ILEV {current_ma:.3f}")
@@ -100,44 +108,44 @@ class Diode(LaserComponent):
     ########## Method Overloads/Aliases ##########
 
     def get_value(self) -> float:
-        """
-        Alias for the `value` property getter.
+        """Alias for the `value` property getter.
 
         Returns:
             The current drive current in milliamps.
+
         """
         return self.value
 
     def set_value(self, val: float) -> None:
-        """
-        Alias for the `value` property setter.
+        """Alias for the `value` property setter.
 
         Args:
             val: The desired drive current in milliamps.
 
         Raises:
             ValueError: If current is not a number or is outside the valid range.
+
         """
         self.value = val
 
     def get_current(self) -> float:
-        """
-        Alias for the `current` property getter.
+        """Alias for the `current` property getter.
 
         Returns:
             The current drive current in milliamps.
+
         """
         return self.current
 
     def set_current(self, current_ma: float) -> None:
-        """
-        Alias for the `current` property setter.
+        """Alias for the `current` property setter.
 
         Args:
             current_ma: The desired drive current in milliamps.
 
         Raises:
             ValueError: If current is not a number or is outside the valid range.
+
         """
         self.current = current_ma
 
@@ -163,6 +171,7 @@ class Diode(LaserComponent):
 
         Returns:
             The current drive current in milliamps.
+
         """
         return self.current
 
@@ -170,9 +179,11 @@ class Diode(LaserComponent):
     def value(self, val: float) -> None:
         """Set the drive current value.
 
-        Alias for the `current` property setter to implement the LaserComponent interface.
+        Alias for the `current` property setter to implement the LaserComponent
+        interface.
 
         Args:
             val: The desired drive current in milliamps.
+
         """
         self.current = val

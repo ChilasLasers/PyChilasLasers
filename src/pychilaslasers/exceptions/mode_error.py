@@ -1,5 +1,4 @@
-"""
-Exception class for laser mode-related errors.
+"""Exception class for laser mode-related errors.
 
 This module defines the ModeError exception which is raised when operations
 are attempted in or for incompatible laser modes. It provides detailed information
@@ -10,6 +9,7 @@ about the current mode and suggests the correct mode for the operation.
 
 # ⚛️ Type checking
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -30,14 +30,17 @@ class ModeError(Exception):
     ) -> None:
         """Exception raised in case of an error related to the mode the laser is in.
 
-        This exception is used to indicate that an operation cannot be performed in the current mode of the laser.
-        It provides information about the current mode and the desired mode that would allow the operation to succeed
+        This exception is used to indicate that an operation cannot be performed
+        in the current mode of the laser.
+        It provides information about the current mode and the desired mode that would
+        allow the operation to succeed
 
         Args:
             message (str): The error message.
             current_mode (LaserMode): The current mode of the laser.
             desired_mode (LaserMode | None, optional): The laser mode that would allow
                 for the operation to succeed. Defaults to None.
+
         """
         super().__init__(message)
         self.message: str = message

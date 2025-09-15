@@ -1,5 +1,4 @@
-"""
-Abstract base class for laser modes that require calibration data.
+"""Abstract base class for laser modes that require calibration data.
 
 This module defines the base class for modes that use calibration data to control
 laser wavelengths and other calibrated parameters. It provides common functionality
@@ -10,6 +9,7 @@ shared between steady and sweep mode operations.
 
 # ⚛️ Type checking
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -38,6 +38,7 @@ class __Calibrated(Mode):
 
         Args:
             laser: The parent laser instance that owns this mode.
+
         """
         super().__init__(laser)
 
@@ -54,6 +55,7 @@ class __Calibrated(Mode):
 
         Returns:
             True if auto-trigger is enabled, False otherwise.
+
         """
         return self._autoTrig
 
@@ -63,6 +65,7 @@ class __Calibrated(Mode):
 
         Args:
             state: Whether to enable (True) or disable (False) auto-trigger.
+
         """
         self._autoTrig = state
 
@@ -82,6 +85,7 @@ class __Calibrated(Mode):
         Args:
             state: The state to set the auto-trigger to. If None,
                 it toggles the current state.
+
         """
         self._autoTrig = state if state is not None else not self._autoTrig
 
@@ -95,6 +99,7 @@ class __Calibrated(Mode):
 
         Returns:
             The minimum calibrated wavelength in nanometers.
+
         """
         return self._min_wl
 
@@ -106,6 +111,7 @@ class __Calibrated(Mode):
 
         Returns:
             The maximum calibrated wavelength in nanometers.
+
         """
         return self._max_wl
 
@@ -118,5 +124,6 @@ class __Calibrated(Mode):
 
         Returns:
             The current wavelength in nanometers.
+
         """
         pass
