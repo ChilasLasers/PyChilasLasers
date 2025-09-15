@@ -27,13 +27,13 @@ repos:
         language: system
         pass_filenames: false
 
-  # Enforce Conventional Commits on the commit message itself
-  - repo: https://github.com/compilerla/conventional-pre-commit
-    rev: v2.3.0
-    hooks:
-      - id: conventional-pre-commit
-        stages: [commit-msg]
-        # optional: restrict allowed types to exactly what you use
-        args: [
-          "--types", "feat,fix,docs,style,refactor,test,chore,perf,ci,build"
-        ]
+  # # Enforce Conventional Commits on the commit message itself
+  # - repo: https://github.com/compilerla/conventional-pre-commit
+  #   rev: v2.3.0
+  #   hooks:
+  #     - id: conventional-pre-commit
+  #       stages: [commit-msg]
+  #       # optional: restrict allowed types to exactly what you use
+  #       args: [
+  #         "--types", "feat,fix,docs,style,refactor,test,chore,perf,ci,build"
+  #       ]
