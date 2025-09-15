@@ -41,3 +41,5 @@ jobs:
         with:
           name: pytest-results-${{ matrix.python-version }}
           path: junit/test-results-${{ matrix.python-version }}.xml
+
+      - uses: webiny/action-conventional-commits@v1.3.0
