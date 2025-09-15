@@ -5,7 +5,7 @@ Class representing errors received from the laser
 """
 
 
-class LaserError(Exception):
+class LaserError(Exception):  # noqa: D101
     def __init__(self, code: str, message: str) -> None:
         """Class representing errors received from the laser.
 
@@ -17,5 +17,5 @@ class LaserError(Exception):
         self.code: str = code
         self.message: str = message
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # noqa: D105
         return f"LaserError {self.code}: The laser has responded with an error {self.message}"

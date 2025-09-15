@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def select_com_port() -> str: 
+def select_com_port() -> str:  # noqa: D103
     from pychilaslasers import utils
     if len(ports:= utils.list_comports()) == 1:
         address: str = ports[0]
@@ -36,7 +36,7 @@ def select_com_port() -> str:
     return address
 
 
-def run_sweeping_example(laser:Laser | None = None) -> None:
+def run_sweeping_example(laser:Laser | None = None) -> None:  # noqa: D103
     if laser is None:
         laser = Laser(calibration_file=fp_lut, com_port=select_com_port())
 

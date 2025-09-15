@@ -60,5 +60,5 @@ class ModeError(Exception):
         else:
             self.message += f" (current mode: {self.current_mode.name})"
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # noqa: D105
         return f"ModeError: {self.message}"

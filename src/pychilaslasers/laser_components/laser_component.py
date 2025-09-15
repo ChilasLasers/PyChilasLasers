@@ -39,7 +39,7 @@ class LaserComponent(ABC):
         Subclasses should initialize self._min, self._max and self._unit during construction.
     """
 
-    def __init__(self, laser: Laser) -> None:
+    def __init__(self, laser: Laser) -> None:  # noqa: D107
         super().__init__()
         self._comm: Communication = laser._comm
 
