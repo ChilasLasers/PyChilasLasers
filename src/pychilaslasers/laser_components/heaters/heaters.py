@@ -17,8 +17,8 @@ if TYPE_CHECKING:
     from pychilaslasers.laser import Laser
 
 # ✅ Standard library imports
-import logging
 from abc import abstractmethod
+import logging
 
 from pychilaslasers.laser_components.heaters.heater_channels import HeaterChannel
 

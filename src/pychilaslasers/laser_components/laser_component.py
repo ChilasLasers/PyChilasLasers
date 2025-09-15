@@ -39,6 +39,7 @@ class LaserComponent(ABC):
         during construction.
 
     """
+
     _min: float
     _max: float
     _unit: str

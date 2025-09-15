@@ -32,6 +32,7 @@ class __Calibrated(Mode):
     The class is marked as private (double underscore prefix) as it should only be
     used as a base class for other mode implementations within this package.
     """
+
     _min_wl: float
     _max_wl: float
 
@@ -48,7 +49,7 @@ class __Calibrated(Mode):
         self._autoTrig: bool = False
 
     @property
-    def autoTrig(self) -> bool:
+    def autoTrig(self) -> bool:  # noqa: N802
         """Get the auto-trigger setting of the laser.
 
         This property indicates whether the laser is set to automatically send
@@ -62,7 +63,7 @@ class __Calibrated(Mode):
         return self._autoTrig
 
     @autoTrig.setter
-    def autoTrig(self, state: bool) -> None:
+    def autoTrig(self, state: bool) -> None:  # noqa: N802
         """Set the auto-trigger setting of the laser.
 
         Args:
@@ -73,7 +74,7 @@ class __Calibrated(Mode):
 
     ########## Main Methods ##########
 
-    def toggle_autoTrig(self, state: bool | None = None) -> None:
+    def toggle_autoTrig(self, state: bool | None = None) -> None:  # noqa: N802
         """Toggle the auto-trigger setting.
 
         If `state` is provided, it sets the auto-trigger to that state.

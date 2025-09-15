@@ -17,11 +17,11 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pychilaslasers.laser import Laser
+    from pychilaslasers.laser_components.heaters.heater_channels import HeaterChannel
+    from pychilaslasers.laser_components.heaters.heaters import Heater
 
 # ✅ Local imports
-from pychilaslasers.laser_components.heaters.heater_channels import HeaterChannel
 from pychilaslasers.laser_components.heaters.heaters import (
-    Heater,
     LargeRing,
     PhaseSection,
     SmallRing,
