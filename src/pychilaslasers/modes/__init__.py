@@ -1,10 +1,9 @@
-"""
-PyChilasLasers Modes Module
+"""PyChilasLasers Modes Module.
 
 Laser modes provide an encapsulation for operations that require common settings
-and/or cannot be performed together.It includes manual mode for direct control 
+and/or cannot be performed together.It includes manual mode for direct control
 and calibrated modes for steady-state and sweeping operations. The module also
-defines wavelength change methods and manages the calibration data for different 
+defines wavelength change methods and manages the calibration data for different
 laser models.
 
 Classes:
@@ -18,22 +17,19 @@ Classes:
     _CyclerIndex: Cycler index-based wavelength change method
 """
 
-
 # Core mode classes
-from .mode import LaserMode, Mode
-
 # Concrete mode implementations
 from .manual_mode import ManualMode
+from .mode import LaserMode, Mode
 from .steady_mode import SteadyMode
 from .sweep_mode import SweepMode
 
 __all__: list[str] = [
     # Enums and base classes
     "LaserMode",
-    "Mode",
-    
     # Mode implementations
     "ManualMode",
-    "SteadyMode", 
+    "Mode",
+    "SteadyMode",
     "SweepMode",
 ]

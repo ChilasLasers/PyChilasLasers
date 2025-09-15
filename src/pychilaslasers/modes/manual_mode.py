@@ -1,5 +1,4 @@
-"""
-Manual mode implementation for direct laser heater control.
+"""Manual mode implementation for direct laser heater control.
 
 This module implements manual mode operation for laser control, allowing direct
 manipulation of individual heater channels without calibration constraints.
@@ -13,12 +12,14 @@ advanced users and debugging purposes.
 
 # ⚛️ Type checking
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pychilaslasers.laser import Laser
 
 # ✅ Local imports
+from pychilaslasers.laser_components.heaters.heater_channels import HeaterChannel
 from pychilaslasers.laser_components.heaters.heaters import (
     Heater,
     LargeRing,
@@ -26,7 +27,6 @@ from pychilaslasers.laser_components.heaters.heaters import (
     SmallRing,
     TunableCoupler,
 )
-from pychilaslasers.laser_components.heaters.heater_channels import HeaterChannel
 from pychilaslasers.modes.mode import LaserMode, Mode
 
 
@@ -51,6 +51,7 @@ class ManualMode(Mode):
         large_ring: Large ring heater component.
         small_ring: Small ring heater component.
         tunable_coupler: Tunable coupler heater component.
+
     """
 
     def __init__(self, laser: Laser) -> None:
@@ -61,6 +62,7 @@ class ManualMode(Mode):
 
         Args:
             laser: The laser instance to control.
+
         """
         super().__init__(laser)
         self._laser.turn_on()  # Ensure the laser is on after initializing heaters
@@ -101,6 +103,7 @@ class ManualMode(Mode):
         Warning:
             This method performs no validation on the input values.
             Setting inappropriate voltages may result in errors or undefined behavior.
+
         """
         self._comm.query(f"DRV:D {heater_ch:d} {heater_value:.4f}")
 
@@ -122,6 +125,7 @@ class ManualMode(Mode):
 
         Args:
             value: The heater drive value to set.
+
         """
         self._phase_section.value = value
 
@@ -136,6 +140,7 @@ class ManualMode(Mode):
 
         Args:
             value: The heater drive value to set.
+
         """
         self._large_ring.value = value
 
@@ -150,6 +155,7 @@ class ManualMode(Mode):
 
         Args:
             value: The heater drive value to set.
+
         """
         self._small_ring.value = value
 
@@ -164,6 +170,7 @@ class ManualMode(Mode):
 
         Args:
             value: The heater drive value to set.
+
         """
         self._tunable_coupler.value = value
 
@@ -182,5 +189,6 @@ class ManualMode(Mode):
                 2. small_ring
                 3. tunable_coupler
                 In this order for easy iteration and access.
+
         """
         return self._heaters
