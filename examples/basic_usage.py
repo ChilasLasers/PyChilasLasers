@@ -8,7 +8,7 @@ performs some common operations with it before safely shutting it down.
 
 import logging
 from pathlib import Path
-from modes import mode
+from pychilaslasers.modes import LaserMode
 from pychilaslasers import Laser
 from  basic_usage_sweeping import run_sweeping_example,select_com_port
 
@@ -34,7 +34,7 @@ print(f"Connection state {laser.system_state}")
 laser.system_state = True
 
 # Steady tuning functionality
-laser.mode = mode.LaserMode.STEADY
+laser.mode = LaserMode.STEADY
 
 # Set wavelength, e.g. 1550.000nm
 laser.steady.wavelength = 1598.000
