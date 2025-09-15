@@ -161,7 +161,7 @@ class PhaseSection(Heater):
         self._volts: None | list[float] = None
         self._time_steps: None | list[float] = None
 
-    def set_value(self, value: float) -> None:
+    def set_value(self, value: float) -> None:  # noqa: D102
         super().set_value(value)
         # Apply additional function after setting value
         if self._anti_hyst:
@@ -223,7 +223,7 @@ class PhaseSection(Heater):
             raise ValueError("anti_hyst must be a boolean.")
         self._anti_hyst = value
 
-    def set_hyst_params(self, volts: list[float], times: list[float]):
+    def set_hyst_params(self, volts: list[float], times: list[float]):  # noqa: D102
         self._volts = volts
         self._time_steps = times
 
