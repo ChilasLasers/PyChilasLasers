@@ -11,6 +11,7 @@
         "milliamps",
         "mypy",
         "pychilaslasers",
+        "pydocstyle",
         "pypi",
         "signum",
         "stopbits",

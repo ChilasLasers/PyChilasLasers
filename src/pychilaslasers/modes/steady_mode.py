@@ -17,8 +17,8 @@ if TYPE_CHECKING:
     from pychilaslasers.utils import CalibrationEntry
 
 # ✅ Standard library imports
-import logging
 from abc import ABC, abstractmethod
+import logging
 from math import sqrt
 from time import sleep
 
@@ -313,14 +313,15 @@ class _WLChangeMethod(ABC):
         data.
         """
         if v_phase is None:
-            v_phase = float(self._comm.query(f"DRV:D? "
-                                             f"{HeaterChannel.PHASE_SECTION.value:d}"))
+            v_phase = float(
+                self._comm.query(f"DRV:D? {HeaterChannel.PHASE_SECTION.value:d}")
+            )
         v_phases_squared_antihyst = self._v_phases_squared_antihyst.copy()
         time_steps = self._time_steps.copy()
 
         for i, v_phase_squared_antihyst in enumerate(v_phases_squared_antihyst):
             if v_phase**2 + v_phase_squared_antihyst < 0:
-                value:float = 0
+                value: float = 0
                 logging.getLogger(__name__).warning(
                     "Anti-hysteresis "
                     f"value out of bounds: {value} (min: {self._phase_min}, max: "
@@ -384,7 +385,7 @@ class _PreLoad(_WLChangeMethod):
 
     """
 
-    _step_size:int
+    _step_size: int
 
     def set_wl(self, wavelength: float) -> None:
         """Set wavelength using preloaded calibration wavelengths.

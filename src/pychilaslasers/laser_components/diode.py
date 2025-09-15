@@ -149,14 +149,14 @@ class Diode(LaserComponent):
         """
         self.current = current_ma
 
-    def turn_ON(self) -> None:
+    def turn_on(self) -> None:
         """Turn the laser diode ON.
 
         Alias for setting `state` to True.
         """
         self.state = True
 
-    def turn_OFF(self) -> None:
+    def turn_off(self) -> None:
         """Turn the laser diode OFF.
 
         Alias for setting `state` to False.
