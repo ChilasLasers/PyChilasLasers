@@ -118,19 +118,20 @@ class Laser:
         # Initialize modes
         self._manual_mode: ManualMode = ManualMode(self)
 
+        self._model: str = "Unknown"
+        self._steady_mode: SteadyMode | None = None
+        self._sweep_mode: SweepMode | None = None
+
         if calibration_file is not None:
             calibration = read_calibration_file(file_path=calibration_file)
-            self._model: str = calibration["model"]
-            self._steady_mode: SteadyMode | None = SteadyMode(self, calibration)
-            self._sweep_mode: SweepMode | None = (
+            self._model = calibration["model"]
+            self._steady_mode = SteadyMode(self, calibration)
+            self._sweep_mode = (
                 SweepMode(self, calibration)
                 if calibration["model"] == "COMET"
                 else None
             )
-        else:
-            self._model: str = "Unknown"
-            self._steady_mode: SteadyMode | None = None
-            self._sweep_mode: SweepMode | None = None
+
         self._mode: Mode = self._manual_mode
 
         logger.debug(
@@ -292,14 +293,17 @@ class Laser:
                     message="Sweep mode is not available for this laser model.",
                     current_mode=self.mode,
                 )
+
             # Change mode to the corresponding mode instance
-            self._mode = (
-                self._sweep_mode
-                if mode is LaserMode.SWEEP
-                else self._steady_mode
-                if mode is LaserMode.STEADY
-                else self._manual_mode
-            )  # type: ignore
+            if mode is LaserMode.SWEEP:
+                assert self._sweep_mode is not None
+                self._mode = self._sweep_mode
+            elif mode is LaserMode.STEADY:
+                assert self._steady_mode is not None
+                self._mode = self._steady_mode
+            else:
+                self._mode = self._manual_mode
+
         else:
             raise TypeError(
                 f"Invalid mode type: {type(mode)}. "

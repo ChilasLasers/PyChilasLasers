@@ -202,7 +202,6 @@ def read_calibration_file(file_path: str | Path) -> dict:
 from serial.tools.list_ports import comports
 
 
-@staticmethod
 def list_comports() -> list[str]:
     """Lists all available COM ports on the system.
     `serial.tools.list_ports.comports` is used to list all available

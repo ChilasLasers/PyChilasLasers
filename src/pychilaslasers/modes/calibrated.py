@@ -32,6 +32,8 @@ class __Calibrated(Mode):
     The class is marked as private (double underscore prefix) as it should only be
     used as a base class for other mode implementations within this package.
     """
+    _min_wl: float
+    _max_wl: float
 
     def __init__(self, laser: Laser) -> None:
         """Initialize the calibrated mode base class.

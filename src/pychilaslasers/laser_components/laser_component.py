@@ -39,6 +39,9 @@ class LaserComponent(ABC):
         during construction.
 
     """
+    _min: float
+    _max: float
+    _unit: str
 
     def __init__(self, laser: Laser) -> None:  # noqa: D107
         super().__init__()

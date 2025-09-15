@@ -18,6 +18,7 @@ dependencies = [
 dev = [
     "pychilaslasers",
     "pytest>=8.4.1",
+    "types-pyserial>=3.5.0.20250914",
 ]
 docs = [
     "mkdocs>=1.6.1",
@@ -38,6 +39,8 @@ pychilaslasers = { workspace = true }
 reportOptionalMemberAccess = "warning"
 reportAttributeAccessIssue = "warning"
 
+[tool.mypy]
+ignore_missing_imports = true
 
 [tool.ruff]
 
