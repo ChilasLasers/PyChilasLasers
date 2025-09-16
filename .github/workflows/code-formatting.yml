@@ -42,4 +42,5 @@ jobs:
           name: pytest-results
           path: junit/test-results.xml
 
-      - uses: webiny/action-conventional-commits@v1.3.0
+      - name: Check conventional commit scheme
+        uses: webiny/action-conventional-commits@v1.3.0
