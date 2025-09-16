@@ -1,9 +1,10 @@
-"""
-This module contains the `Communication` class for handling communication with the laser
-driver over serial.
+"""Communication class for handling laser driver serial communication.
 
-It contains the methods for sending commands to the laser, receiving responses, and managing
-the serial connection.
+This module contains the `Communication` class for handling communication
+with the laser driver over serial.
+
+It contains the methods for sending commands to the laser, receiving
+responses, and managing the serial connection.
 
 **Authors:** RLK, AVR, SDU
 """
@@ -24,11 +25,11 @@ logger = logging.getLogger(__name__)
 
 
 class Communication:
-    """
-    Communication class for handling communication with the laser driver over serial.
+    """Communication class for handling communication with the laser driver over serial.
 
     This class provides methods for sending commands to the laser, receiving responses,
-    and managing the serial connection. It also handles the prefix mode for the laser driver,
+    and managing the serial connection. It also handles the prefix mode for the
+    laser driver.
     """
 
     def __init__(self, com_port: str) -> None:
@@ -38,12 +39,15 @@ class Communication:
         the communication parameters. It also registers cleanup functions to ensure
         the serial connection is properly closed on exit or signal termination. And
         sets the initial baudrate to the default value. When a connection fails, it will
-        attempt to reconnect using the next supported baudrate until a connection is established
-        as this is one of the most common issues when connecting to the laser driver.
+        attempt to reconnect using the next supported baudrate until a connection is
+        established as this is one of the most common issues when connecting to the
+        laser driver.
 
         Args:
             com_port: The serial port to connect to the laser driver.
-                this can be found by using the `pychilaslasers.utils.get_serial_ports()` function.
+                this can be found by using the `pychilaslasers.utils.get_serial_ports()`
+                function.
+
         """
         # Validate the com_port input
         if not isinstance(com_port, str):
@@ -75,12 +79,14 @@ class Communication:
             except Exception:
                 try:
                     logger.error(
-                        f"Serial connection failed at {rate} baud.Attempting new connection with baudrate {(rate := baudrates.pop())}."
+                        f"Serial connection failed at {rate} baud.Attempting new "
+                        f"connection with baudrate {(rate := baudrates.pop())}."
                     )
                     self.baudrate = rate  # Try next baudrate if the current one fails
                 except KeyError:
                     logger.critical(
-                        "No more supported baudrates available. Cannot establish serial connection."
+                        "No more supported baudrates available. Cannot establish serial"
+                        " connection."
                     )
                     raise RuntimeError(
                         "Failed to establish serial connection with the laser driver. "
@@ -94,18 +100,19 @@ class Communication:
         signal.signal(signal.SIGTERM, self.close_connection)
 
     def __del__(self) -> None:
-        """Destructor that ensures the serial connection is closed when the object is deleted.
+        """Destructor that ensures the serial connection is closed after deletion.
 
-        This method is called when the object is garbage collected, providing an additional
-        safety mechanism to ensure the serial connection is properly closed even if the
-        user forgets to call close explicitly or if the program terminates unexpectedly.
+        This method is called when the object is garbage collected, providing an
+        additional safety mechanism to ensure the serial connection is properly closed
+        even if the user forgets to call close explicitly or if the program terminates
+        unexpectedly.
         """
         self.close_connection()
 
     ########## Main Methods ##########
 
     def query(self, data: str) -> str:
-        """Main method for communication with the laser.
+        """Send a command to the laser and return its response.
 
         This method sends a command to the laser over the serial connection and returns
         the response. It also handles the logging of the command and response. The
@@ -124,9 +131,10 @@ class Communication:
         Raises:
             serial.SerialException: If there is an error in the serial communication,
                 such as a decoding error or an empty reply.
-            LaserError: If the response code from the laser is not 0, indicating an error.
-        """
+            LaserError: If the response code from the laser is not 0,
+                indicating an error.
 
+        """
         # Write the command to the serial port
         logger.debug(msg=f"W {data}")  # Logs the command being sent
         self._serial.write(f"{self._semicolon_replace(data)}\r\n".encode("ascii"))
@@ -143,7 +151,7 @@ class Communication:
             raise serial.SerialException(
                 f"Failed to decode reply from device: {e}. "
                 + "Please check the connection and baudrate settings."
-            )
+            ) from e
 
         # Error handling
         if not reply or reply == "":
@@ -163,15 +171,18 @@ class Communication:
         return reply[2:]
 
     def close_connection(self, signum=None, fname=None) -> None:
-        """Closes the serial connection to the laser driver safely.
-        Attempts to reset the baudrate to the initial value before closing the connection.
+        """Close the serial connection to the laser driver safely.
+
+        Attempts to reset the baudrate to the initial value before closing the
+        connection.
 
         This method is registered to be called on exit or when a signal is received.
         """
         if self._serial and self._serial.is_open:
             if signum is not None:
                 logger.error(
-                    f"Received signal {signal.Signals(signum).name} ({signum}): closing connection"
+                    f"Received signal {signal.Signals(signum).name} ({signum}):"
+                    "closing connection"
                 )
             else:
                 logger.debug("Closing connection")
@@ -185,7 +196,7 @@ class Communication:
     ########## Private Methods ##########
 
     def _semicolon_replace(self, cmd: str) -> str:
-        """To speed up communication, a repeating command can be replaced with a semicolon.
+        """To speed up communication, repeating commands can be replaced by a semicolon.
 
         Check if the command was previously sent to the device. In that case, replace
         it with a semicolon.
@@ -195,6 +206,7 @@ class Communication:
 
         Returns:
             The command with semicolon inserted
+
         """
         if (
             cmd.split(" ")[0] == self._previous_command
@@ -207,7 +219,7 @@ class Communication:
 
     def _initialize_variables(self) -> None:
         """Initialize private variables."""
-        self._previous_command: str = "None"
+        self._previous_command = "None"
 
     ########## Properties (Getters/Setters) ##########
 
@@ -215,7 +227,7 @@ class Communication:
     def prefix_mode(self) -> bool:
         """Gets prefix mode for the laser driver.
 
-        !!! info "The laser driver can be operated in two different communication modes:"
+        !!! info "The laser can be operated in two different communication modes:"
             1. Prefix mode on
             2. Prefix mode off
 
@@ -230,14 +242,15 @@ class Communication:
 
         Returns:
             whether prefix mode is enabled (True) or disabled (False)
+
         """
         return self._prefix_mode
 
     @prefix_mode.setter
     def prefix_mode(self, mode: bool) -> None:
-        """Sets prefix mode for the laser driver.
+        """Set prefix mode for the laser driver.
 
-        !!! info "The laser driver can be operated in two different communication modes:"
+        !!! info "The laser can be operated in two different communication modes:"
             1. Prefix mode on
             2. Prefix mode off
 
@@ -253,6 +266,7 @@ class Communication:
 
         Args:
             mode: whether to enable prefix mode (True) or disable it (False)
+
         """
         self.query(f"SYST:COMM:PFX {mode:d}")
         self._prefix_mode = mode
@@ -260,7 +274,7 @@ class Communication:
 
     @property
     def baudrate(self) -> int:
-        """Gets the baudrate of the serial connection to the driver
+        """Gets the baudrate of the serial connection to the driver.
 
         The baudrate can be changed, but does require a serial reconnect
 
@@ -275,20 +289,22 @@ class Communication:
             - 230400
             - 460800
             - 912600
-            
+
         Returns:
             (int): baudrate currently in use
+
         """
         driver_baudrate = int(self.query("SYST:SER:BAUD?"))
         if driver_baudrate != self._serial.baudrate:
             logger.error(
-                "There seems to be a baudrate mismatch between driver and connection baudrate settings"
+                "There seems to be a baudrate mismatch between driver and connection"
+                " baudrate settings"
             )
         return driver_baudrate
 
     @baudrate.setter
     def baudrate(self, new_baudrate: int) -> None:
-        """Sets the baudrate of the serial connection to the driver
+        """Set the baudrate of the serial connection to the driver.
 
         The baudrate can be changed, but this requires a serial reconnect.
 
@@ -308,8 +324,9 @@ class Communication:
         If not, it will do nothing and return immediately (None). If a serial connection
         is open, it will first check if new baudrate requested, is supported.
         If not, it will return None. Otherwise, continue to check if the new baudrate
-        needs to be set, by comparing with the current baudrate in use. If the new requested
-        baudrate is different then it will set the new baudrate as follows:
+        needs to be set, by comparing with the current baudrate in use.
+        If the new requested baudrate is different then it will set the new baudrate
+        as follows:
             1. Instruct the driver to use a new baudrate
             2. Close the serial connection
             3. Change the serial connection attribute to use the new baudrate as well
@@ -317,8 +334,8 @@ class Communication:
 
         Args:
             new_baudrate (int): new baudrate to use
-        """
 
+        """
         # Input validation
         if not self._serial.is_open:
             return
@@ -343,4 +360,3 @@ class Communication:
         # 4. Reopen serial connection
         logger.debug("[baudrate_switch] Reopening serial connection with new baudrate")
         self._serial.open()
-

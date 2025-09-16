@@ -1,15 +1,14 @@
 #!/usr/bin/env python
-"""
-Demo script for pychilaslasers library.
+"""Demo script for pychilaslasers library.
 
-This demo script follows a typical usage of the library that showcases the sweeping 
-mode functions that can be used on COMET lasers. 
+This demo script follows a typical usage of the library that showcases the sweeping
+mode functions that can be used on COMET lasers.
 """
 
 import logging
 from pathlib import Path
-from pychilaslasers import Laser
 
+from pychilaslasers import Laser
 
 # Path to *.csv file, which contains the calibration Look-Up Table (lut)
 path_calibration_lut = Path("path/to/file")
@@ -29,11 +28,13 @@ def select_com_port() -> str:
         exit(1)
     else:
         while True:
+
             selected_com_port = input(f"Available COM ports: {ports}\nPlease enter the COM port address: ")
             if selected_com_port in ports:
                 break
             print("Invalid COM port address. Please choose from.")
     return selected_com_port
+
 
 
 def run_sweeping_example(laser:Laser | None = None) -> None:
@@ -50,6 +51,7 @@ def run_sweeping_example(laser:Laser | None = None) -> None:
     # Automatically define the sweep range for a full sweep, based on the maximum tuning range of the calibration look-up table
     start_wavelength: float = laser.sweep.start_wavelength
     end_wavelength: float = laser.sweep.end_wavelength
+
     print(f"Starting sweep from {start_wavelength} nm to {end_wavelength} nm")
 
     # Start a full wavelength sweep for an infinite number of sweeps, until it is interrupted by stop()
@@ -75,7 +77,7 @@ def run_sweeping_example(laser:Laser | None = None) -> None:
 
     # Stop wavelength sweep
     input("Press Enter to stop the sweep...")
-    laser.sweep.stop()    
+    laser.sweep.stop()
 
 
 if __name__ == "__main__":

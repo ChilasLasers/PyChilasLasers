@@ -1,5 +1,4 @@
-"""
-Abstract base class for laser hardware components.
+"""Abstract base class for laser hardware components.
 
 This module defines the common interface that all laser hardware components
 must implement. This encapsulation allows for abstracticizing the internals of
@@ -11,12 +10,12 @@ possible operations.
 
 # ⚛️ Type checking
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
-
 if TYPE_CHECKING:
-    from pychilaslasers.laser import Laser
     from pychilaslasers.comm import Communication
+    from pychilaslasers.laser import Laser
 
 # ✅ Standard library imports
 from abc import ABC, abstractmethod
@@ -36,10 +35,16 @@ class LaserComponent(ABC):
         unit: The unit of measurement for this component's values.
 
     Note:
-        Subclasses should initialize self._min, self._max and self._unit during construction.
+        Subclasses should initialize self._min, self._max and self._unit
+        during construction.
+
     """
 
-    def __init__(self, laser: Laser) -> None:
+    _min: float
+    _max: float
+    _unit: str
+
+    def __init__(self, laser: Laser) -> None:  # noqa: D107
         super().__init__()
         self._comm: Communication = laser._comm
 
@@ -48,32 +53,20 @@ class LaserComponent(ABC):
     @property
     @abstractmethod
     def value(self) -> float:
-        """
-        Returns:
-            The current value of the component in appropriate units.
-        """
+        """Returns the current value of the component in appropriate units."""
         pass
 
     @property
     def min_value(self) -> float:
-        """
-        Returns:
-            The minimum value that can be safely set for this component.
-        """
+        """Returns the minimum value that can be safely set for this component."""
         return self._min
 
     @property
     def max_value(self) -> float:
-        """
-        Returns:
-            The maximum value that can be safely set for this component.
-        """
+        """Returns the maximum value that can be safely set for this component."""
         return self._max
 
     @property
     def unit(self) -> str:
-        """
-        Returns:
-            The unit string (e.g., "mA", "°C", "V") for this component.
-        """
+        """Returns the unit string (e.g., "mA", "°C", "V") for this component."""
         return self._unit

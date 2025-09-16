@@ -1,5 +1,4 @@
-"""
-Abstract base class for laser modes that require calibration data.
+"""Abstract base class for laser modes that require calibration data.
 
 This module defines the base class for modes that use calibration data to control
 laser wavelengths and other calibrated parameters. It provides common functionality
@@ -10,6 +9,7 @@ shared between steady and sweep mode operations.
 
 # ⚛️ Type checking
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -33,11 +33,15 @@ class __Calibrated(Mode):
     used as a base class for other mode implementations within this package.
     """
 
+    _min_wl: float
+    _max_wl: float
+
     def __init__(self, laser: Laser) -> None:
         """Initialize the calibrated mode base class.
 
         Args:
             laser: The parent laser instance that owns this mode.
+
         """
         super().__init__(laser)
 
@@ -45,7 +49,7 @@ class __Calibrated(Mode):
         self._autoTrig: bool = False
 
     @property
-    def autoTrig(self) -> bool:
+    def autoTrig(self) -> bool:  # noqa: N802
         """Get the auto-trigger setting of the laser.
 
         This property indicates whether the laser is set to automatically send
@@ -54,21 +58,23 @@ class __Calibrated(Mode):
 
         Returns:
             True if auto-trigger is enabled, False otherwise.
+
         """
         return self._autoTrig
 
     @autoTrig.setter
-    def autoTrig(self, state: bool) -> None:
+    def autoTrig(self, state: bool) -> None:  # noqa: N802
         """Set the auto-trigger setting of the laser.
 
         Args:
             state: Whether to enable (True) or disable (False) auto-trigger.
+
         """
         self._autoTrig = state
 
     ########## Main Methods ##########
 
-    def toggle_autoTrig(self, state: bool | None = None) -> None:
+    def toggle_autoTrig(self, state: bool | None = None) -> None:  # noqa: N802
         """Toggle the auto-trigger setting.
 
         If `state` is provided, it sets the auto-trigger to that state.
@@ -82,6 +88,7 @@ class __Calibrated(Mode):
         Args:
             state: The state to set the auto-trigger to. If None,
                 it toggles the current state.
+
         """
         self._autoTrig = state if state is not None else not self._autoTrig
 
@@ -95,6 +102,7 @@ class __Calibrated(Mode):
 
         Returns:
             The minimum calibrated wavelength in nanometers.
+
         """
         return self._min_wl
 
@@ -106,6 +114,7 @@ class __Calibrated(Mode):
 
         Returns:
             The maximum calibrated wavelength in nanometers.
+
         """
         return self._max_wl
 
@@ -118,5 +127,6 @@ class __Calibrated(Mode):
 
         Returns:
             The current wavelength in nanometers.
+
         """
         pass
