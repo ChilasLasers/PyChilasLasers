@@ -30,8 +30,6 @@ if TYPE_CHECKING:
 # ✅ Standard library imports
 import logging
 
-# ✅ Local imports
-from pychilaslasers.modes.sweep_mode import SweepMode
 from pychilaslasers.comm import Communication
 from pychilaslasers.exceptions.mode_error import ModeError
 from pychilaslasers.laser_components.diode import Diode
@@ -39,6 +37,9 @@ from pychilaslasers.laser_components.tec import TEC
 from pychilaslasers.modes.manual_mode import ManualMode
 from pychilaslasers.modes.mode import LaserMode, Mode
 from pychilaslasers.modes.steady_mode import SteadyMode
+
+# ✅ Local imports
+from pychilaslasers.modes.sweep_mode import SweepMode
 from pychilaslasers.utils import read_calibration_file
 
 logger: logging.Logger = logging.getLogger(__name__)
