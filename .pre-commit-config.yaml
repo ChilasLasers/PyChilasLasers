@@ -1,3 +1,5 @@
+# Install: pre-commit install --hook-type pre-push --hook-type commit-msg --install-hooks
+
 default_stages: [pre-push]
 
 repos:
@@ -31,13 +33,8 @@ repos:
         pass_filenames: false
 
 
-  # Enforce Conventional Commits on the commit message itself
-  - repo: https://github.com/compilerla/conventional-pre-commit
-    rev: v2.3.0
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v1.17.0
     hooks:
-      - id: conventional-pre-commit
+      - id: commitizen
         stages: [commit-msg]
-        # optional: restrict allowed types to exactly what you use
-        args: [
-          "feat,fix,docs,style,refactor,test,chore,perf,ci,build"
-        ]
