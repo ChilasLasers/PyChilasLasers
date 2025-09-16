@@ -100,13 +100,7 @@ def read_calibration_file(file_path: str | Path) -> dict:
         }
     }
 
-    if model == "COMET":
-        calibration["sweep"] = {
-            "current": Constants.HARD_CODED_SWEEP_CURRENT,  # Default current for sweep mode
-            "tec_temp": Constants.HARD_CODED_SWEEP_TEC_TEMP,  # Default TEC temperature for sweep mode
-            "interval": Constants.HARD_CODED_INTERVAL,  # Default interval for sweep mode
-            "wavelengths": []  # List of wavelengths for sweep mode
-        }
+
 
     with open(file_path, newline='') as csvfile:
         # Read content first to detect dialect
@@ -126,6 +120,13 @@ def read_calibration_file(file_path: str | Path) -> dict:
 
             if model != "COMET":
                 settings = list(filter(lambda setting: not setting.startswith("sweep"), settings))
+            else:
+                calibration["sweep"] = {
+                    "current": Constants.HARD_CODED_SWEEP_CURRENT,  # Default current for sweep mode
+                    "tec_temp": Constants.HARD_CODED_SWEEP_TEC_TEMP,  # Default TEC temperature for sweep mode
+                    "interval": Constants.HARD_CODED_INTERVAL,  # Default interval for sweep mode
+                    "wavelengths": []  # List of wavelengths for sweep mode
+                }
 
             def sanitize(word: str) -> str:
                 return word.strip().replace('\r', '').replace('\n', '').upper()
