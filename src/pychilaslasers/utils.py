@@ -21,12 +21,12 @@ class Constants:
         "DRV:CYC:SETT",
         "DRV:CYC:STRW"]
 
-    HARD_CODED_LASER_MODEL: str = "COMET"
+    HARD_CODED_LASER_MODEL: str = "ATLAS"
 
     # Steady mode default values
-    HARD_CODED_STEADY_CURRENT: float = 295.0
+    HARD_CODED_STEADY_CURRENT: float = 280.0
     HARD_CODED_STEADY_TEC_TEMP: float = 25.0
-    HARD_CODED_STEADY_ANTI_HYST: tuple = ([20.0, 0.0], [10.0])
+    HARD_CODED_STEADY_ANTI_HYST: tuple = ([35.0, 0.0], [10.0])
 
     # Sweep mode default values (for COMET model)
     HARD_CODED_SWEEP_CURRENT: float = 280.0
