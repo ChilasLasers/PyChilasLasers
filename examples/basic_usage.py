@@ -36,18 +36,17 @@ laser.system_state = True
 laser.mode = LaserMode.STEADY
 
 # Set laser wavelength to any value within the tuning range given by the calibration look-up table
-laser.steady.wavelength = 1598.000  # nm
+laser.steady.wavelength = 1550.000  # nm
 
 # Get current laser wavelength
 print(f"Current wavelength is {laser.steady.wavelength} nm")
 input("Press enter to continue...")
 
 # Set wavelength in relative manner to apply a single step or offset
-print(f"New wavelength is {laser.steady.set_wl_relative(0.004)} nm")
+print(f"New wavelength is {laser.steady.set_wl_relative(0.100)} nm")
 
-# ... or decrease wavelength with a negative step, e.g. -1.000 nm
+# ... or decrease wavelength with a negative step
 print(f"New wavelength is {laser.steady.set_wl_relative(-1.000)} nm")
-
 input("Press Enter to continue...")
 
 # Emit a trigger pulse for synchronization with other equipment, e.g. to indicate that the wavelength is set

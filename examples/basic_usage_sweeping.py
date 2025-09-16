@@ -60,13 +60,13 @@ def run_sweeping_example(laser:Laser | None = None) -> None:
     laser.sweep.stop()
 
     # Manually define the sweep range
-    print(f"Now sweeping with user-defined bounds. Min is {start_wavelength}nm, Max is {end_wavelength}nm")
-    low_bound = input("Enter the start wavelength (nm): ")
-    high_bound = input("Enter the end wavelength (nm): ")
+    print(f"Please define sweep wavelength bounds. Maximum start is {start_wavelength} nm, minimum end is {end_wavelength} nm")
+    start_wavelength = float(input("Enter the start wavelength (nm): "))
+    end_wavelength = float(input("Enter the end wavelength (nm): "))
 
     try:
-        laser.sweep.set_range(float(low_bound), float(high_bound))
-        print(f"Bounds set to {low_bound}nm - {high_bound}nm")
+        laser.sweep.set_range(start_wavelength, end_wavelength)
+        print(f"Sweep bounds set from {start_wavelength} nm to {end_wavelength} nm")
     except ValueError as e:
         print(f"Error setting bounds: {e}")
 
