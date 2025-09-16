@@ -91,9 +91,18 @@ jobs:
         with:
           enable-cache: true
           
+      - name: Create app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          installation-id: ${{ secrets.INSTALLATION_ID }}
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
           
       - name: update pyproject.toml
         id: toml
@@ -104,8 +113,8 @@ jobs:
           echo "toml_version $TOML_VERSION"
           echo "new version $NEW_VERSION"
           echo "new version $RELEASE_VERSION"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
           if [ "$TOML_VERSION" != "$RELEASE_VERSION" ];then
             uv version $RELEASE_VERSION
             if ! git diff --quiet pyproject.toml; then
