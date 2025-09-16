@@ -30,12 +30,10 @@ if TYPE_CHECKING:
 # ✅ Standard library imports
 import logging
 
-from modes.sweep_mode import SweepMode
-
+# ✅ Local imports
+from pychilaslasers.modes.sweep_mode import SweepMode
 from pychilaslasers.comm import Communication
 from pychilaslasers.exceptions.mode_error import ModeError
-
-# ✅ Local imports
 from pychilaslasers.laser_components.diode import Diode
 from pychilaslasers.laser_components.tec import TEC
 from pychilaslasers.modes.manual_mode import ManualMode
