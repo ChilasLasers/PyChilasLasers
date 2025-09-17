@@ -120,7 +120,7 @@ jobs:
             if ! git diff --quiet pyproject.toml; then
               git fetch
               git add pyproject.toml
-              git commit -m "chore(CICD): update pyproject.toml"
+              git commit -m "ci(pyproject.toml): update package version"
               git push origin HEAD:main
             else
               echo "pyproject.toml not changed after uv version (already up-to-date)"
