@@ -1,6 +1,6 @@
-"""Steady mode operation for laser wavelength control.
+"""Tune mode operation for laser wavelength control.
 
-This module implements steady mode operation of the laser which allows for tuning to
+This module implements tune mode operation of the laser which allows for tuning to
 wavelengths from the calibration table.
 
 **Authors**: RLK, AVR, SDU
@@ -28,39 +28,39 @@ from pychilaslasers.modes.calibrated import __Calibrated
 from pychilaslasers.modes.mode import LaserMode
 
 
-class SteadyMode(__Calibrated):
-    """Steady operation mode of the laser.
+class TuneMode(__Calibrated):
+    """Tune operation mode of the laser.
 
-    SteadyMode allows for tuning to specific wavelengths
+    TuneMode allows for tuning to specific wavelengths
 
     The mode supports anti-hysteresis correction to improve wavelength stability
     and provides convenient methods for wavelength setting and control.
 
     Args:
         laser: The laser instance to control.
-        calibration: Calibration data dictionary containing steady mode parameters.
+        calibration: Calibration data dictionary containing tune mode parameters.
                 as returned by the `utils.read_calibration_file` method
 
     Attributes:
         wavelength: Current wavelength setting in nanometers.
         antihyst: Anti-hysteresis correction enable/disable state.
-        mode: Returns LaserMode.STEADY.
+        mode: Returns LaserMode.TUNE.
 
     """
 
     def __init__(self, laser: Laser, calibration: dict) -> None:
-        """Initialize steady mode with laser and calibration data.
+        """Initialize tune mode with laser and calibration data.
 
         Args:
             laser: The laser instance to control.
-            calibration: Calibration data dictionary containing steady mode parameters.
+            calibration: Calibration data dictionary containing tune mode parameters.
 
         """
         super().__init__(laser)
 
-        self._calibration = calibration["steady"]["calibration"]
-        self._default_TEC = calibration["steady"]["tec_temp"]
-        self._default_current = calibration["steady"]["current"]
+        self._calibration = calibration["tune"]["calibration"]
+        self._default_TEC = calibration["tune"]["tec_temp"]
+        self._default_current = calibration["tune"]["current"]
 
         self._min_wl: float = min(self._calibration.keys())
         self._max_wl: float = max(self._calibration.keys())
@@ -72,10 +72,10 @@ class SteadyMode(__Calibrated):
         self._wl: float = self._min_wl  # Default to minimum wavelength
 
         # Initialize wavelength change method based on laser model
-        antihyst_parameters = calibration["steady"]["anti-hyst"]
+        antihyst_parameters = calibration["tune"]["anti-hyst"]
         if calibration["model"] == "COMET":
             self._change_method: _WLChangeMethod = _PreLoad(
-                steady_mode=self,
+                tune_mode=self,
                 laser=laser,
                 calibration_table=self._calibration,
                 anti_hyst_parameters=antihyst_parameters,
@@ -83,7 +83,7 @@ class SteadyMode(__Calibrated):
         else:
             # Default to cycler index method for ATLAS
             self._change_method = _CyclerIndex(
-                steady_mode=self,
+                tune_mode=self,
                 laser=laser,
                 calibration_table=self._calibration,
                 anti_hyst_parameters=antihyst_parameters,
@@ -92,7 +92,7 @@ class SteadyMode(__Calibrated):
     ########## Main Methods ##########
 
     def apply_defaults(self) -> None:
-        """Apply default settings for steady mode operation.
+        """Apply default settings for tune mode operation.
 
         Sets the TEC temperature and diode current to their default values
         as specified in the calibration data.
@@ -173,10 +173,10 @@ class SteadyMode(__Calibrated):
         """Get the laser operation mode.
 
         Returns:
-            LaserMode.STEADY indicating steady mode operation.
+            LaserMode.TUNE indicating tune mode operation.
 
         """
-        return LaserMode.STEADY
+        return LaserMode.TUNE
 
     @property
     def step_size(self) -> float:
@@ -247,7 +247,7 @@ class _WLChangeMethod(ABC):
     commands and anti-hysteresis procedures for its respective laser type.
 
     Args:
-        steady_mode: Reference to the parent SteadyMode instance.
+        tune_mode: Reference to the parent TuneMode instance.
         laser: The laser hardware interface.
         calibration_table: Wavelength to calibration entry mapping.
         anti_hyst_parameters: Tuple of (voltage_list, time_steps_list) for
@@ -260,7 +260,7 @@ class _WLChangeMethod(ABC):
 
     def __init__(
         self,
-        steady_mode: SteadyMode,
+        tune_mode: TuneMode,
         laser: Laser,
         calibration_table: dict[float, CalibrationEntry],
         anti_hyst_parameters: tuple[list[float], list[float]],
@@ -268,7 +268,7 @@ class _WLChangeMethod(ABC):
         """Initialize wavelength change method.
 
         Args:
-            steady_mode: Reference to the parent SteadyMode instance.
+            tune_mode: Reference to the parent TuneMode instance.
             laser: The laser hardware interface.
             calibration_table: Wavelength to calibration entry mapping.
                 This is not the same as the calibration dictionary returned by
@@ -279,7 +279,7 @@ class _WLChangeMethod(ABC):
         """
         self._laser: Laser = laser
         self._comm: Communication = laser._comm
-        self._steady_mode: SteadyMode = steady_mode
+        self._tune_mode: TuneMode = tune_mode
         self._calibration_table: dict[float, CalibrationEntry] = calibration_table
         antihyst_parameters: tuple[list[float], list[float]] = anti_hyst_parameters
 
@@ -350,7 +350,7 @@ class _WLChangeMethod(ABC):
             Current wavelength setting in nanometers.
 
         """
-        return self._steady_mode.wavelength
+        return self._tune_mode.wavelength
 
     ########## Abstract Methods ##########
 

@@ -7,7 +7,7 @@ in specific operation modes.
 !!! tip "The modes of the laser are:"
     - [ManualMode][pychilaslasers.modes.ManualMode]: Allows manual control of the
       heater values.
-    - [SteadyMode][pychilaslasers.modes.SteadyMode]: Can be used to tune the laser to
+    - [TuneMode][pychilaslasers.modes.TuneMode]: Can be used to tune the laser to
       specific wavelengths according to the calibration data.
     - [SweepMode][pychilaslasers.modes.SweepMode]: Sweep mode is used for COMET lasers
       to enable the sweep functionality.
@@ -38,7 +38,7 @@ from pychilaslasers.laser_components.diode import Diode
 from pychilaslasers.laser_components.tec import TEC
 from pychilaslasers.modes.manual_mode import ManualMode
 from pychilaslasers.modes.mode import LaserMode, Mode
-from pychilaslasers.modes.steady_mode import SteadyMode
+from pychilaslasers.modes.tune_mode import TuneMode
 from pychilaslasers.utils import read_calibration_file
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -55,7 +55,7 @@ class Laser:
 
     Usage:
         Accessing functionality of a specific mode is done through the `mode` property
-        such as `laser.steady.method_name()` or `laser.sweep.method_name()`. This will
+        such as `laser.tune.method_name()` or `laser.sweep.method_name()`. This will
         however only work if the laser is in the correct mode. If the laser is not in
         the correct mode, an exception will be raised. The current mode of the laser
         can be set using the `mode` property as well.
@@ -118,13 +118,13 @@ class Laser:
         self._manual_mode: ManualMode = ManualMode(self)
 
         self._model: str = "Unknown"
-        self._steady_mode: SteadyMode | None = None
+        self._tune_mode: TuneMode | None = None
         self._sweep_mode: SweepMode | None = None
 
         if calibration_file is not None:
             calibration = read_calibration_file(file_path=calibration_file)
             self._model = calibration["model"]
-            self._steady_mode = SteadyMode(self, calibration)
+            self._tune_mode = TuneMode(self, calibration)
             self._sweep_mode = (
                 SweepMode(self, calibration)
                 if calibration["model"] == "COMET"
@@ -155,11 +155,11 @@ class Laser:
         """
         calibration = read_calibration_file(file_path=calibration_file)
         self._model = calibration["model"]
-        self._steady_mode = SteadyMode(self, calibration)
+        self._tune_mode = TuneMode(self, calibration)
 
         if self._model == "COMET":
             self._sweep_mode = SweepMode(self, calibration)
-        params = calibration["steady"]["anti-hyst"]
+        params = calibration["tune"]["anti-hyst"]
         self._manual_mode.phase_section.set_hyst_params(params[0], params[1])
 
     ########## Properties (Getters/Setters) ##########
@@ -213,7 +213,7 @@ class Laser:
         Returns:
             The current mode of the laser. This can be one of the following:
                 - LaserMode.MANUAL
-                - LaserMode.STEADY
+                - LaserMode.TUNE
                 - LaserMode.SWEEP
 
         """
@@ -226,19 +226,19 @@ class Laser:
         This method is used for changing the current mode of the laser. The mode
         can be set to one of the following:
             - ManualMode
-            - SteadyMode
+            - TuneMode
             - SweepMode (only available for COMET lasers)
         When changing the mode the default values for the mode are applied.
 
         Args:
             mode (LaserMode | Mode | str): The mode to set the laser to. This can be:
-                - An instance of a specific mode class (ManualMode, SteadyMode,
+                - An instance of a specific mode class (ManualMode, TuneMode,
                   SweepMode). The mode will NOT be changed to that specific mode
                   class, but rather the mode will be set to the mode of that class.
-                - A string representing the mode (e.g., "manual", "steady", "sweep")
+                - A string representing the mode (e.g., "manual", "tune", "sweep")
                   Case-insensitive and allows for common misspellings or partial typing.
                 - An enum value from LaserMode (e.g., LaserMode.MANUAL,
-                  LaserMode.STEADY, LaserMode.SWEEP)
+                  LaserMode.TUNE, LaserMode.SWEEP)
 
         Raises:
             ValueError: If the mode is not recognized or is not available for the
@@ -259,14 +259,14 @@ class Laser:
                 # Define mode mappings including exact matches and fuzzy matches
                 mode_mappings = {
                     "manual": LaserMode.MANUAL,  # Exact match
-                    "steady": LaserMode.STEADY,  # Exact match
+                    "tune": LaserMode.TUNE,  # Exact match
                     "sweep": LaserMode.SWEEP,  # Exact match
                     "manuel": LaserMode.MANUAL,  # Common misspelling
                     "manua": LaserMode.MANUAL,  # Partial typing
                     "man": LaserMode.MANUAL,  # Short form
-                    "steadi": LaserMode.STEADY,  # Partial typing
-                    "stead": LaserMode.STEADY,  # Partial typing
-                    "ste": LaserMode.STEADY,  # Partial typing
+                    "steadi": LaserMode.TUNE,  # Partial typing
+                    "stead": LaserMode.TUNE,  # Partial typing
+                    "ste": LaserMode.TUNE,  # Partial typing
                     "swep": LaserMode.SWEEP,  # Common misspelling
                     "swp": LaserMode.SWEEP,  # Common misspelling
                     "sweap": LaserMode.SWEEP,  # Common misspelling
@@ -279,10 +279,10 @@ class Laser:
                 else:
                     raise ValueError(
                         f"Unknown mode: {mode}. "
-                        "Please use 'manual', 'steady', or 'sweep' "
+                        "Please use 'manual', 'tune', or 'sweep' "
                     )
             # Check if the mode is a valid mode to enter at this point
-            if mode in (LaserMode.STEADY, LaserMode.SWEEP) and not self.calibrated:
+            if mode in (LaserMode.TUNE, LaserMode.SWEEP) and not self.calibrated:
                 raise ValueError(
                     f"Calibration data not available, laser cannot enter "
                     f"{mode.name.lower()} mode."
@@ -297,17 +297,17 @@ class Laser:
             if mode is LaserMode.SWEEP:
                 assert self._sweep_mode is not None
                 self._mode = self._sweep_mode
-            elif mode is LaserMode.STEADY:
-                assert self._steady_mode is not None
-                self._mode = self._steady_mode
+            elif mode is LaserMode.TUNE:
+                assert self._tune_mode is not None
+                self._mode = self._tune_mode
             else:
                 self._mode = self._manual_mode
 
         else:
             raise TypeError(
                 f"Invalid mode type: {type(mode)}. "
-                "Please use 'ManualMode', 'SteadyMode', 'SweepMode' instances, "
-                "or a string representing the mode (e.g., 'manual', 'steady', 'sweep')."
+                "Please use 'ManualMode', 'TuneMode', 'SweepMode' instances, "
+                "or a string representing the mode (e.g., 'manual', 'tune', 'sweep')."
             )
 
         # If we were in sweep mode and are switching to another mode, stop the sweep
@@ -320,42 +320,42 @@ class Laser:
         logging.info(f"Laser mode set to {self._mode.mode}")
 
     @property
-    def steady(self) -> SteadyMode:
-        """Getter function for the steady mode instance.
+    def tune(self) -> TuneMode:
+        """Getter function for the tune mode instance.
 
-        This property allows access to the steady mode instance of the laser in a
-        convenient way such as `laser.steady.method()`. Steady mode uses calibration
+        This property allows access to the tune mode instance of the laser in a
+        convenient way such as `laser.tune.method()`. Tune mode uses calibration
         data to tune the laser to specific wavelengths with high precision. This mode
         is available for both COMET and ATLAS lasers and provides wavelength control
         based on the laser's calibration file.
 
         Warning:
             This method will not change the mode of the laser, it will only return
-            the steady mode instance if the laser is in that mode. To switch to steady
-            mode, use `laser.mode = LaserMode.STEADY` or `laser.set_mode("steady")`
+            the tune mode instance if the laser is in that mode. To switch to tune
+            mode, use `laser.mode = LaserMode.TUNE` or `laser.set_mode("tune")`
             first.
 
         Returns:
-            The steady mode instance with access to wavelength control methods.
+            The tune mode instance with access to wavelength control methods.
 
         Raises:
-            ModeError: If the laser is not in steady mode.
+            ModeError: If the laser is not in tune mode.
 
         Example:
             ```python
-            >>> laser.mode = LaserMode.STEADY
-            >>> laser.steady.set_wavelength(1550.0)  # Set wavelength to 1550nm
+            >>> laser.mode = LaserMode.TUNE
+            >>> laser.tune.set_wavelength(1550.0)  # Set wavelength to 1550nm
             ```
 
         """
-        if self.mode != LaserMode.STEADY:
+        if self.mode != LaserMode.TUNE:
             raise ModeError(
-                "Laser not in steady mode.",
+                "Laser not in tune mode.",
                 current_mode=self.mode,
-                desired_mode=LaserMode.STEADY,
+                desired_mode=LaserMode.TUNE,
             )
-        assert self._steady_mode is not None
-        return self._steady_mode
+        assert self._tune_mode is not None
+        return self._tune_mode
 
     @property
     def sweep(self) -> SweepMode:
@@ -446,7 +446,7 @@ class Laser:
             True if the laser has calibration data, False otherwise.
 
         """
-        return self._steady_mode is not None or self._sweep_mode is not None
+        return self._tune_mode is not None or self._sweep_mode is not None
 
     ########## Method Overloads/Aliases ##########
 

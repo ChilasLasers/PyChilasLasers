@@ -31,13 +31,13 @@ class LaserMode(Enum):
     Attributes:
         MANUAL: Manual mode for direct component control.
         SWEEP: Sweep mode for wavelength scanning (COMET lasers only).
-        STEADY: Steady mode for precise wavelength control using calibration data.
+        TUNE: Tune mode for precise wavelength control using calibration data.
 
     """
 
     MANUAL = "Manual"
     SWEEP = "Sweep"
-    STEADY = "Steady"
+    TUNE = "Tune"
 
 
 class Mode(ABC):
@@ -45,7 +45,7 @@ class Mode(ABC):
 
     This class defines the basic structure and properties that all laser modes
     should implement. It provides a common interface for interacting with different
-    laser modes, such as manual, sweep, and steady modes.
+    laser modes, such as manual, sweep, and tune modes.
 
     A laser mode is an abstract operational state of the laser that adds functionality
     and defines how it behaves, the operations available, and the settings required

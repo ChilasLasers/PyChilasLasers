@@ -185,8 +185,8 @@ class PhaseSection(Heater):
         constants class are used
         """
         if not self._volts or not self._time_steps:
-            voltage_squares: list[float] = Constants.HARD_CODED_STEADY_ANTI_HYST[0]
-            time_steps: list[float] = Constants.HARD_CODED_STEADY_ANTI_HYST[0]
+            voltage_squares: list[float] = Constants.HARD_CODED_TUNE_ANTI_HYST[0]
+            time_steps: list[float] = Constants.HARD_CODED_TUNE_ANTI_HYST[0]
         else:
             voltage_squares = self._volts.copy()
             time_steps = self._time_steps.copy()

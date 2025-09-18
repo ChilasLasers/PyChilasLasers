@@ -2,7 +2,7 @@
 
 Laser modes provide an encapsulation for operations that require common settings
 and/or cannot be performed together.It includes manual mode for direct control
-and calibrated modes for steady-state and sweeping operations. The module also
+and calibrated modes for tune-state and sweeping operations. The module also
 defines wavelength change methods and manages the calibration data for different
 laser models.
 
@@ -10,7 +10,7 @@ Classes:
     LaserMode: Enum defining available laser modes
     Mode: Abstract base class for all modes
     ManualMode: Direct manual control of laser parameters
-    SteadyMode: Calibrated steady-state wavelength operation
+    TuneMode: Calibrated tune-state wavelength operation
     SweepMode: Calibrated sweeping operations
     _WLChangeMethod: Abstract base for wavelength change methods
     _PreLoad: Preload-based wavelength change method
@@ -21,7 +21,7 @@ Classes:
 # Concrete mode implementations
 from .manual_mode import ManualMode
 from .mode import LaserMode, Mode
-from .steady_mode import SteadyMode
+from .tune_mode import TuneMode
 from .sweep_mode import SweepMode
 
 __all__: list[str] = [
@@ -30,6 +30,6 @@ __all__: list[str] = [
     # Mode implementations
     "ManualMode",
     "Mode",
-    "SteadyMode",
     "SweepMode",
+    "TuneMode",
 ]

@@ -39,10 +39,10 @@ class Constants:
 
     HARD_CODED_LASER_MODEL: str = "ATLAS"
 
-    # Steady mode default values
-    HARD_CODED_STEADY_CURRENT: float = 280.0
-    HARD_CODED_STEADY_TEC_TEMP: float = 25.0
-    HARD_CODED_STEADY_ANTI_HYST: tuple = ([35.0, 0.0], [10.0])
+    # Tune mode default values
+    HARD_CODED_TUNE_CURRENT: float = 280.0
+    HARD_CODED_TUNE_TEC_TEMP: float = 25.0
+    HARD_CODED_TUNE_ANTI_HYST: tuple = ([35.0, 0.0], [10.0])
 
     # Sweep mode default values (for COMET model)
     HARD_CODED_SWEEP_CURRENT: float = 280.0
@@ -76,15 +76,15 @@ def read_calibration_file(file_path: str | Path) -> dict:
     Returns a calibration object which is a dictionary with the following structure:
     {
         "model": str,  # The model of the laser
-        "steady": {
-            "current": float,  # Default current for steady mode
-            "tec_temp": float,  # Default TEC temperature for steady mode
-            "anti-hyst": tuple(voltages^2(list(float)),time_steps(list(float))),  # anti-hyst values for steady mode
+        "tune": {
+            "current": float,  # Default current for tune mode
+            "tec_temp": float,  # Default TEC temperature for tune mode
+            "anti-hyst": tuple(voltages^2(list(float)),time_steps(list(float))),  # anti-hyst values for tune mode
             "calibration": dict[wavelength(float) -> CalibrationEntry]
 
-        Due to how the tables are initialized the steady calibration dictionary does not contain
+        Due to how the tables are initialized the tune calibration dictionary does not contain
         the entries with mode hop flags just the final entry for each wavelength.
-        This is fine for steady mode as those entries are not used in steady mode for
+        This is fine for tune mode as those entries are not used in tune mode for
         the COMET model. However, this means that the index of the wavelengths in list of keys of the
         dictionary is not the same as it's cycler index.
 
@@ -110,11 +110,11 @@ def read_calibration_file(file_path: str | Path) -> dict:
 
     calibration: dict = {
         "model": model,
-        "steady": {
-            "current": Constants.HARD_CODED_STEADY_CURRENT,  # Default current for steady mode
-            "tec_temp": Constants.HARD_CODED_STEADY_TEC_TEMP,  # Default TEC temperature for steady mode
-            "anti-hyst": Constants.HARD_CODED_STEADY_ANTI_HYST,  # anti-hyst values for steady mode
-            "calibration": {},  # Calibration data for steady mode
+        "tune": {
+            "current": Constants.HARD_CODED_TUNE_CURRENT,  # Default current for tune mode
+            "tec_temp": Constants.HARD_CODED_TUNE_TEC_TEMP,  # Default TEC temperature for tune mode
+            "anti-hyst": Constants.HARD_CODED_TUNE_ANTI_HYST,  # anti-hyst values for tune mode
+            "calibration": {},  # Calibration data for tune mode
         },
     }
 
@@ -172,21 +172,21 @@ def read_calibration_file(file_path: str | Path) -> dict:
                 elif param == "SWEEP_INTERVAL":
                     calibration["sweep"]["interval"] = int(value)
                 elif param == "TUNE_TEC_TARGET":
-                    calibration["steady"]["tec_temp"] = float(value)
+                    calibration["tune"]["tec_temp"] = float(value)
                 elif param == "TUNE_DIODE_CURRENT":
-                    calibration["steady"]["current"] = float(value)
+                    calibration["tune"]["current"] = float(value)
                 elif param == "ANTI_HYST_PHASE_V_SQUARED":
                     # Expecting a comma-separated list of floats
                     voltages = [float(v) for v in value.strip("[]").split(",")]
-                    calibration["steady"]["anti-hyst"] = (
+                    calibration["tune"]["anti-hyst"] = (
                         voltages,
-                        calibration["steady"]["anti-hyst"][1],
+                        calibration["tune"]["anti-hyst"][1],
                     )
                 elif param == "ANTI_HYST_INTERVAL":
                     # Expecting a comma-separated list of floats
                     intervals = [float(v) for v in value.strip("[]").split(",")]
-                    calibration["steady"]["anti-hyst"] = (
-                        calibration["steady"]["anti-hyst"][0],
+                    calibration["tune"]["anti-hyst"] = (
+                        calibration["tune"]["anti-hyst"][0],
                         intervals,
                     )
 
@@ -210,7 +210,7 @@ def read_calibration_file(file_path: str | Path) -> dict:
                     mode_index += 1  # Increment mode index
 
             # Adding calibration entry to the dictionary
-            calibration["steady"]["calibration"][float(row[4])] = CalibrationEntry(
+            calibration["tune"]["calibration"][float(row[4])] = CalibrationEntry(
                 wavelength=float(row[4]),
                 phase_section=float(row[0]),
                 large_ring=float(row[1]),
