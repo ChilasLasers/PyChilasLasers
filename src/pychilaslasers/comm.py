@@ -16,6 +16,8 @@ import signal
 
 # ✅ Third-party imports
 import serial
+import serial.tools
+import serial.tools.list_ports
 
 # ✅ Local imports
 from pychilaslasers.exceptions.laser_error import LaserError
@@ -360,3 +362,16 @@ class Communication:
         # 4. Reopen serial connection
         logger.debug("[baudrate_switch] Reopening serial connection with new baudrate")
         self._serial.open()
+
+    @staticmethod
+    def list_comports() -> list[str]:
+        """List all available COM ports on the system.
+
+        `serial.tools.list_ports.comports` is used to list all available
+        ports. In that regard this method is but a wrapper for it.
+
+        Returns:
+            List of available COM ports as strings sorted
+            alphabetically in ascending order.
+        """
+        return sorted([port.device for port in serial.tools.list_ports.comports()])

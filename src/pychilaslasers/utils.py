@@ -232,18 +232,3 @@ def read_calibration_file(file_path: str | Path) -> dict:
             cycler_index += 1  # Increment cycler index
 
     return calibration
-
-
-from serial.tools.list_ports import comports
-
-
-def list_comports() -> list[str]:
-    """Lists all available COM ports on the system.
-    `serial.tools.list_ports.comports` is used to list all available
-    ports. In that regard this method is but a wrapper for it.
-
-    Returns:
-        List of available COM ports as strings sorted
-        alphabetically in ascending order.
-    """
-    return sorted([port.device for port in comports()])
