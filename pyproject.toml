@@ -9,15 +9,14 @@ authors = [
 license =  "Apache-2.0"
 
 requires-python = ">=3.10"
+
 dependencies = [
-    "packaging>=25.0",
     "pyserial>=3.5",
 ]
 
 [dependency-groups]
 dev = [
     "pre-commit>=4.3.0",
-    "pychilaslasers",
     "pytest>=8.4.1",
     "types-pyserial>=3.5.0.20250914",
 ]
@@ -31,9 +30,14 @@ docs = [
     "mkdocstrings[python]>=0.30.0",
 ]
 
+
+[build-system]
+requires = ["uv_build>=0.8.18,<0.9.0"]
+build-backend = "uv_build"
+
+
 [tool.uv.sources]
 pychilaslasers = { workspace = true }
-
 
 [tool.pyright]
 
@@ -43,7 +47,6 @@ reportAttributeAccessIssue = "warning"
 [tool.mypy]
 ignore_missing_imports = true
 mypy_path = ["src"]
-
 
 [tool.ruff]
 exclude = [
