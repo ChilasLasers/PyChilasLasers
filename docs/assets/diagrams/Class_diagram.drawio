@@ -100,7 +100,7 @@
                 <mxCell id="RFVsDfMTFyBvrJDYn3Be-55" value="+ get_wl(): float" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="RFVsDfMTFyBvrJDYn3Be-47" vertex="1">
                     <mxGeometry y="230" width="200" height="26" as="geometry"/>
                 </mxCell>
-                <mxCell id="RFVsDfMTFyBvrJDYn3Be-61" value="SteadyMode" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                <mxCell id="RFVsDfMTFyBvrJDYn3Be-61" value="TuneMode" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="-30" y="682" width="240" height="138" as="geometry"/>
                 </mxCell>
                 <mxCell id="kWr4uf3u0KwMldFB6IhT-99" value="# wl_change_method: WLChangeMethod" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="RFVsDfMTFyBvrJDYn3Be-61" vertex="1">

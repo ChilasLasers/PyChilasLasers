@@ -9,7 +9,7 @@ capabilities, then walks through installation, initialization, and a step‑by�
 
 **Operating Modes**
 
-- **Steady Mode ([`OperatingMode.STEADY`][pychilaslasers.modes.SteadyMode])** – Uses calibration table entries for precise wavelength tuning.
+- **Tune Mode ([`OperatingMode.TUNE`][pychilaslasers.modes.TuneMode])** – Uses calibration table entries for precise wavelength tuning.
 - **Manual Mode ([`OperatingMode.MANUAL`][pychilaslasers.modes.ManualMode])** – Direct control of individual heater voltages.
 - **Sweep Mode ([`OperatingMode.SWEEP`][pychilaslasers.modes.SweepMode])** – High‑speed, high‑resolution sweeping across the calibrated wavelength range.
 
@@ -22,6 +22,7 @@ capabilities, then walks through installation, initialization, and a step‑by�
 - **Relative tuning** – Apply an offset (step) from the current wavelength.
 
 **Other Features**
+
 
 - **Trigger pulse generation** for synchronization with external equipment.
 
@@ -109,15 +110,15 @@ the provided settings file must be provided by the user for the demo to work.
 
 ### 2. Select Mode & Enable Output
 
-Power the system and select [`SteadyMode`][pychilaslasers.modes.SteadyMode] via its [`LaserMode`][pychilaslasers.modes.LaserMode] value. Steady Mode is the primary mode for ATLAS devices.
+Power the system and select [`TuneMode`][pychilaslasers.modes.TuneMode] via its [`LaserMode`][pychilaslasers.modes.LaserMode] value. Tune Mode is the primary mode for ATLAS devices.
 
 !!! example
     ```python
     # Turn system on
     laser.system_state = True
 
-    # Enter steady mode
-    laser.mode = mode.LaserMode.STEADY
+    # Enter tune mode
+    laser.mode = mode.LaserMode.TUNE
     ```
 
 ### 3. Wavelength Control Examples
@@ -127,22 +128,22 @@ Two approaches are demonstrated: setting an absolute wavelength and applying rel
 !!! example
     ```python
     # Absolute set (example value)
-    laser.steady.wavelength = 1598.000  # nm
+    laser.tune.wavelength = 1598.000  # nm
 
     # Relative increase (+0.004 nm)
-    laser.steady.set_wl_relative(0.004)
+    laser.tune.set_wl_relative(0.004)
 
     # Relative decrease (-1.000 nm)
-    laser.steady.set_wl_relative(-1.000)
+    laser.tune.set_wl_relative(-1.000)
     ```
 
 ### 4. Monitor Current Wavelength
 
-Access the current wavelength directly via the steady mode interface:
+Access the current wavelength directly via the tune mode interface:
 
 !!! example
     ```python
-    print(f"Current wavelength: {laser.steady.wavelength} nm")
+    print(f"Current wavelength: {laser.tune.wavelength} nm")
     ```
 
 ### 5. COMET‑Only Features (Sweep Mode)

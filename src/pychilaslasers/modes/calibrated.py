@@ -2,7 +2,7 @@
 
 This module defines the base class for modes that use calibration data to control
 laser wavelengths and other calibrated parameters. It provides common functionality
-shared between steady and sweep mode operations.
+shared between tune and sweep mode operations.
 
 **Authors**: SDU
 """
@@ -26,7 +26,7 @@ class __Calibrated(Mode):
     """Abstract base class for laser modes that work with calibration data.
 
     This class provides the basic structure and properties that are common to all
-    "calibrated" modes such as steady and sweep mode. It handles auto-triggering
+    "calibrated" modes such as tune and sweep mode. It handles auto-triggering
     functionality and wavelength range validation.
 
     The class is marked as private (double underscore prefix) as it should only be
