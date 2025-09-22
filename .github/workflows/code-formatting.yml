@@ -32,7 +32,7 @@ jobs:
         run: uvx mypy src
 
       - name: Check project structure
-        run: uvx pytest -vv  --junitxml=junit/test-results.xml
+        run: uv run pytest -vv  --junitxml=junit/test-results.xml
 
         
       - name: Upload pytest test results

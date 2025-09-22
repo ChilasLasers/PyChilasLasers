@@ -100,6 +100,7 @@ nav:
     - Class Diagram: assets/diagrams/Class_diagram.drawio   
     - package/laser.md
     - package/modes.md
+    - package/calibration.md
     - Laser Components:
       - package/laser_components/index.md
       - package/laser_components/heaters.md
@@ -113,7 +114,7 @@ nav:
     
 
 
-repo_url: https://github.com/ChilasLasers
+repo_url: https://github.com/ChilasLasers/PyChilasLasers
 site_url: https://ChilasLasers.github.io/PyChilasLasers/
 edit_uri: blob/docs/docs/
 
