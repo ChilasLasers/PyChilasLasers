@@ -35,6 +35,7 @@ from collections.abc import Iterator
 
 from pychilaslasers.exceptions.calibration_error import CalibrationError
 
+
 class Defaults:
     """Default configuration values for laser calibration.
 
@@ -69,7 +70,6 @@ class Defaults:
     HARD_CODED_SWEEP_CURRENT: float = 280.0
     HARD_CODED_SWEEP_TEC_TEMP: float = 25.0
     HARD_CODED_INTERVAL: int = 100
-
 
 
 @dataclass
@@ -164,11 +164,13 @@ class ModeSetting:
         )
         ```
     """
+
     current: float
     tec_temp: float
     anti_hyst_voltages: list[float] | None
     anti_hyst_times: list[float] | None
     sweep_interval: int | None
+
 
 @dataclass
 class Calibration:
@@ -188,8 +190,8 @@ class Calibration:
         sweep_settings: Configuration for sweep mode (None for ATLAS).
     """
 
-    model : str
-    _direct_access: dict[float,CalibrationEntry]
+    model: str
+    _direct_access: dict[float, CalibrationEntry]
     entries: list[CalibrationEntry]
     min_wl: float
     max_wl: float
@@ -197,11 +199,13 @@ class Calibration:
     tune_settings: ModeSetting
     sweep_settings: ModeSetting | None
 
-    def __init__(self,
-                model: str,
-                entries: list[CalibrationEntry], # should be in original order
-                tune_settings: ModeSetting,
-                sweep_settings: ModeSetting | None) -> None:
+    def __init__(
+        self,
+        model: str,
+        entries: list[CalibrationEntry],  # should be in original order
+        tune_settings: ModeSetting,
+        sweep_settings: ModeSetting | None,
+    ) -> None:
         """Initialize Calibration with laser model and calibration data.
 
         Args:
@@ -221,13 +225,17 @@ class Calibration:
         _wavelengths: list[float] = [entry.wavelength for entry in entries]
         self.max_wl = _wavelengths[0]
         self.min_wl = _wavelengths[-1]
-        self.step_size =  abs(
-             _wavelengths[0] - _wavelengths[_wavelengths.count(_wavelengths[0])]
-                            )
+        try:
+            self.step_size = abs(
+                _wavelengths[0] - _wavelengths[_wavelengths.count(_wavelengths[0])]
+            )
+        except IndexError:
+            logging.getLogger(__name__).warning(
+                "Calibration loaded with less than 2 entries")
 
         self._direct_access = {
-            entry.wavelength : entry for entry in entries if not entry.mode_hop_flag
-                                }
+            entry.wavelength: entry for entry in entries if not entry.mode_hop_flag
+        }
 
     def get_mode_hop_start(self, wavelength: float) -> CalibrationEntry:
         """Get the calibration entry at the start of a mode hop procedure.
@@ -246,8 +254,10 @@ class Calibration:
 
         """
         mode_hops: list[CalibrationEntry] = [
-            entry for entry in self.entries
-            if entry.wavelength == wavelength and entry.mode_hop_flag]
+            entry
+            for entry in self.entries
+            if entry.wavelength == wavelength and entry.mode_hop_flag
+        ]
         if mode_hops:
             return mode_hops[0]
         else:
@@ -274,7 +284,7 @@ class Calibration:
         elif wavelength in self:
             return self._direct_access[
                 min(self._direct_access.keys(), key=lambda x: abs(x - wavelength))
-                                        ]
+            ]
         else:
             raise KeyError(wavelength)
 
@@ -311,13 +321,10 @@ class Calibration:
             For wavelength: True if within the calibration range [min_wl, max_wl].
             For CalibrationEntry: True if the exact entry exists in this calibration.
         """
-        if isinstance(wl,CalibrationEntry):
+        if isinstance(wl, CalibrationEntry):
             return wl in self.entries
         else:
             return self.min_wl <= wl and self.max_wl >= wl
-
-
-
 
 
 def _sanitize(s: str) -> str:
@@ -370,7 +377,7 @@ def _parse_defaults_block(f: TextIO) -> tuple[str, ModeSetting, ModeSetting | No
     settings = {}
     while True:
         line = f.readline()
-        if not line: # EOF
+        if not line:  # EOF
             raise CalibrationError("Unexpected end of file. No calibration data found")
 
         if "[look_up_table]" in line:
@@ -391,37 +398,38 @@ def _parse_defaults_block(f: TextIO) -> tuple[str, ModeSetting, ModeSetting | No
 
     try:
         model = settings.pop("LASER_MODEL").upper()
-        tune  = ModeSetting(
+        tune = ModeSetting(
             current=float(settings.pop("TUNE_DIODE_CURRENT")),
             tec_temp=float(settings.pop("TUNE_TEC_TARGET")),
             anti_hyst_voltages=settings.pop("ANTI_HYST_PHASE_V_SQUARED"),
             anti_hyst_times=settings.pop("ANTI_HYST_INTERVAL"),
-            sweep_interval=None
+            sweep_interval=None,
         )
         if model == "ATLAS":
             sweep = None
         else:
             sweep = ModeSetting(
-            current=float(settings.pop("SWEEP_DIODE_CURRENT")),
-            tec_temp=float(settings.pop("SWEEP_TEC_TARGET")),
-            sweep_interval=int(settings.pop("SWEEP_INTERVAL")),
-            anti_hyst_voltages=None,
-            anti_hyst_times=None
+                current=float(settings.pop("SWEEP_DIODE_CURRENT")),
+                tec_temp=float(settings.pop("SWEEP_TEC_TARGET")),
+                sweep_interval=int(settings.pop("SWEEP_INTERVAL")),
+                anti_hyst_voltages=None,
+                anti_hyst_times=None,
             )
-    except KeyError as e: # Handle parameters missing
+    except KeyError as e:  # Handle parameters missing
         raise CalibrationError(
-            f"Calibration data incomplete. Missing parameter {e}!") from e
+            f"Calibration data incomplete. Missing parameter {e}!"
+        ) from e
 
-    if not settings == {}: # Warn about extra parameters
+    if not settings == {}:  # Warn about extra parameters
         for param in settings.keys():
             logging.getLogger(__name__).warning(
-                f"Invalid param {param} found in calibration data")
+                f"Invalid param {param} found in calibration data"
+            )
 
     return model, tune, sweep
 
-def _parse_rows(
-    f: TextIO, model: str
-) -> list[CalibrationEntry]:
+
+def _parse_rows(f: TextIO, model: str) -> list[CalibrationEntry]:
     """Parse the semicolon-delimited calibration table from a file.
 
     Reads CSV-formatted calibration data with semicolon delimiters and
@@ -466,8 +474,7 @@ def _parse_rows(
         # normalize row length if trailing semicolons are missing
         if len(row) < 6:
             # You could raise here if the file is malformed
-            continue
-
+            raise CalibrationError("Incorrect file format, missing columns!")
 
         if model == "COMET":
             # hop flag as bool
@@ -498,6 +505,7 @@ def _parse_rows(
 
     return entries
 
+
 def load_calibration(file_path: str | Path) -> Calibration:
     """Load and parse a laser calibration file into a Calibration object.
 
@@ -517,20 +525,9 @@ def load_calibration(file_path: str | Path) -> Calibration:
             incomplete data.
     """
     file_path = Path(file_path)
-    model = Defaults.HARD_CODED_LASER_MODEL
-    tune = ModeSetting(
-        current=Defaults.HARD_CODED_STEADY_CURRENT,
-        tec_temp=Defaults.HARD_CODED_STEADY_TEC_TEMP,
-        anti_hyst_voltages=list(Defaults.HARD_CODED_STEADY_ANTI_HYST[0]),
-        anti_hyst_times=list(Defaults.HARD_CODED_STEADY_ANTI_HYST[1]),
-        sweep_interval=None
-    )
-    sweep: ModeSetting | None = None
     entries: list[CalibrationEntry] = []
 
     with open(file_path, newline="") as f:
-
-
         first_line = f.readline()
         if "[default_settings]" in first_line:
             model, tune, sweep = _parse_defaults_block(f)
@@ -538,12 +535,20 @@ def load_calibration(file_path: str | Path) -> Calibration:
             # No defaults block: rewind so the first line belongs to the data table
             f.seek(0)
             model = Defaults.HARD_CODED_LASER_MODEL
+            tune = ModeSetting(
+                current=Defaults.HARD_CODED_STEADY_CURRENT,
+                tec_temp=Defaults.HARD_CODED_STEADY_TEC_TEMP,
+                anti_hyst_voltages=list(Defaults.HARD_CODED_STEADY_ANTI_HYST[0]),
+                anti_hyst_times=list(Defaults.HARD_CODED_STEADY_ANTI_HYST[1]),
+                sweep_interval=None,
+            )
+            sweep: ModeSetting | None = None
         # Now parse the lookup table rows
         entries = _parse_rows(f, model=model)
 
     return Calibration(
         model=model,
-        entries=entries,            # original order retained
+        entries=entries,  # original order retained
         tune_settings=tune,
-        sweep_settings=sweep,       # None for non-COMET
+        sweep_settings=sweep,  # None for non-COMET
     )
