@@ -11,10 +11,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from calibration import CalibrationEntry
+
+
 if TYPE_CHECKING:
     from pychilaslasers.comm import Communication
     from pychilaslasers.laser import Laser
-    from pychilaslasers.utils import CalibrationEntry
+    from pychilaslasers.calibration import Calibration, CalibrationEntry
 
 # ✅ Standard library imports
 from abc import ABC, abstractmethod
@@ -38,8 +41,7 @@ class TuneMode(__Calibrated):
 
     Args:
         laser: The laser instance to control.
-        calibration: Calibration data dictionary containing tune mode parameters.
-                as returned by the `utils.read_calibration_file` method
+        calibration: Calibration object
 
     Attributes:
         wavelength: Current wavelength setting in nanometers.
@@ -48,7 +50,7 @@ class TuneMode(__Calibrated):
 
     """
 
-    def __init__(self, laser: Laser, calibration: dict) -> None:
+    def __init__(self, laser: Laser, calibration: Calibration) -> None:
         """Initialize tune mode with laser and calibration data.
 
         Args:
@@ -58,27 +60,22 @@ class TuneMode(__Calibrated):
         """
         super().__init__(laser)
 
-        self._calibration = calibration["tune"]["calibration"]
-        self._default_TEC = calibration["tune"]["tec_temp"]
-        self._default_current = calibration["tune"]["current"]
+        self._calibration: Calibration = calibration
+        self._default_TEC = calibration.tune_settings.tec_temp
+        self._default_current = calibration.tune_settings.current
 
-        self._min_wl: float = min(self._calibration.keys())
-        self._max_wl: float = max(self._calibration.keys())
-        _wavelengths: list[float] = sorted(list(self._calibration.keys()))
-        self._step_size: float = abs(
-            _wavelengths[0] - _wavelengths[_wavelengths.count(_wavelengths[0])]
-        )
+        self._min_wl: float = self._calibration.min_wl
+        self._max_wl: float = self._calibration.max_wl
+        self._step_size: float = calibration.step_size
 
         self._wl: float = self._min_wl  # Default to minimum wavelength
 
         # Initialize wavelength change method based on laser model
-        antihyst_parameters = calibration["tune"]["anti-hyst"]
-        if calibration["model"] == "COMET":
+        if calibration.model == "COMET":
             self._change_method: _WLChangeMethod = _PreLoad(
                 tune_mode=self,
                 laser=laser,
                 calibration_table=self._calibration,
-                anti_hyst_parameters=antihyst_parameters,
             )
         else:
             # Default to cycler index method for ATLAS
@@ -86,7 +83,6 @@ class TuneMode(__Calibrated):
                 tune_mode=self,
                 laser=laser,
                 calibration_table=self._calibration,
-                anti_hyst_parameters=antihyst_parameters,
             )
 
     ########## Main Methods ##########
@@ -128,19 +124,13 @@ class TuneMode(__Calibrated):
             ValueError: If wavelength is outside the valid calibration range.
 
         """
-        if wavelength < self._min_wl or wavelength > self._max_wl:
+        if wavelength not in self._calibration:
             raise ValueError(
                 f"Wavelength value {wavelength} not valid: must be between "
                 f"{self._min_wl} and {self._max_wl}."
             )
-        if wavelength not in self._calibration.keys():
-            # Find the closest available wavelength to the requested wavelength
-            wavelength = min(
-                self._calibration.keys(), key=lambda x: abs(x - wavelength)
-            )
 
-        self._change_method.set_wl(wavelength)
-        self._wl = wavelength
+        self._wl =self._change_method.set_wl(wavelength)
 
         # Trigger pulse if auto-trigger is enabled (inherited from parent)
         if self._autoTrig:
@@ -249,9 +239,7 @@ class _WLChangeMethod(ABC):
     Args:
         tune_mode: Reference to the parent TuneMode instance.
         laser: The laser hardware interface.
-        calibration_table: Wavelength to calibration entry mapping.
-        anti_hyst_parameters: Tuple of (voltage_list, time_steps_list) for
-        anti-hysteresis.
+        calibration_table: Calibration table.
 
     Attributes:
         anti_hyst_enabled: Enable/disable anti-hysteresis correction.
@@ -262,29 +250,23 @@ class _WLChangeMethod(ABC):
         self,
         tune_mode: TuneMode,
         laser: Laser,
-        calibration_table: dict[float, CalibrationEntry],
-        anti_hyst_parameters: tuple[list[float], list[float]],
+        calibration_table: Calibration,
     ) -> None:
         """Initialize wavelength change method.
 
         Args:
             tune_mode: Reference to the parent TuneMode instance.
             laser: The laser hardware interface.
-            calibration_table: Wavelength to calibration entry mapping.
-                This is not the same as the calibration dictionary returned by
-                `utils.read_calibration_file`, just the calibration data
-            anti_hyst_parameters: Tuple containing voltage steps and timing
-                for anti-hysteresis correction.
+            calibration_table: Calibration object
 
         """
         self._laser: Laser = laser
         self._comm: Communication = laser._comm
         self._tune_mode: TuneMode = tune_mode
-        self._calibration_table: dict[float, CalibrationEntry] = calibration_table
-        antihyst_parameters: tuple[list[float], list[float]] = anti_hyst_parameters
-
-        self._v_phases_squared_antihyst: list[float] = antihyst_parameters[0]
-        self._time_steps: list[float] = antihyst_parameters[1]
+        self._calibration_table: Calibration = calibration_table
+        self._v_phases_squared_antihyst: list[float] = \
+            calibration_table.tune_settings.anti_hyst_voltages  # type: ignore
+        self._time_steps: list[float] = calibration_table.tune_settings.anti_hyst_times # type: ignore
 
         assert len(self._v_phases_squared_antihyst) != 0 and len(self._time_steps) != 0
         assert (
@@ -355,7 +337,7 @@ class _WLChangeMethod(ABC):
     ########## Abstract Methods ##########
 
     @abstractmethod
-    def set_wl(self, wavelength: float) -> None:
+    def set_wl(self, wavelength: float) -> float:
         """Set the laser wavelength using the specific method implementation.
 
         This method must be implemented by subclasses to handle the wavelength
@@ -366,6 +348,9 @@ class _WLChangeMethod(ABC):
 
         Raises:
             ValueError: If wavelength is not found in calibration table.
+
+        Returns:
+            The actual wavelength that was set.
 
         Warning:
             This method assumes self._wavelength is NOT already set to the current
@@ -387,7 +372,7 @@ class _PreLoad(_WLChangeMethod):
 
     _step_size: int
 
-    def set_wl(self, wavelength: float) -> None:
+    def set_wl(self, wavelength: float) -> float:
         """Set wavelength using preloaded calibration wavelengths.
 
         Loads heater values from calibration table and applies them to the laser.
@@ -401,14 +386,19 @@ class _PreLoad(_WLChangeMethod):
         Args:
             wavelength: Target wavelength in nanometers.
 
+        Returns:
+            The actual wavelength that was set.
+
         Raises:
             ValueError: If wavelength is not found in calibration table.
 
         """
-        if wavelength not in self._calibration_table.keys():
-            raise ValueError(f"Wavelength {wavelength} not found in calibration table.")
-
-        entry: CalibrationEntry = self._calibration_table[wavelength]
+        try:
+            entry: CalibrationEntry =  self._calibration_table[wavelength]
+        except KeyError as e:
+            raise ValueError(
+                f"Wavelength {wavelength} not found in calibration table."
+            ) from e
 
         # Preload the laser with the calibration entry values
         self._comm.query(f"DRV:DP 0 {entry.phase_section:.4f}")
@@ -423,6 +413,8 @@ class _PreLoad(_WLChangeMethod):
         if self._calibration_table[self._wavelength].mode_index != entry.mode_index:
             if self.anti_hyst_enabled:
                 self._antihyst(entry.phase_section)
+
+        return entry.wavelength
 
     @property
     def step_size(self) -> float:
@@ -447,7 +439,7 @@ class _CyclerIndex(_WLChangeMethod):
 
     """
 
-    def set_wl(self, wavelength: float) -> None:
+    def set_wl(self, wavelength: float) -> float:
         """Set wavelength using the laser's cycler index.
 
         Args:
@@ -456,18 +448,27 @@ class _CyclerIndex(_WLChangeMethod):
         Raises:
             ValueError: If wavelength is not found in calibration table.
 
+        Returns:
+            The actual wavelength that was set.
+
         Warning:
             This method assumes self._wavelength is NOT already set to the current
             wavelength. This is important for mode checking and anti-hysteresis
             application.
 
         """
-        if wavelength not in self._calibration_table.keys():
-            raise ValueError(f"Wavelength {wavelength} not found in calibration table.")
+        try:
+            entry: CalibrationEntry =  self._calibration_table[wavelength]
+        except KeyError as e:
+            raise ValueError(
+                f"Wavelength {wavelength} not found in calibration table."
+            ) from e
 
         self._comm.query(
-            f"DRV:CYC:LOAD {self._calibration_table[wavelength].cycler_index}"
+            f"DRV:CYC:LOAD {entry.cycler_index}"
         )
 
         if self.anti_hyst_enabled:
             self._antihyst()
+
+        return entry.wavelength
