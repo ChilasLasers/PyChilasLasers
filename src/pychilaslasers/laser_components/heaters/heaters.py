@@ -24,7 +24,7 @@ from pychilaslasers.laser_components.heaters.heater_channels import HeaterChanne
 
 # ✅ Local imports
 from pychilaslasers.laser_components.laser_component import LaserComponent
-from pychilaslasers.calibration import Defaults
+from pychilaslasers.calibration.defaults import Defaults
 
 
 class Heater(LaserComponent):

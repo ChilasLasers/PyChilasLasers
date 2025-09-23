@@ -41,7 +41,7 @@ from pychilaslasers.laser_components.tec import TEC
 from pychilaslasers.modes.manual_mode import ManualMode
 from pychilaslasers.modes.mode import LaserMode, Mode
 from pychilaslasers.modes.tune_mode import TuneMode
-from pychilaslasers.calibration import load_calibration
+from pychilaslasers.calibration.calibration_parsing import load_calibration
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -159,10 +159,9 @@ class Laser:
 
         if self._model == "COMET":
             self._sweep_mode = SweepMode(self, calibration)
-        volts = calibration.tune_settings.anti_hyst_voltages
-        times = calibration.tune_settings.anti_hyst_times
-        if volts is not None and times is not None:
-            self._manual_mode.phase_section.set_hyst_params(volts, times)
+        volts: list[float] = calibration.tune_settings.anti_hyst_voltages
+        times: list[float] = calibration.tune_settings.anti_hyst_times
+        self._manual_mode.phase_section.set_hyst_params(volts, times)
 
     ########## Properties (Getters/Setters) ##########
 

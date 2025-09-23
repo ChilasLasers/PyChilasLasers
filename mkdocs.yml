@@ -106,7 +106,7 @@ nav:
       - package/laser_components/heaters.md
     - package/comm.md
     - package/exceptions.md
-    - package/utils.md
+    - package/constants.md
   - Quickstart Guide: quickstart.md
   - Licence: LICENSE.md
   - Readme: README.md

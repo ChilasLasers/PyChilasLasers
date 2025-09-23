@@ -5,15 +5,11 @@ from pathlib import Path
 from io import StringIO
 from unittest.mock import mock_open, patch
 
+from pychilaslasers.calibration.calibration_parsing import _parse_defaults_block, _parse_rows, load_calibration
 from pychilaslasers.calibration import (
     CalibrationEntry,
-    ModeSetting,
-    Defaults,
     Calibration,
-    load_calibration,
-    _sanitize,
-    _parse_defaults_block,
-    _parse_rows,
+    TuneSettings,
 )
 from pychilaslasers.exceptions.calibration_error import CalibrationError
 
@@ -50,12 +46,11 @@ SAMPLE_CALIBRATION_ENTRIES = [
     CalibrationEntry(1551.0, 14.0, 24.0, 34.0, 44.0, 2, False, 6),
 ]
 
-SAMPLE_TUNE_SETTING = ModeSetting(
+SAMPLE_TUNE_SETTING = TuneSettings(
     current=280.0,
     tec_temp=25.0,
     anti_hyst_voltages=[35.0, 0.0],
     anti_hyst_times=[10.0],
-    sweep_interval=None
 )
 
 
@@ -209,7 +204,6 @@ anti_hyst_interval = [10.0]
         assert tune.tec_temp == 25.0
         assert tune.anti_hyst_voltages == [35.0, 0.0]
         assert tune.anti_hyst_times == [10.0]
-        assert tune.sweep_interval is None
         assert sweep is None
     
     def test_parse_defaults_block_comet(self):
@@ -234,7 +228,6 @@ sweep_interval = 100
         assert sweep.current == 300.0
         assert sweep.tec_temp == 30.0
         assert sweep.sweep_interval == 100
-        assert sweep.anti_hyst_voltages is None
     
     def test_parse_defaults_block_missing_parameter(self):
         """Test _parse_defaults_block raises CalibrationError for missing parameter."""

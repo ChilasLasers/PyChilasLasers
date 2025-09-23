@@ -9,6 +9,7 @@ import logging
 from pathlib import Path
 
 from pychilaslasers import Laser
+from pychilaslasers.comm import list_comports
 
 # Path to *.csv file, which contains the calibration Look-Up Table (lut)
 path_calibration_lut = Path("path/to/file")
@@ -20,8 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def select_com_port() -> str:
-    from pychilaslasers import utils
-    if len(ports := utils.list_comports()) == 1:
+    if len(ports := list_comports()) == 1:
         selected_com_port: str = ports[0]
     elif len(ports) < 0:
         print("No COM ports found. Please connect the laser and try again.")

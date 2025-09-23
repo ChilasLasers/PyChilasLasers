@@ -363,15 +363,15 @@ class Communication:
         logger.debug("[baudrate_switch] Reopening serial connection with new baudrate")
         self._serial.open()
 
-    @staticmethod
-    def list_comports() -> list[str]:
-        """List all available COM ports on the system.
+@staticmethod
+def list_comports() -> list[str]:
+    """List all available COM ports on the system.
 
-        `serial.tools.list_ports.comports` is used to list all available
-        ports. In that regard this method is but a wrapper for it.
+    `serial.tools.list_ports.comports` is used to list all available
+    ports. In that regard this method is but a wrapper for it.
 
-        Returns:
-            List of available COM ports as strings sorted
-            alphabetically in ascending order.
-        """
-        return sorted([port.device for port in serial.tools.list_ports.comports()])
+    Returns:
+        List of available COM ports as strings sorted
+        alphabetically in ascending order.
+    """
+    return sorted([port.device for port in serial.tools.list_ports.comports()])
