@@ -12,8 +12,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from pychilaslasers.laser import Laser
+    from pychilaslasers.calibration import Calibration
 
 # ✅ Standard library imports
 import logging
@@ -55,7 +57,7 @@ class SweepMode(__Calibrated):
 
     """
 
-    def __init__(self, laser: Laser, calibration: dict) -> None:
+    def __init__(self, laser: Laser, calibration: Calibration) -> None:
         """Initialize sweep mode with laser instance and calibration data.
 
         Args:
@@ -71,8 +73,8 @@ class SweepMode(__Calibrated):
         super().__init__(laser)
         if (
             laser.model != "COMET"
-            or calibration.get("model") != "COMET"
-            or "sweep" not in calibration
+            or calibration.model != "COMET"
+            or calibration.sweep_settings is None
         ):
             raise ModeError(
                 "Sweep mode is only supported for COMET lasers.",
@@ -80,18 +82,14 @@ class SweepMode(__Calibrated):
             )
 
         # Gather calibration data
-        self._calibration = calibration["sweep"]
-        self._default_TEC: float = calibration["sweep"]["tec_temp"]
-        self._default_current: float = calibration["sweep"]["current"]
-        self._default_interval: int = calibration["sweep"]["interval"]
-        self._wavelengths: list[float] = calibration["sweep"]["wavelengths"]
+        self._calibration: Calibration = calibration
+        self._default_TEC: float = calibration.sweep_settings.tec_temp
+        self._default_current: float = calibration.sweep_settings.current
+        self._default_interval: int = calibration.sweep_settings.sweep_interval  # type: ignore
 
-        self._min_wl: float = min(self._wavelengths)
-        self._max_wl: float = max(self._wavelengths)
-        self._step_size: float = abs(
-            self._wavelengths[0]
-            - self._wavelengths[self._wavelengths.count(self._wavelengths[0])]
-        )
+        self._min_wl: float = calibration.min_wl
+        self._max_wl: float = calibration.max_wl
+        self._step_size: float = calibration.step_size
 
         self._no_sweeps: int = 0  # Default to infinite sweeps
 
@@ -167,10 +165,11 @@ class SweepMode(__Calibrated):
                 including both the lower and upper wavelengths.
 
         """
-        lower_index: int = self._wavelengths.index(self.start_wavelength)
-        upper_index: int = self._wavelengths.index(self.end_wavelength)
-        upper_index += self._wavelengths.count(self.end_wavelength) - 1
-        return self._wavelengths[lower_index : upper_index + 1]
+        return [
+            wl
+            for wl in [e.wavelength for e in self._calibration]
+            if wl >= self.start_wavelength and wl <= self.end_wavelength
+        ]
 
     ########## Properties (Getters/Setters) ##########
 
@@ -202,7 +201,7 @@ class SweepMode(__Calibrated):
 
         """
         current_index: int = int(self._comm.query("DRV:CYC:CPOS?"))
-        return self._wavelengths[current_index]
+        return self._calibration.entries[current_index].wavelength
 
     @property
     def interval(self) -> int:
@@ -273,7 +272,10 @@ class SweepMode(__Calibrated):
 
         """
         [index_start, index_end] = self._comm.query("DRV:CYC:SPAN?").split(" ")
-        return (self._wavelengths[int(index_start)], self._wavelengths[int(index_end)])
+        return (
+            self._calibration.entries[int(index_start)].wavelength,
+            self._calibration.entries[int(index_end)].wavelength,
+        )
 
     @range.setter
     def range(self, range: tuple[float, float] | list[float]) -> None:
@@ -312,17 +314,11 @@ class SweepMode(__Calibrated):
                 f"Start wavelength {start_wl} cannot be less than end wavelength "
                 f"{end_wl}."
             )
-        if start_wl not in self._wavelengths:
-            start_wl = self._find_closest_wavelength(start_wl)
-        if end_wl not in self._wavelengths:
-            end_wl = self._find_closest_wavelength(end_wl)
 
         # Get the index of the first occurrence of the start wavelength
-        index_start: int = self._wavelengths.index(start_wl)
+        index_start: int = self._calibration.get_mode_hop_start(start_wl).cycler_index
         # Get the index of the first occurrence of the end wavelength
-        index_end: int = self._wavelengths.index(end_wl)
-        # Get the index of the last occurrence of the end wavelength
-        index_end += self._wavelengths.count(end_wl) - 1
+        index_end: int = self._calibration[end_wl].cycler_index
 
         self._comm.query(data=f"DRV:CYC:SPAN {index_start} {index_end}")
 
@@ -346,24 +342,6 @@ class SweepMode(__Calibrated):
 
         """
         return bool(int(self._comm.query("DRV:CYC:RUN?")))
-
-    ########## Private Methods ##########
-
-    def _find_closest_wavelength(self, wavelength: float) -> float:
-        """Find the closest available wavelength in the calibration table.
-
-        This method is used internally to find a wavelength in the calibration table
-        that is closest to the specified target wavelength. This is useful when
-        the exact requested wavelength is not available in the calibration data.
-
-        Args:
-            wavelength: The target wavelength in nanometers.
-
-        Returns:
-            The closest valid wavelength from the calibration data in nanometers.
-
-        """
-        return min(self._wavelengths, key=lambda x: abs(x - wavelength))
 
     ########## Method Overloads/Aliases ##########
 

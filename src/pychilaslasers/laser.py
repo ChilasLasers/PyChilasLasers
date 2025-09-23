@@ -24,8 +24,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from pathlib import Path
+    from pychilaslasers.calibration import Calibration
 
 # ✅ Standard library imports
 import logging
@@ -39,7 +41,7 @@ from pychilaslasers.laser_components.tec import TEC
 from pychilaslasers.modes.manual_mode import ManualMode
 from pychilaslasers.modes.mode import LaserMode, Mode
 from pychilaslasers.modes.tune_mode import TuneMode
-from pychilaslasers.utils import read_calibration_file
+from pychilaslasers.calibration import load_calibration
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -122,13 +124,11 @@ class Laser:
         self._sweep_mode: SweepMode | None = None
 
         if calibration_file is not None:
-            calibration = read_calibration_file(file_path=calibration_file)
-            self._model = calibration["model"]
-            self._tune_mode = TuneMode(self, calibration)
+            calibration: Calibration = load_calibration(file_path=calibration_file)
+            self._model = calibration.model
+            self._tune_mode = TuneMode(self, calibration=calibration)
             self._sweep_mode = (
-                SweepMode(self, calibration)
-                if calibration["model"] == "COMET"
-                else None
+                SweepMode(self, calibration) if calibration.model == "COMET" else None
             )
 
         self._mode: Mode = self._manual_mode
@@ -153,14 +153,16 @@ class Laser:
                 The path to the calibration file to be used for calibrating the laser.
 
         """
-        calibration = read_calibration_file(file_path=calibration_file)
-        self._model = calibration["model"]
+        calibration = load_calibration(file_path=calibration_file)
+        self._model = calibration.model
         self._tune_mode = TuneMode(self, calibration)
 
         if self._model == "COMET":
             self._sweep_mode = SweepMode(self, calibration)
-        params = calibration["tune"]["anti-hyst"]
-        self._manual_mode.phase_section.set_hyst_params(params[0], params[1])
+        volts = calibration.tune_settings.anti_hyst_voltages
+        times = calibration.tune_settings.anti_hyst_times
+        if volts is not None and times is not None:
+            self._manual_mode.phase_section.set_hyst_params(volts, times)
 
     ########## Properties (Getters/Setters) ##########
 
