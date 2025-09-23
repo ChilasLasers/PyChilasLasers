@@ -98,7 +98,7 @@ class Laser:
         Args:
             com_port: The COM port to which the laser is connected. This should
                 be a string such as "COM7". To see available COM you may use the
-                `pychilaslasers.utils.list_comports` method from the `utils` module.
+                `pychilaslasers.comm.list_comports` method from the `comm` module.
             calibration_file (str | Path):
                 The path to the calibration file that was provided for the laser.
 

@@ -28,16 +28,16 @@ def select_com_port() -> str:
         exit(1)
     else:
         while True:
-
-            selected_com_port = input(f"Available COM ports: {ports}\nPlease enter the COM port address: ")
+            selected_com_port = input(
+                f"Available COM ports: {ports}\nPlease enter the COM port address: "
+            )
             if selected_com_port in ports:
                 break
             print("Invalid COM port address. Please choose from.")
     return selected_com_port
 
 
-
-def run_sweeping_example(laser:Laser | None = None) -> None:
+def run_sweeping_example(laser: Laser | None = None) -> None:
     # Continue with the sweeping example using the laser object
     if laser is None:
         laser = Laser(calibration_file=path_calibration_lut, com_port=select_com_port())
@@ -62,7 +62,9 @@ def run_sweeping_example(laser:Laser | None = None) -> None:
     laser.sweep.stop()
 
     # Manually define the sweep range
-    print(f"Please define sweep wavelength bounds. Maximum start is {start_wavelength} nm, minimum end is {end_wavelength} nm")
+    print(
+        f"Please define sweep wavelength bounds. Maximum start is {start_wavelength} nm, minimum end is {end_wavelength} nm"
+    )
     start_wavelength = float(input("Enter the start wavelength (nm): "))
     end_wavelength = float(input("Enter the end wavelength (nm): "))
 

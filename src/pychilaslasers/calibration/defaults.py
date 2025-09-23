@@ -1,5 +1,8 @@
 """Default configuration values for laser calibration."""
 
+# ⚛️ Type checking
+from __future__ import annotations
+
 
 class Defaults:
     """Hard-coded default values for laser calibration parameters.

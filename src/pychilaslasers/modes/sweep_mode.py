@@ -41,8 +41,8 @@ class SweepMode(__Calibrated):
 
     Args:
         laser: The laser instance to control.
-        calibration: Calibration data dictionary containing sweep mode parameters
-            as returned by the `utils.read_calibration_file` method.
+        calibration: Calibration object as returned by the
+            [`load_calibration()`][pychilaslasers.calibration.load_calibration] method.
 
     Attributes:
         wavelength: Current wavelength setting.
@@ -62,9 +62,9 @@ class SweepMode(__Calibrated):
 
         Args:
             laser: The laser instance to control.
-            calibration: Calibration data dictionary containing sweep mode parameters.
-                This should be the full calibration dictionary as returned by
-                `utils.read_calibration_file`.
+            calibration: Calibration object as returned by the
+                [`load_calibration()`][pychilaslasers.calibration.load_calibration]
+                method.
 
         Raises:
             ValueError: If laser model is not COMET or calibration is invalid.
@@ -85,7 +85,7 @@ class SweepMode(__Calibrated):
         self._calibration: Calibration = calibration
         self._default_TEC: float = calibration.sweep_settings.tec_temp
         self._default_current: float = calibration.sweep_settings.current
-        self._default_interval: int = calibration.sweep_settings.sweep_interval  # type: ignore
+        self._default_interval: int = calibration.sweep_settings.interval  # type: ignore
 
         self._min_wl: float = calibration.min_wl
         self._max_wl: float = calibration.max_wl

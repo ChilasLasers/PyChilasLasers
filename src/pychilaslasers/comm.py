@@ -1,12 +1,15 @@
-"""Communication class for handling laser driver serial communication.
+"""Serial communication interface for Chilas laser systems.
 
-This module contains the `Communication` class for handling communication
-with the laser driver over serial.
+Provides low-level serial communication with laser drivers, including
+command/response handling, connection management, and port discovery.
 
-It contains the methods for sending commands to the laser, receiving
-responses, and managing the serial connection.
+Classes:
+    Communication: Main serial communication handler.
 
-**Authors:** RLK, AVR, SDU
+Functions:
+    list_comports: Discover available COM ports.
+
+Authors: RLK, AVR, SDU
 """
 
 # ✅ Standard library imports
@@ -47,7 +50,7 @@ class Communication:
 
         Args:
             com_port: The serial port to connect to the laser driver.
-                this can be found by using the `pychilaslasers.utils.get_serial_ports()`
+                this can be found by using the `pychilaslasers.comm.list_comports()`
                 function.
 
         """
@@ -363,7 +366,7 @@ class Communication:
         logger.debug("[baudrate_switch] Reopening serial connection with new baudrate")
         self._serial.open()
 
-@staticmethod
+
 def list_comports() -> list[str]:
     """List all available COM ports on the system.
 

@@ -10,11 +10,19 @@ This module defines the core data structures used for laser calibration:
 Authors: SDU
 """
 
-from dataclasses import dataclass, field
-import logging
-from typing import overload
-from collections.abc import Iterator
+# ⚛️ Type checking
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+# ✅ Standard library imports
+import logging
+from dataclasses import dataclass, field
+from typing import overload
+
+# ✅ Local imports
 from pychilaslasers.exceptions.calibration_error import CalibrationError
 
 
@@ -125,10 +133,10 @@ class SweepSettings(ModeSetting):
     Attributes:
         current: Inherited from ModeSetting - Diode current setting in milliamps.
         tec_temp: Inherited from ModeSetting - TEC temperature target in Celsius.
-        sweep_interval: Sweep interval for sweep mode in milliseconds.
+        interval: Sweep interval for sweep mode in milliseconds.
     """
 
-    sweep_interval: int
+    interval: int
 
 
 @dataclass

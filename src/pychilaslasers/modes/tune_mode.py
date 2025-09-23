@@ -264,8 +264,8 @@ class _WLChangeMethod(ABC):
         self._calibration_table: Calibration = calibration_table
         self._v_phases_squared_antihyst: list[float] = (
             calibration_table.tune_settings.anti_hyst_voltages
-        )  # type: ignore
-        self._time_steps: list[float] = calibration_table.tune_settings.anti_hyst_times  # type: ignore
+        )
+        self._time_steps: list[float] = calibration_table.tune_settings.anti_hyst_times
 
         assert len(self._v_phases_squared_antihyst) != 0 and len(self._time_steps) != 0
         assert (
@@ -345,17 +345,13 @@ class _WLChangeMethod(ABC):
         Args:
             wavelength: Target wavelength in nanometers.
 
-        Raises:
-            ValueError: If wavelength is not found in calibration table.
-
         Returns:
             The actual wavelength that was set.
 
         Warning:
             This method assumes self._wavelength is NOT already set to the current
             wavelength.This is important for mode checking and anti-hysteresis
-            application.This method assumes that the wavelength is in the calibration
-            data provided and does not choose the closest wavelength.
+            application.
 
         """
         pass
@@ -387,10 +383,6 @@ class _PreLoad(_WLChangeMethod):
 
         Returns:
             The actual wavelength that was set.
-
-        Raises:
-            ValueError: If wavelength is not found in calibration table.
-
         """
         try:
             entry: CalibrationEntry = self._calibration_table[wavelength]
@@ -445,7 +437,7 @@ class _CyclerIndex(_WLChangeMethod):
             wavelength: Target wavelength in nanometers.
 
         Raises:
-            ValueError: If wavelength is not found in calibration table.
+            ValueError: If wavelength is outside the calibration range
 
         Returns:
             The actual wavelength that was set.

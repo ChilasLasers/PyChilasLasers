@@ -97,7 +97,7 @@ def _parse_defaults_block(f: TextIO) -> tuple[str, TuneSettings, SweepSettings |
             sweep = SweepSettings(
                 current=float(settings.pop("SWEEP_DIODE_CURRENT")[0]),
                 tec_temp=float(settings.pop("SWEEP_TEC_TARGET")[0]),
-                sweep_interval=int(settings.pop("SWEEP_INTERVAL")[0]),
+                interval=int(settings.pop("SWEEP_INTERVAL")[0]),
             )
     except KeyError as e:  # Handle parameters missing
         raise CalibrationError(

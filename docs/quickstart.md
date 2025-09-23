@@ -54,12 +54,12 @@ a python object and encapsulates all of the required logic for operation.
     [`Laser.calibrate()`][pychilaslasers.Laser.calibrate].
 
 ??? tip "How do you know what com ports are available?"
-    The included utils module provides a [`list_comports()`][pychilaslasers.utils.list_comports]
+    The included communications module provides a [`list_comports()`][pychilaslasers.comm.list_comports]
     method that can be used to discover available comports.
     !!! example
         ```python
-        >>> from pychilaslasers import utils
-        >>> print(utils.list_comports())
+        >>> from pychilaslasers import comm
+        >>> print(comm.list_comports())
         ```
 
 Power the laser on by pressing the side button and turning the key to the right 
