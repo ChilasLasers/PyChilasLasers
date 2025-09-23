@@ -21,7 +21,7 @@ import serial.tools.list_ports
 
 # ✅ Local imports
 from pychilaslasers.exceptions.laser_error import LaserError
-from pychilaslasers.utils import Constants
+from pychilaslasers.constants import Constants
 
 logger = logging.getLogger(__name__)
 
@@ -70,8 +70,8 @@ class Communication:
 
         self._prefix_mode: bool = True
         # Attempt to open the serial connection by trying different baudrates
-        baudrates: set[int] = (
-            Constants.SUPPORTED_BAUDRATES.copy()
+        baudrates: set[int] = set(
+            Constants.SUPPORTED_BAUDRATES
         )  # Copy to avoid modifying the original set
         rate = Constants.TLM_INITIAL_BAUDRATE
         while True:

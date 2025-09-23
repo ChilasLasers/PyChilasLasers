@@ -11,8 +11,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from calibration import CalibrationEntry
-
 
 if TYPE_CHECKING:
     from pychilaslasers.comm import Communication
@@ -130,7 +128,7 @@ class TuneMode(__Calibrated):
                 f"{self._min_wl} and {self._max_wl}."
             )
 
-        self._wl =self._change_method.set_wl(wavelength)
+        self._wl = self._change_method.set_wl(wavelength)
 
         # Trigger pulse if auto-trigger is enabled (inherited from parent)
         if self._autoTrig:
@@ -264,9 +262,10 @@ class _WLChangeMethod(ABC):
         self._comm: Communication = laser._comm
         self._tune_mode: TuneMode = tune_mode
         self._calibration_table: Calibration = calibration_table
-        self._v_phases_squared_antihyst: list[float] = \
-            calibration_table.tune_settings.anti_hyst_voltages  # type: ignore
-        self._time_steps: list[float] = calibration_table.tune_settings.anti_hyst_times # type: ignore
+        self._v_phases_squared_antihyst: list[float] = (
+            calibration_table.tune_settings.anti_hyst_voltages
+        )  # type: ignore
+        self._time_steps: list[float] = calibration_table.tune_settings.anti_hyst_times  # type: ignore
 
         assert len(self._v_phases_squared_antihyst) != 0 and len(self._time_steps) != 0
         assert (
@@ -394,7 +393,7 @@ class _PreLoad(_WLChangeMethod):
 
         """
         try:
-            entry: CalibrationEntry =  self._calibration_table[wavelength]
+            entry: CalibrationEntry = self._calibration_table[wavelength]
         except KeyError as e:
             raise ValueError(
                 f"Wavelength {wavelength} not found in calibration table."
@@ -458,15 +457,13 @@ class _CyclerIndex(_WLChangeMethod):
 
         """
         try:
-            entry: CalibrationEntry =  self._calibration_table[wavelength]
+            entry: CalibrationEntry = self._calibration_table[wavelength]
         except KeyError as e:
             raise ValueError(
                 f"Wavelength {wavelength} not found in calibration table."
             ) from e
 
-        self._comm.query(
-            f"DRV:CYC:LOAD {entry.cycler_index}"
-        )
+        self._comm.query(f"DRV:CYC:LOAD {entry.cycler_index}")
 
         if self.anti_hyst_enabled:
             self._antihyst()
