@@ -9,20 +9,23 @@ Includes individual heater types. These are only available in manual mode.
 # ⚛️ Type checking
 from __future__ import annotations
 
-from math import sqrt
-from time import sleep
 from typing import TYPE_CHECKING
+
 
 if TYPE_CHECKING:
     from pychilaslasers.laser import Laser
+    from pychilaslasers.calibration import Calibration
+    from collections.abc import Callable
 
 # ✅ Standard library imports
 from abc import abstractmethod
 import logging
+from math import sqrt
+from time import sleep
 
-from pychilaslasers.laser_components.heaters.heater_channels import HeaterChannel
 
 # ✅ Local imports
+from pychilaslasers.laser_components.heaters.heater_channels import HeaterChannel
 from pychilaslasers.laser_components.laser_component import LaserComponent
 from pychilaslasers.calibration.defaults import Defaults
 
@@ -159,84 +162,125 @@ class SmallRing(Heater):
 class PhaseSection(Heater):
     """Phase section heater component."""
 
+    _anti_hyst: Callable[
+        [
+            float | None,
+        ],
+        None,
+    ]
+
     def __init__(self, laser: Laser) -> None:
         """Initialize the phase section heater component."""
         super().__init__(laser)
 
-        self._anti_hyst = True
+        self._anti_hyst_enabled = True
 
         self._volts: None | list[float] = None
         self._time_steps: None | list[float] = None
 
+        self._anti_hyst = self.get_antihyst_method(laser=laser)
+
     def set_value(self, value: float) -> None:  # noqa: D102
         super().set_value(value)
         # Apply additional function after setting value
-        if self._anti_hyst:
-            self._antihyst(value)
-
-    def _antihyst(self, target: float) -> None:
-        """Apply anti-hysteresis correction to the laser.
-
-        Applies a voltage ramping procedure to the phase section heater to
-        minimize hysteresis effects during wavelength changes. The specifics of
-        this method are laser-dependent and are specified as part of the
-        calibration data.
-        When calibration data is unavailable, default parameters from the
-        constants class are used
-        """
-        if not self._volts or not self._time_steps:
-            voltage_squares: list[float] = Defaults.HARD_CODED_TUNE_ANTI_HYST[0]
-            time_steps: list[float] = Defaults.HARD_CODED_TUNE_ANTI_HYST[0]
-        else:
-            voltage_squares = self._volts.copy()
-            time_steps = self._time_steps.copy()
-
-        time_steps = (
-            [time_steps[0]] * (len(voltage_squares) - 1) + [0]
-            if len(time_steps) == 1
-            else [*time_steps, 0]
-        )
-
-        for i, voltage in enumerate(voltage_squares):
-            if target**2 + voltage < 0:
-                value: float = 0
-                logging.getLogger(__name__).warning(
-                    "Anti-hysteresis"
-                    f"value out of bounds: {value} (min: {self.min_value}, max: "
-                    f"{self.max_value}). Approximating by 0"
-                )
-                value = 0
-            else:
-                value = sqrt(target**2 + voltage)
-
-            if value < self.min_value or value > self.max_value:
-                logging.getLogger(__name__).error(
-                    "Anti-hysteresis"
-                    f"value out of bounds: {value} (min: {self.min_value}, max: "
-                    f"{self.max_value}). Approximating with the closest limit."
-                )
-                value = min(value, self.max_value)
-                value = max(value, self.min_value)
-            self._comm.query(f"DRV:D {HeaterChannel.PHASE_SECTION.value:d} {value:.4f}")
-            sleep(time_steps[i] / 1000)
+        if self._anti_hyst_enabled:
+            self._anti_hyst(value)
 
     @property
     def anti_hyst(self) -> bool:
         """Get the anti-hysteresis flag."""
-        return self._anti_hyst
+        return self._anti_hyst_enabled
 
     @anti_hyst.setter
     def anti_hyst(self, value: bool) -> None:
         """Set the anti-hysteresis flag."""
         if not isinstance(value, bool):
             raise ValueError("anti_hyst must be a boolean.")
-        self._anti_hyst = value
+        self._anti_hyst_enabled = value
 
-    def set_hyst_params(self, volts: list[float], times: list[float]):  # noqa: D102
-        self._volts = volts
-        self._time_steps = times
+    def calibrate(self, laser: Laser, calibration: Calibration) -> None:
+        """Calibrate the phase section heater with the given laser and calibration.
+
+        Args:
+            laser: The laser instance to use for calibration.
+            calibration: The calibration object containing calibration data.
+        """
+        self._anti_hyst = self.get_antihyst_method(laser=laser, calibration=calibration)
 
     @property
     def channel(self) -> HeaterChannel:
         """Get the phase section channel."""
         return HeaterChannel.PHASE_SECTION
+
+    @staticmethod
+    def get_antihyst_method(
+        laser: Laser, calibration: Calibration | None = None
+    ) -> Callable[[float | None], None]:
+        """Construct an anti-hysteresis correction function for the laser.
+
+        This method takes a laser object and returns an appropriate anti-hyst func
+        that can be used independently.
+
+        Args:
+            laser: The laser instance to apply anti-hysteresis correction to.
+            calibration: Optional calibration object containing anti-hysteresis
+            parameters. If one is not provided the default ones will be used
+
+        Returns:
+            A callable that applies anti-hysteresis correction when invoked with
+              an optional phase voltage.
+        """
+        query: Callable[[str], str] = laser.comm.query
+
+        phase_max: float = laser._manual_mode.phase_section.max_value
+        phase_min: float = laser._manual_mode.phase_section.min_value
+
+        voltage_steps: list[float]
+        time_steps: list[float]
+
+        if calibration is not None:
+            voltage_steps = calibration.tune_settings.anti_hyst_voltages
+            time_steps = calibration.tune_settings.anti_hyst_times
+        else:
+            voltage_steps = Defaults.HARD_CODED_TUNE_ANTI_HYST[0]
+            time_steps = Defaults.HARD_CODED_TUNE_ANTI_HYST[0]
+
+        time_steps = (
+            [time_steps[0]] * (len(voltage_steps) - 1) + [0]
+            if len(time_steps) == 1
+            else [*time_steps, 0]
+        )
+
+        def antihyst(v_phase: float | None = None) -> None:
+            """Apply anti-hysteresis correction to the laser.
+
+            Applies a voltage ramping procedure to the phase section heater to
+            minimize hysteresis effects during wavelength changes. The specifics of
+            this method are laser-dependent and are specified as part of the calibration
+            data.
+            """
+            if v_phase is None:
+                v_phase = float(query(f"DRV:D? {HeaterChannel.PHASE_SECTION.value:d}"))
+
+            for i, voltage_step in enumerate(voltage_steps):
+                if v_phase**2 + voltage_step < 0:
+                    value: float = 0
+                    logging.getLogger(__name__).warning(
+                        "Anti-hysteresis "
+                        f"value out of bounds: {value} (min: {phase_min}, max: "
+                        f"{phase_max}). Approximating by 0"
+                    )
+                else:
+                    value = sqrt(v_phase**2 + voltage_step)
+                if value < phase_min or value > phase_max:
+                    logging.getLogger(__name__).error(
+                        "Anti-hysteresis"
+                        f"value out of bounds: {value} (min: {phase_min}, max: "
+                        f"{phase_max}). Approximating with the closest limit."
+                    )
+                    value = min(value, phase_max)
+                    value = max(value, phase_min)
+                query(f"DRV:D {HeaterChannel.PHASE_SECTION.value:d} {value:.4f}")
+                sleep(time_steps[i] / 1000)
+
+        return antihyst
