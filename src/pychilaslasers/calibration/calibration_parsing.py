@@ -147,6 +147,7 @@ def _parse_rows(f: TextIO, model: str) -> list[CalibrationEntry]:
     csv_reader = reader(f, delimiter=";")
     entries: list[CalibrationEntry] = []
 
+    no_expected_columns = 5 if model == "ATLAS" else 6
     cycler_index = 0
     mode_index = 1
     in_hop = False
@@ -156,7 +157,7 @@ def _parse_rows(f: TextIO, model: str) -> list[CalibrationEntry]:
         if not row or all(not c for c in row):
             continue
         # normalize row length if trailing semicolons are missing
-        if len(row) < 6:
+        if len(row) < no_expected_columns:
             # You could raise here if the file is malformed
             raise CalibrationError("Incorrect file format, missing columns!")
 

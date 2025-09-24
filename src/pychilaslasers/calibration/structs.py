@@ -190,8 +190,8 @@ class Calibration:
         if entries == []:
             raise CalibrationError("Empty calibration received!")
         _wavelengths: list[float] = [entry.wavelength for entry in entries]
-        self.max_wl = _wavelengths[0]
-        self.min_wl = _wavelengths[-1]
+        self.max_wl = max(_wavelengths)
+        self.min_wl = min(_wavelengths)
         try:
             self.step_size = abs(
                 _wavelengths[0] - _wavelengths[_wavelengths.count(_wavelengths[0])]
@@ -293,4 +293,4 @@ class Calibration:
         if isinstance(wl, CalibrationEntry):
             return wl in self.entries
         else:
-            return self.min_wl <= wl and self.max_wl >= wl
+            return self.min_wl <= wl <= self.max_wl
