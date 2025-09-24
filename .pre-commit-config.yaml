@@ -28,7 +28,7 @@ repos:
 
       - id: pytest
         name: Run pytest
-        entry: uvx pytest -vv
+        entry: uv run pytest -vv
         language: system
         pass_filenames: false
 

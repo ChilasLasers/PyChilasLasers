@@ -19,5 +19,6 @@
     ],
     "python.analysis.extraPaths": [
         "./src/pychilaslasers"
-    ]
+    ],
+    "python.REPL.enableREPLSmartSend": false
 }

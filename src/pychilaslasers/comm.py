@@ -1,12 +1,15 @@
-"""Communication class for handling laser driver serial communication.
+"""Serial communication interface for Chilas laser systems.
 
-This module contains the `Communication` class for handling communication
-with the laser driver over serial.
+Provides low-level serial communication with laser drivers, including
+command/response handling, connection management, and port discovery.
 
-It contains the methods for sending commands to the laser, receiving
-responses, and managing the serial connection.
+Classes:
+    Communication: Main serial communication handler.
 
-**Authors:** RLK, AVR, SDU
+Functions:
+    list_comports: Discover available COM ports.
+
+Authors: RLK, AVR, SDU
 """
 
 # ✅ Standard library imports
@@ -16,10 +19,12 @@ import signal
 
 # ✅ Third-party imports
 import serial
+import serial.tools
+import serial.tools.list_ports
 
 # ✅ Local imports
 from pychilaslasers.exceptions.laser_error import LaserError
-from pychilaslasers.utils import Constants
+from pychilaslasers.constants import Constants
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +50,7 @@ class Communication:
 
         Args:
             com_port: The serial port to connect to the laser driver.
-                this can be found by using the `pychilaslasers.utils.get_serial_ports()`
+                this can be found by using the `pychilaslasers.comm.list_comports()`
                 function.
 
         """
@@ -68,8 +73,8 @@ class Communication:
 
         self._prefix_mode: bool = True
         # Attempt to open the serial connection by trying different baudrates
-        baudrates: set[int] = (
-            Constants.SUPPORTED_BAUDRATES.copy()
+        baudrates: set[int] = set(
+            Constants.SUPPORTED_BAUDRATES
         )  # Copy to avoid modifying the original set
         rate = Constants.TLM_INITIAL_BAUDRATE
         while True:
@@ -360,3 +365,16 @@ class Communication:
         # 4. Reopen serial connection
         logger.debug("[baudrate_switch] Reopening serial connection with new baudrate")
         self._serial.open()
+
+
+def list_comports() -> list[str]:
+    """List all available COM ports on the system.
+
+    `serial.tools.list_ports.comports` is used to list all available
+    ports. In that regard this method is but a wrapper for it.
+
+    Returns:
+        List of available COM ports as strings sorted
+        alphabetically in ascending order.
+    """
+    return sorted([port.device for port in serial.tools.list_ports.comports()])

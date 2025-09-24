@@ -24,7 +24,7 @@ from pychilaslasers.laser_components.heaters.heater_channels import HeaterChanne
 
 # ✅ Local imports
 from pychilaslasers.laser_components.laser_component import LaserComponent
-from pychilaslasers.utils import Constants
+from pychilaslasers.calibration.defaults import Defaults
 
 
 class Heater(LaserComponent):
@@ -185,8 +185,8 @@ class PhaseSection(Heater):
         constants class are used
         """
         if not self._volts or not self._time_steps:
-            voltage_squares: list[float] = Constants.HARD_CODED_TUNE_ANTI_HYST[0]
-            time_steps: list[float] = Constants.HARD_CODED_TUNE_ANTI_HYST[0]
+            voltage_squares: list[float] = Defaults.HARD_CODED_TUNE_ANTI_HYST[0]
+            time_steps: list[float] = Defaults.HARD_CODED_TUNE_ANTI_HYST[0]
         else:
             voltage_squares = self._volts.copy()
             time_steps = self._time_steps.copy()

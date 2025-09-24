@@ -50,7 +50,6 @@ mypy_path = ["src"]
 
 [tool.ruff]
 exclude = [
-    "utils.py",
     "docs/",
     "examples/",
     "tests/",
@@ -59,7 +58,7 @@ exclude = [
 
 [tool.ruff.lint]
 
-select = ["D100", "D101", "D102", "D103", "D104", "D105", "D107","F","E","W",
+select = ["D100", "D101", "D102", "D103", "D104", "D107","F","E","W",
     "UP","B","D","RUF", "TID", "TCH","N"]
 
 # Ignore one side of each conflict:

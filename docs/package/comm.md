@@ -6,3 +6,7 @@
     options:
         show_root_heading: true
 
+::: pychilaslasers.comm.list_comports
+    options:
+        show_root_heading: true
+
