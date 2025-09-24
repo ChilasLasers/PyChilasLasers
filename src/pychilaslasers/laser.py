@@ -155,13 +155,12 @@ class Laser:
         """
         calibration = load_calibration(file_path=calibration_file)
         self._model = calibration.model
+        self._manual_mode.phase_section.calibrate(calibration=calibration, laser=self)
+
         self._tune_mode = TuneMode(self, calibration)
 
         if self._model == "COMET":
             self._sweep_mode = SweepMode(self, calibration)
-        volts: list[float] = calibration.tune_settings.anti_hyst_voltages
-        times: list[float] = calibration.tune_settings.anti_hyst_times
-        self._manual_mode.phase_section.set_hyst_params(volts, times)
 
     ########## Properties (Getters/Setters) ##########
 

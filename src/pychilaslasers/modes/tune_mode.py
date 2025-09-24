@@ -11,20 +11,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-
 if TYPE_CHECKING:
-    from pychilaslasers.comm import Communication
+    from collections.abc import Callable
     from pychilaslasers.laser import Laser
     from pychilaslasers.calibration import Calibration, CalibrationEntry
 
 # ✅ Standard library imports
-from abc import ABC, abstractmethod
-import logging
-from math import sqrt
-from time import sleep
 
 # ✅ Local imports
-from pychilaslasers.laser_components.heaters.heater_channels import HeaterChannel
 from pychilaslasers.modes.calibrated import __Calibrated
 from pychilaslasers.modes.mode import LaserMode
 
@@ -48,6 +42,8 @@ class TuneMode(__Calibrated):
 
     """
 
+    _antihyst: Callable[..., None]
+
     def __init__(self, laser: Laser, calibration: Calibration) -> None:
         """Initialize tune mode with laser and calibration data.
 
@@ -66,22 +62,19 @@ class TuneMode(__Calibrated):
         self._max_wl: float = self._calibration.max_wl
         self._step_size: float = calibration.step_size
 
+        self.anti_hyst_enabled: bool = True  # Default to enabled
+
         self._wl: float = self._min_wl  # Default to minimum wavelength
 
+        self._antihyst = laser._manual_mode.phase_section._anti_hyst
+
+        self._change_method: Callable[[float], float]
         # Initialize wavelength change method based on laser model
         if calibration.model == "COMET":
-            self._change_method: _WLChangeMethod = _PreLoad(
-                tune_mode=self,
-                laser=laser,
-                calibration_table=self._calibration,
-            )
+            self._change_method = self._pre_load
         else:
             # Default to cycler index method for ATLAS
-            self._change_method = _CyclerIndex(
-                tune_mode=self,
-                laser=laser,
-                calibration_table=self._calibration,
-            )
+            self._change_method = self._cycler_index
 
     ########## Main Methods ##########
 
@@ -128,7 +121,7 @@ class TuneMode(__Calibrated):
                 f"{self._min_wl} and {self._max_wl}."
             )
 
-        self._wl = self._change_method.set_wl(wavelength)
+        self._wl = self._change_method(wavelength)
 
         # Trigger pulse if auto-trigger is enabled (inherited from parent)
         if self._autoTrig:
@@ -144,7 +137,7 @@ class TuneMode(__Calibrated):
             True if anti-hysteresis correction is enabled, False otherwise.
 
         """
-        return self._change_method.anti_hyst_enabled
+        return self.anti_hyst_enabled
 
     @antihyst.setter
     def antihyst(self, state: bool) -> None:
@@ -154,7 +147,7 @@ class TuneMode(__Calibrated):
             state: Enable (True) or disable (False) anti-hysteresis correction.
 
         """
-        self._change_method.anti_hyst_enabled = state
+        self.anti_hyst_enabled = state
 
     @property
     def mode(self) -> LaserMode:
@@ -217,157 +210,13 @@ class TuneMode(__Calibrated):
         """
         if state is None:
             # Toggle the current state
-            self._change_method.anti_hyst_enabled = (
-                not self._change_method.anti_hyst_enabled
-            )
+            self.anti_hyst_enabled = not self.anti_hyst_enabled
         else:
-            self._change_method.anti_hyst_enabled = state
+            self.anti_hyst_enabled = state
 
+    ########## Private Classes ##########
 
-########## Private Classes ##########
-
-
-class _WLChangeMethod(ABC):
-    """Abstract base class for wavelength change methods.
-
-    Defines the interface for different wavelength change strategies used by
-    different laser models. Each implementation handles the specific hardware
-    commands and anti-hysteresis procedures for its respective laser type.
-
-    Args:
-        tune_mode: Reference to the parent TuneMode instance.
-        laser: The laser hardware interface.
-        calibration_table: Calibration table.
-
-    Attributes:
-        anti_hyst_enabled: Enable/disable anti-hysteresis correction.
-
-    """
-
-    def __init__(
-        self,
-        tune_mode: TuneMode,
-        laser: Laser,
-        calibration_table: Calibration,
-    ) -> None:
-        """Initialize wavelength change method.
-
-        Args:
-            tune_mode: Reference to the parent TuneMode instance.
-            laser: The laser hardware interface.
-            calibration_table: Calibration object
-
-        """
-        self._laser: Laser = laser
-        self._comm: Communication = laser._comm
-        self._tune_mode: TuneMode = tune_mode
-        self._calibration_table: Calibration = calibration_table
-        self._v_phases_squared_antihyst: list[float] = (
-            calibration_table.tune_settings.anti_hyst_voltages
-        )
-        self._time_steps: list[float] = calibration_table.tune_settings.anti_hyst_times
-
-        assert len(self._v_phases_squared_antihyst) != 0 and len(self._time_steps) != 0
-        assert (
-            len(self._v_phases_squared_antihyst) == len(self._time_steps) + 1
-            or len(self._time_steps) == 1
-        )
-        self._time_steps = (
-            [self._time_steps[0]] * (len(self._v_phases_squared_antihyst) - 1) + [0]
-            if len(self._time_steps) == 1
-            else [*self._time_steps, 0]
-        )
-
-        self._phase_max: float = self._laser._manual_mode.phase_section.max_value
-        self._phase_min: float = self._laser._manual_mode.phase_section.min_value
-
-        self.anti_hyst_enabled: bool = True  # Default to enabled
-
-    ########## Private Methods ##########
-
-    def _antihyst(self, v_phase: float | None = None) -> None:
-        """Apply anti-hysteresis correction to the laser.
-
-        Applies a voltage ramping procedure to the phase section heater to
-        minimize hysteresis effects during wavelength changes. The specifics of
-        this method are laser-dependent and are specified as part of the calibration
-        data.
-        """
-        if v_phase is None:
-            v_phase = float(
-                self._comm.query(f"DRV:D? {HeaterChannel.PHASE_SECTION.value:d}")
-            )
-        v_phases_squared_antihyst = self._v_phases_squared_antihyst.copy()
-        time_steps = self._time_steps.copy()
-
-        for i, v_phase_squared_antihyst in enumerate(v_phases_squared_antihyst):
-            if v_phase**2 + v_phase_squared_antihyst < 0:
-                value: float = 0
-                logging.getLogger(__name__).warning(
-                    "Anti-hysteresis "
-                    f"value out of bounds: {value} (min: {self._phase_min}, max: "
-                    f"{self._phase_max}). Approximating by 0"
-                )
-            else:
-                value = sqrt(v_phase**2 + v_phase_squared_antihyst)
-            if value < self._phase_min or value > self._phase_max:
-                logging.getLogger(__name__).error(
-                    "Anti-hysteresis"
-                    f"value out of bounds: {value} (min: {self._phase_min}, max: "
-                    f"{self._phase_max}). Approximating with the closest limit."
-                )
-                value = min(value, self._phase_max)
-                value = max(value, self._phase_min)
-            self._comm.query(f"DRV:D {HeaterChannel.PHASE_SECTION.value:d} {value:.4f}")
-            sleep(time_steps[i] / 1000)
-
-    ########## Properties (Getters/Setters) ##########
-
-    @property
-    def _wavelength(self) -> float:
-        """Get the current wavelength setting.
-
-        Returns:
-            Current wavelength setting in nanometers.
-
-        """
-        return self._tune_mode.wavelength
-
-    ########## Abstract Methods ##########
-
-    @abstractmethod
-    def set_wl(self, wavelength: float) -> float:
-        """Set the laser wavelength using the specific method implementation.
-
-        This method must be implemented by subclasses to handle the wavelength
-        change procedure specific to each laser model.
-
-        Args:
-            wavelength: Target wavelength in nanometers.
-
-        Returns:
-            The actual wavelength that was set.
-
-        Warning:
-            This method assumes self._wavelength is NOT already set to the current
-            wavelength.This is important for mode checking and anti-hysteresis
-            application.
-
-        """
-        pass
-
-
-class _PreLoad(_WLChangeMethod):
-    """Preload-based wavelength change method for COMET model.
-
-    Note:
-        This method is specifically designed for COMET laser models.
-
-    """
-
-    _step_size: int
-
-    def set_wl(self, wavelength: float) -> float:
+    def _pre_load(self, wavelength: float) -> float:
         """Set wavelength using preloaded calibration wavelengths.
 
         Loads heater values from calibration table and applies them to the laser.
@@ -385,7 +234,7 @@ class _PreLoad(_WLChangeMethod):
             The actual wavelength that was set.
         """
         try:
-            entry: CalibrationEntry = self._calibration_table[wavelength]
+            entry: CalibrationEntry = self._calibration[wavelength]
         except KeyError as e:
             raise ValueError(
                 f"Wavelength {wavelength} not found in calibration table."
@@ -401,36 +250,13 @@ class _PreLoad(_WLChangeMethod):
         self._comm.query("DRV:U")
 
         # Check for mode hop and apply anti-hysteresis if needed
-        if self._calibration_table[self._wavelength].mode_index != entry.mode_index:
+        if self._calibration[self._wl].mode_index != entry.mode_index:
             if self.anti_hyst_enabled:
-                self._antihyst(entry.phase_section)
+                self._antihyst()
 
         return entry.wavelength
 
-    @property
-    def step_size(self) -> float:
-        """Get the step size between consecutive wavelengths in the sweep range.
-
-        Returns:
-            The step size in nanometers between consecutive wavelengths
-                in the sweep range.
-
-        """
-        return self._step_size
-
-
-class _CyclerIndex(_WLChangeMethod):
-    """Cycler index-based wavelength change method for ATLAS model.
-
-    Uses the laser's internal cycler functionality to change wavelengths.
-    This method always applies anti-hysteresis correction when enabled.
-
-    Note:
-        This method is the default for ATLAS laser models.
-
-    """
-
-    def set_wl(self, wavelength: float) -> float:
+    def _cycler_index(self, wavelength: float) -> float:
         """Set wavelength using the laser's cycler index.
 
         Args:
@@ -449,7 +275,7 @@ class _CyclerIndex(_WLChangeMethod):
 
         """
         try:
-            entry: CalibrationEntry = self._calibration_table[wavelength]
+            entry: CalibrationEntry = self._calibration[wavelength]
         except KeyError as e:
             raise ValueError(
                 f"Wavelength {wavelength} not found in calibration table."
