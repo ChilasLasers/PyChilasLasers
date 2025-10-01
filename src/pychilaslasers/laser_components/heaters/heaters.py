@@ -28,6 +28,7 @@ from time import sleep
 from pychilaslasers.laser_components.heaters.heater_channels import HeaterChannel
 from pychilaslasers.laser_components.laser_component import LaserComponent
 from pychilaslasers.calibration.defaults import Defaults
+from pychilaslasers.exceptions import ModeError
 
 
 class Heater(LaserComponent):
@@ -232,8 +233,24 @@ class PhaseSection(Heater):
         """
         query: Callable[[str], str] = laser.comm.query
 
-        phase_max: float = laser._manual_mode.phase_section.max_value
-        phase_min: float = laser._manual_mode.phase_section.min_value
+        phase_min: float
+        phase_max: float
+
+        try:
+            phase_max = laser._manual_mode.phase_section.max_value
+            phase_min = laser._manual_mode.phase_section.min_value
+        except AttributeError as e:
+            if laser.system_state:
+                phase_max = float(
+                    laser.comm.query(f"DRV:LIM:MIN? {PhaseSection.channel}")
+                )
+                phase_min = float(
+                    laser.comm.query(f"DRV:LIM:MAX? {PhaseSection.channel}")
+                )
+            else:
+                raise ModeError(
+                    "Phase section min-max values could not be obtained", laser.mode
+                ) from e
 
         voltage_steps: list[float]
         time_steps: list[float]
