@@ -26,8 +26,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from pathlib import Path
-    from pychilaslasers.calibration import Calibration
+    pass  # noqa: TC005
 
 # ✅ Standard library imports
 import logging
@@ -41,7 +40,9 @@ from pychilaslasers.laser_components.tec import TEC
 from pychilaslasers.modes.manual_mode import ManualMode
 from pychilaslasers.modes.mode import LaserMode, Mode
 from pychilaslasers.modes.tune_mode import TuneMode
+from pychilaslasers.calibration import Calibration
 from pychilaslasers.calibration.calibration_parsing import load_calibration
+from pathlib import Path
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -120,11 +121,13 @@ class Laser:
         self._manual_mode: ManualMode = ManualMode(self)
 
         self._model: str = "Unknown"
+        self._calibration: Calibration | None = None
         self._tune_mode: TuneMode | None = None
         self._sweep_mode: SweepMode | None = None
 
         if calibration_file is not None:
             calibration: Calibration = load_calibration(file_path=calibration_file)
+            self.calibration = calibration
             self._model = calibration.model
             self._tune_mode = TuneMode(self, calibration=calibration)
             self._sweep_mode = (
@@ -145,15 +148,42 @@ class Laser:
         self._comm.query(f"DRV:CYC:TRIG {int(True):d}")
         self._comm.query(f"DRV:CYC:TRIG {int(False):d}")
 
-    def calibrate(self, calibration_file: str | Path) -> None:
-        """Calibrates the laser with the given calibration file.
+    def calibrate(
+        self,
+        calibration_file: str | Path | None = None,
+        calibration_object: Calibration | None = None,
+    ) -> None:
+        """Calibrates the laser with the given calibration file or calibration object.
+
+        This method configures the laser with calibration data, enabling tune mode and
+        sweep mode (for COMET lasers). Exactly one of calibration_file or
+        calibration_object must be provided.
 
         Args:
-            calibration_file (str | Path):
+            calibration_file (str | Path | None, optional):
                 The path to the calibration file to be used for calibrating the laser.
+                Defaults to None.
+            calibration_object (Calibration | None, optional):
+                A pre-loaded calibration object to be used for calibrating the laser.
+                Defaults to None.
 
+        Raises:
+            KeyError: If both calibration_file and calibration_object are provided,
+                or if neither is provided.
         """
-        calibration = load_calibration(file_path=calibration_file)
+        if not (calibration_file is None) ^ (calibration_object is None):
+            raise KeyError(
+                "Calibration file or object need to be provided for calibration "
+                "but not at the same time."
+            )
+
+        calibration: Calibration
+        if calibration_object is None:
+            assert calibration_file is not None  # Type guard
+            calibration = load_calibration(file_path=calibration_file)
+        else:
+            calibration = calibration_object
+        self._calibration = calibration
         self._model = calibration.model
         self._manual_mode.phase_section.calibrate(calibration=calibration, laser=self)
 
@@ -446,7 +476,41 @@ class Laser:
             True if the laser has calibration data, False otherwise.
 
         """
-        return self._tune_mode is not None or self._sweep_mode is not None
+        return self.calibration is not None
+
+    @property
+    def calibration(self) -> Calibration | None:
+        """Get the current calibration object.
+
+        Returns:
+            Calibration | None: The current calibration object if available,
+                None otherwise.
+        """
+        return getattr(self, "_calibration", None)
+
+    @calibration.setter
+    def calibration(self, calibration: str | Path | Calibration) -> None:
+        """Set the calibration for the laser.
+
+        This is an alias for the `calibrate` method.
+
+        Args:
+            calibration (str | Path | Calibration): The calibration data to apply.
+
+        Raises:
+            ValueError: If the calibration parameter is not one of the expected
+                types (str, Path, or Calibration).
+
+        """
+        if isinstance(calibration, str) or isinstance(calibration, Path):
+            self.calibrate(calibration_file=calibration)
+        elif isinstance(calibration, Calibration):
+            self.calibrate(calibration_object=calibration)
+        else:
+            raise ValueError(
+                f"Invalid calibration type: {type(calibration)}. "
+                "Expected str, Path, or Calibration object."
+            )
 
     ########## Method Overloads/Aliases ##########
 
