@@ -28,9 +28,9 @@
       }
     },
     {
-      "label": "Clean pycache",
+      "label": "Clean build artifacts",
       "type": "shell",
-      "command": "Get-ChildItem -Recurse -Directory -Filter '__pycache__' | ForEach-Object { Remove-Item -Recurse -Force $_.FullName; if ((Get-ChildItem $_.Parent.FullName).Count -eq 0) { Remove-Item $_.Parent.FullName } }",
+      "command": "$patterns = @('__pycache__', '.ruff_cache', '.mypy_cache','.pytest_cache'); foreach ($p in $patterns) { Get-ChildItem -Recurse -Force -Directory -Filter $p | ForEach-Object { Remove-Item -Recurse -Force $_.FullName; if ((Get-ChildItem $_.Parent.FullName -Force).Count -eq 0) { Remove-Item $_.Parent.FullName -Force } } }",
       "options": {
         "shell": {
           "executable": "powershell.exe",
@@ -39,7 +39,7 @@
             "-ExecutionPolicy",
             "Bypass",
             "-Command"
-          ]
+          ] 
         }
       },
       "presentation": {

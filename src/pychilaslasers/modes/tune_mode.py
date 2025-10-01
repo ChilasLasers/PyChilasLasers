@@ -49,18 +49,14 @@ class TuneMode(__Calibrated):
 
         Args:
             laser: The laser instance to control.
-            calibration: Calibration data dictionary containing tune mode parameters.
+            calibration: Calibration data object containing tune mode parameters.
 
         """
-        super().__init__(laser)
+        super().__init__(laser, calibration=calibration)
 
         self._calibration: Calibration = calibration
         self._default_TEC = calibration.tune_settings.tec_temp
         self._default_current = calibration.tune_settings.current
-
-        self._min_wl: float = self._calibration.min_wl
-        self._max_wl: float = self._calibration.max_wl
-        self._step_size: float = calibration.step_size
 
         self.anti_hyst_enabled: bool = True  # Default to enabled
 
@@ -158,16 +154,6 @@ class TuneMode(__Calibrated):
 
         """
         return LaserMode.TUNE
-
-    @property
-    def step_size(self) -> float:
-        """Get the step size between consecutive wavelengths.
-
-        Returns:
-            The step size in nanometers between consecutive wavelengths.
-
-        """
-        return self._step_size
 
     ########## Method Overloads/Aliases ##########
 

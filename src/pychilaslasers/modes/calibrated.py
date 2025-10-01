@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pychilaslasers.laser import Laser
+    from pychilaslasers.calibration import Calibration
 
 # ✅ Standard library imports
 from abc import abstractmethod
@@ -35,18 +36,27 @@ class __Calibrated(Mode):
 
     _min_wl: float
     _max_wl: float
+    _step_size: float
 
-    def __init__(self, laser: Laser) -> None:
+    def __init__(self, laser: Laser, calibration: Calibration) -> None:
         """Initialize the calibrated mode base class.
 
         Args:
-            laser: The parent laser instance that owns this mode.
+            laser(Laser): The parent laser instance that owns this mode.
+            calibration(Calibration): The calibration object of the laser.
 
         """
         super().__init__(laser)
 
         # Initialize the mode-specific attributes
         self._autoTrig: bool = False
+
+        # Set min and max wavelengths
+        self._min_wl = calibration.min_wl
+        self._max_wl = calibration.max_wl
+
+        # Set step size
+        self._step_size = calibration.step_size
 
     @property
     def autoTrig(self) -> bool:  # noqa: N802
@@ -130,3 +140,14 @@ class __Calibrated(Mode):
 
         """
         pass
+
+    @property
+    def step_size(self) -> float:
+        """Get the step size between consecutive wavelengths in the sweep range.
+
+        Returns:
+            The step size in nanometers between consecutive wavelengths
+                in the sweep range.
+
+        """
+        return self._step_size

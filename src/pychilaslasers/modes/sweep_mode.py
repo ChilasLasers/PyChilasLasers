@@ -70,7 +70,7 @@ class SweepMode(__Calibrated):
             ValueError: If laser model is not COMET or calibration is invalid.
 
         """
-        super().__init__(laser)
+        super().__init__(laser=laser, calibration=calibration)
         if (
             laser.model != "COMET"
             or calibration.model != "COMET"
@@ -86,10 +86,6 @@ class SweepMode(__Calibrated):
         self._default_TEC: float = calibration.sweep_settings.tec_temp
         self._default_current: float = calibration.sweep_settings.current
         self._default_interval: int = calibration.sweep_settings.interval  # type: ignore
-
-        self._min_wl: float = calibration.min_wl
-        self._max_wl: float = calibration.max_wl
-        self._step_size: float = calibration.step_size
 
         self._no_sweeps: int = 0  # Default to infinite sweeps
 
@@ -321,17 +317,6 @@ class SweepMode(__Calibrated):
         index_end: int = self._calibration[end_wl].cycler_index
 
         self._comm.query(data=f"DRV:CYC:SPAN {index_start} {index_end}")
-
-    @property
-    def step_size(self) -> float:
-        """Get the step size between consecutive wavelengths in the sweep range.
-
-        Returns:
-            The step size in nanometers between consecutive wavelengths
-                in the sweep range.
-
-        """
-        return self._step_size
 
     @property
     def cycler_running(self) -> bool:
