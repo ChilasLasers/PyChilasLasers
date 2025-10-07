@@ -206,7 +206,11 @@ class PhaseSection(Heater):
             laser: The laser instance to use for calibration.
             calibration: The calibration object containing calibration data.
         """
-        self._anti_hyst = self.get_antihyst_method(laser=laser, calibration=calibration)
+        self._anti_hyst = self.get_antihyst_method(
+            laser=laser,
+            voltage_steps=calibration.tune_settings.anti_hyst_voltages,
+            time_steps=calibration.tune_settings.anti_hyst_times,
+        )
 
     @property
     def channel(self) -> HeaterChannel:
@@ -215,7 +219,9 @@ class PhaseSection(Heater):
 
     @staticmethod
     def get_antihyst_method(
-        laser: Laser, calibration: Calibration | None = None
+        laser: Laser,
+        voltage_steps: list[float] | None = None,
+        time_steps: list[float] | None = None,
     ) -> Callable[[float | None], None]:
         """Construct an anti-hysteresis correction function for the laser.
 
@@ -224,8 +230,10 @@ class PhaseSection(Heater):
 
         Args:
             laser: The laser instance to apply anti-hysteresis correction to.
-            calibration: Optional calibration object containing anti-hysteresis
-            parameters. If one is not provided the default ones will be used
+            voltage_steps: Optional list of voltage step values for the
+                anti-hysteresis procedure. Defaults will be used if None provided.
+            time_steps: Optional list of time step durations (in ms) for
+                each voltage step. Defaults will be used if None provided.
 
         Returns:
             A callable that applies anti-hysteresis correction when invoked with
@@ -252,15 +260,14 @@ class PhaseSection(Heater):
                     "Phase section min-max values could not be obtained", laser.mode
                 ) from e
 
-        voltage_steps: list[float]
-        time_steps: list[float]
-
-        if calibration is not None:
-            voltage_steps = calibration.tune_settings.anti_hyst_voltages
-            time_steps = calibration.tune_settings.anti_hyst_times
-        else:
-            voltage_steps = Defaults.HARD_CODED_TUNE_ANTI_HYST[0]
-            time_steps = Defaults.HARD_CODED_TUNE_ANTI_HYST[0]
+        voltage_steps = (
+            Defaults.HARD_CODED_TUNE_ANTI_HYST[0]
+            if voltage_steps is None
+            else voltage_steps
+        )
+        time_steps = (
+            Defaults.HARD_CODED_TUNE_ANTI_HYST[0] if time_steps is None else time_steps
+        )
 
         time_steps = (
             [time_steps[0]] * (len(voltage_steps) - 1) + [0]
