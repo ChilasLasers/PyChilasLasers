@@ -277,9 +277,6 @@ class SweepMode(__Calibrated):
     def range(self, range: tuple[float, float] | list[float]) -> None:
         """Set the wavelength sweep range.
 
-        Alias for `range`. Returns the current sweep range as configured for
-        high-to-low wavelength sweeping.
-
         Configures the start and end wavelength limits for the sweep operation.
         When setting the range the start wavelength is set to the first occurrence of
         that wavelength in the calibration table and the end wavelength is set to the
@@ -440,7 +437,7 @@ class SweepMode(__Calibrated):
         """
         return self.range
 
-    def set_range(self, start_wl: float, end_wl: float) -> None:  # set range
+    def set_range(self, start_wl: float, end_wl: float) -> tuple[float, float]:
         """Alias for `range`.
 
         Returns the current sweep range as configured for high-to-low wavelength
@@ -454,5 +451,8 @@ class SweepMode(__Calibrated):
             ValueError: If wavelength are outside the calibrated range or
                 if start <= end.
 
+        Returns:
+            A tuple with the actual wavelengths that were set
         """
         self.range = (start_wl, end_wl)
+        return self.range
