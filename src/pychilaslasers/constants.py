@@ -12,15 +12,15 @@ class Constants:
         57600  # Initial baudrate the laser is set to when it is powered on.
     )
     SUPPORTED_BAUDRATES: tuple[int, ...] = (
+        460800,
+        57600,
         9600,
         14400,
         19200,
         28800,
         38400,
-        57600,
         115200,
         230400,
-        460800,
         912600,
     )
 

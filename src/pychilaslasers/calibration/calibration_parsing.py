@@ -163,7 +163,7 @@ def _parse_rows(f: TextIO, model: str) -> list[CalibrationEntry]:
 
         if model == "COMET":
             # hop flag as bool
-            hop_flag = str(row[5]).strip() == "1"
+            hop_flag = int(float(str(row[5]).strip())) == 1
 
             if in_hop and not hop_flag:
                 in_hop = False
