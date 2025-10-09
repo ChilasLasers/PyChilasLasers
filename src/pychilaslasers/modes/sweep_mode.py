@@ -161,10 +161,11 @@ class SweepMode(__Calibrated):
                 including both the lower and upper wavelengths.
 
         """
+        start, end = self.range
         return [
             wl
             for wl in [e.wavelength for e in self._calibration]
-            if wl >= self.start_wavelength and wl <= self.end_wavelength
+            if wl <= start and wl >= end
         ]
 
     ########## Properties (Getters/Setters) ##########
