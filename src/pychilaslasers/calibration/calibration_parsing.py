@@ -32,7 +32,14 @@ def _sanitize(s: str) -> str:
     Returns:
         Cleaned and uppercase string.
     """
-    return s.strip().replace("\r", "").replace("\n", "").upper()
+    return (
+        s.strip()
+        .replace("\r", "")
+        .replace("\n", "")
+        .replace('"', "")
+        .replace("'", "")
+        .upper()
+    )
 
 
 def _parse_defaults_block(f: TextIO) -> tuple[str, TuneSettings, SweepSettings | None]:
@@ -97,7 +104,7 @@ def _parse_defaults_block(f: TextIO) -> tuple[str, TuneSettings, SweepSettings |
             tec_temp=float(settings.pop("TUNE_TEC_TARGET")[0]),
             anti_hyst_voltages=settings.pop("ANTI_HYST_PHASE_V_SQUARED"),
             anti_hyst_times=settings.pop("ANTI_HYST_INTERVAL"),
-            method=TuneMethod(settings.pop("TUNE_METHOD", Defaults.TUNE_METHOD)),
+            method=TuneMethod(settings.pop("TUNE_METHOD", [Defaults.TUNE_METHOD])[0]),
         )
         if model == "ATLAS":
             sweep = None

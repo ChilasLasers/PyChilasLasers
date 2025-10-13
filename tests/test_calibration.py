@@ -13,8 +13,9 @@ from pychilaslasers.calibration.calibration_parsing import (
 from pychilaslasers.calibration import (
     CalibrationEntry,
     Calibration,
+    Defaults,
     TuneSettings,
-    TuneMethod
+    TuneMethod,
 )
 from pychilaslasers.exceptions.calibration_error import CalibrationError
 
@@ -54,6 +55,7 @@ SAMPLE_TUNE_SETTING = TuneSettings(
     tec_temp=25.0,
     anti_hyst_voltages=[35.0, 0.0],
     anti_hyst_times=[10.0],
+    method=Defaults.TUNE_METHOD,
 )
 
 
