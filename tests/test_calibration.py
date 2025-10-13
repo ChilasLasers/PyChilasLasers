@@ -13,7 +13,9 @@ from pychilaslasers.calibration.calibration_parsing import (
 from pychilaslasers.calibration import (
     CalibrationEntry,
     Calibration,
+    Defaults,
     TuneSettings,
+    TuneMethod,
 )
 from pychilaslasers.exceptions.calibration_error import CalibrationError
 
@@ -53,6 +55,7 @@ SAMPLE_TUNE_SETTING = TuneSettings(
     tec_temp=25.0,
     anti_hyst_voltages=[35.0, 0.0],
     anti_hyst_times=[10.0],
+    method=Defaults.TUNE_METHOD,
 )
 
 
@@ -197,6 +200,7 @@ tune_diode_current = 280.0
 tune_tec_target = 25.0
 anti_hyst_phase_v_squared = [35.0, 0.0]
 anti_hyst_interval = [10.0]
+tune_method = "cycler"
 [look_up_table]
 """
         f = StringIO(content)
@@ -209,6 +213,7 @@ anti_hyst_interval = [10.0]
         assert tune.anti_hyst_voltages == [35.0, 0.0]
         assert tune.anti_hyst_times == [10.0]
         assert sweep is None
+        assert tune.method is TuneMethod.CYCLER
 
     def test_parse_defaults_block_comet(self):
         """Test _parse_defaults_block for COMET laser."""
@@ -278,6 +283,7 @@ anti_hyst_interval = [10.0]
         assert calibration.model == "ATLAS"
         assert len(calibration.entries) == 2
         assert calibration.tune_settings.current == 280.0
+        assert calibration.tune_settings.method is Defaults.TUNE_METHOD
         assert calibration.sweep_settings is None
 
     def test_load_calibration_file_not_found(self):

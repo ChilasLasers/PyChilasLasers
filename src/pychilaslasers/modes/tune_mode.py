@@ -19,6 +19,8 @@ if TYPE_CHECKING:
 # ✅ Standard library imports
 
 # ✅ Local imports
+from pychilaslasers.exceptions.calibration_error import CalibrationError
+from pychilaslasers.calibration.structs import TuneMethod
 from pychilaslasers.modes.calibrated import __Calibrated
 from pychilaslasers.modes.mode import LaserMode
 
@@ -65,12 +67,15 @@ class TuneMode(__Calibrated):
         self._antihyst = laser._manual_mode.phase_section._anti_hyst
 
         self._change_method: Callable[[float], float]
-        # Initialize wavelength change method based on laser model
-        if calibration.model == "COMET":
+
+        # Initialize wavelength change method
+        if (method := calibration.tune_settings.method) is TuneMethod.FILE:
             self._change_method = self._pre_load
-        else:
+        elif method is TuneMethod.CYCLER:
             # Default to cycler index method for ATLAS
             self._change_method = self._cycler_index
+        else:
+            raise CalibrationError("Invalid tune Method")
 
     ########## Main Methods ##########
 

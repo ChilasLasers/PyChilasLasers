@@ -189,3 +189,4 @@ docs/uml_images/
 *.iml
 docs/project-structure.md
 .secrets
+test.py

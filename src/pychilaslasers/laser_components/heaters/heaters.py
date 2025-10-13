@@ -260,13 +260,9 @@ class PhaseSection(Heater):
                 ) from e
 
         voltage_steps = (
-            Defaults.HARD_CODED_TUNE_ANTI_HYST[0]
-            if voltage_steps is None
-            else voltage_steps
+            Defaults.TUNE_ANTI_HYST[0] if voltage_steps is None else voltage_steps
         )
-        time_steps = (
-            Defaults.HARD_CODED_TUNE_ANTI_HYST[0] if time_steps is None else time_steps
-        )
+        time_steps = Defaults.TUNE_ANTI_HYST[0] if time_steps is None else time_steps
 
         time_steps = (
             [time_steps[0]] * (len(voltage_steps) - 1) + [0]

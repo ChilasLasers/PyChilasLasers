@@ -12,6 +12,7 @@ Authors: SDU
 
 # ⚛️ Type checking
 from __future__ import annotations
+from enum import Enum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -105,6 +106,16 @@ class ModeSetting:
     tec_temp: float
 
 
+class TuneMethod(Enum):
+    """Enumeration for tune method types.
+
+    Specifies the available methods for tuning: from file or cycler.
+    """
+
+    FILE = "FILE"
+    CYCLER = "CYCLER"
+
+
 @dataclass
 class TuneSettings(ModeSetting):
     """Configuration settings for laser tune mode operation.
@@ -117,10 +128,12 @@ class TuneSettings(ModeSetting):
         tec_temp: Inherited from ModeSetting - TEC temperature target in Celsius.
         anti_hyst_voltages: Anti-hysteresis voltage values for tune mode.
         anti_hyst_times: Anti-hysteresis timing values for tune mode.
+        method: The wavelength changing method to be used.
     """
 
     anti_hyst_voltages: list[float]
     anti_hyst_times: list[float]
+    method: TuneMethod
 
 
 @dataclass
@@ -152,7 +165,7 @@ class Calibration:
         entries: Complete list of calibration entries in file order.
         min_wl: Minimum wavelength in the calibration range.
         max_wl: Maximum wavelength in the calibration range.
-        precision: The maximum number of decimals an entry can have after the ".".
+        precision: The maximum number of decimals an entry can have after the "."
         step_size: Wavelength step size between entries.
         tune_settings: Configuration for tune mode operation.
         sweep_settings: Configuration for sweep mode (None for ATLAS).
