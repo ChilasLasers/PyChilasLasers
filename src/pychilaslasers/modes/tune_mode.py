@@ -67,7 +67,8 @@ class TuneMode(__Calibrated):
         self._antihyst = laser._manual_mode.phase_section._anti_hyst
 
         self._change_method: Callable[[float], float]
-        # Initialize wavelength change method based on laser model
+
+        # Initialize wavelength change method
         if (method := calibration.tune_settings.method) is TuneMethod.FILE:
             self._change_method = self._pre_load
         elif method is TuneMethod.CYCLER:

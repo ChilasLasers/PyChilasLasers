@@ -60,6 +60,7 @@ def _parse_defaults_block(f: TextIO) -> tuple[str, TuneSettings, SweepSettings |
         laser_model = COMET
         tune_diode_current = 280.0
         tune_tec_target = 25.0
+        tune_method = "file"
         anti_hyst_phase_v_squared = [35.0, 0.0]
         anti_hyst_interval = [10.0]
         sweep_diode_current = 300.0
