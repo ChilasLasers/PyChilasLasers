@@ -152,6 +152,7 @@ class Calibration:
         entries: Complete list of calibration entries in file order.
         min_wl: Minimum wavelength in the calibration range.
         max_wl: Maximum wavelength in the calibration range.
+        precision: The maximum number of decimals an entry can have after the ".".
         step_size: Wavelength step size between entries.
         tune_settings: Configuration for tune mode operation.
         sweep_settings: Configuration for sweep mode (None for ATLAS).
@@ -162,6 +163,7 @@ class Calibration:
     entries: list[CalibrationEntry]
     min_wl: float
     max_wl: float
+    precision: int
     step_size: float
     tune_settings: TuneSettings
     sweep_settings: SweepSettings | None
@@ -192,6 +194,10 @@ class Calibration:
         _wavelengths: list[float] = [entry.wavelength for entry in entries]
         self.max_wl = max(_wavelengths)
         self.min_wl = min(_wavelengths)
+        self.precision = max(
+            len(s.split(".")[1]) if "." in s else 0 for s in map(str, _wavelengths)
+        )
+
         try:
             self.step_size = abs(
                 _wavelengths[0] - _wavelengths[_wavelengths.count(_wavelengths[0])]
