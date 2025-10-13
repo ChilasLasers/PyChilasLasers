@@ -9,8 +9,14 @@ from csv import reader
 from pathlib import Path
 from typing import Any, TextIO
 
-from .structs import TuneSettings, SweepSettings, CalibrationEntry, Calibration
-from .defaults import Defaults
+from pychilaslasers.calibration.structs import (
+    TuneMethod,
+    TuneSettings,
+    SweepSettings,
+    CalibrationEntry,
+    Calibration,
+)
+from pychilaslasers.calibration.defaults import Defaults
 from pychilaslasers.exceptions.calibration_error import CalibrationError
 
 
@@ -90,6 +96,7 @@ def _parse_defaults_block(f: TextIO) -> tuple[str, TuneSettings, SweepSettings |
             tec_temp=float(settings.pop("TUNE_TEC_TARGET")[0]),
             anti_hyst_voltages=settings.pop("ANTI_HYST_PHASE_V_SQUARED"),
             anti_hyst_times=settings.pop("ANTI_HYST_INTERVAL"),
+            method=TuneMethod(settings.pop("TUNE_METHOD", Defaults.TUNE_METHOD)),
         )
         if model == "ATLAS":
             sweep = None
@@ -222,12 +229,13 @@ def load_calibration(file_path: str | Path) -> Calibration:
         else:
             # No defaults block: rewind so the first line belongs to the data table
             f.seek(0)
-            model = Defaults.HARD_CODED_LASER_MODEL
+            model = Defaults.LASER_MODEL
             tune = TuneSettings(
-                current=Defaults.HARD_CODED_TUNE_CURRENT,
-                tec_temp=Defaults.HARD_CODED_TUNE_TEC_TEMP,
-                anti_hyst_voltages=list(Defaults.HARD_CODED_TUNE_ANTI_HYST[0]),
-                anti_hyst_times=list(Defaults.HARD_CODED_TUNE_ANTI_HYST[1]),
+                current=Defaults.TUNE_CURRENT,
+                tec_temp=Defaults.TUNE_TEC_TEMP,
+                anti_hyst_voltages=list(Defaults.TUNE_ANTI_HYST[0]),
+                anti_hyst_times=list(Defaults.TUNE_ANTI_HYST[1]),
+                method=Defaults.TUNE_METHOD,
             )
             sweep = None
         # Now parse the lookup table rows

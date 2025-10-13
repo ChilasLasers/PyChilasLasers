@@ -12,6 +12,7 @@ Authors: SDU
 
 # ⚛️ Type checking
 from __future__ import annotations
+from enum import Enum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -105,6 +106,16 @@ class ModeSetting:
     tec_temp: float
 
 
+class TuneMethod(Enum):
+    """Enumeration for tune method types.
+
+    Specifies the available methods for tuning: from file or cycler.
+    """
+
+    FILE = "FILE"
+    CYCLER = "CYCLER"
+
+
 @dataclass
 class TuneSettings(ModeSetting):
     """Configuration settings for laser tune mode operation.
@@ -121,6 +132,7 @@ class TuneSettings(ModeSetting):
 
     anti_hyst_voltages: list[float]
     anti_hyst_times: list[float]
+    method: TuneMethod
 
 
 @dataclass
