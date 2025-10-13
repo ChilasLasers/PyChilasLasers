@@ -249,10 +249,10 @@ class PhaseSection(Heater):
         except AttributeError as e:
             if laser.system_state:
                 phase_max = float(
-                    laser.comm.query(f"DRV:LIM:MIN? {PhaseSection.channel}")
+                    laser.comm.query(f"DRV:LIM:MAX? {PhaseSection.channel}")
                 )
                 phase_min = float(
-                    laser.comm.query(f"DRV:LIM:MAX? {PhaseSection.channel}")
+                    laser.comm.query(f"DRV:LIM:MIN? {PhaseSection.channel}")
                 )
             else:
                 raise ModeError(
