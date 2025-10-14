@@ -8,6 +8,8 @@
         "CPOS",
         "csvfile",
         "EIGHTBITS",
+        "ILIM",
+        "ITEC",
         "milliamps",
         "mypy",
         "pychilaslasers",
@@ -15,6 +17,7 @@
         "pypi",
         "signum",
         "stopbits",
+        "TMAX",
         "viewcode"
     ],
     "python.analysis.extraPaths": [

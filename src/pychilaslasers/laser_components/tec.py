@@ -28,6 +28,8 @@ class TEC(LaserComponent):
         target: The target temperature in Celsius.
         temp: The current measured temperature in Celsius.
         value: Alias for the current temperature (inherited from LaserComponent).
+        current: The current applied to the driver.
+        current_limit: The maximum current that can be applied to the driver.
         min_value: Minimum allowable temperature target.
         max_value: Maximum allowable temperature target.
         unit: Temperature unit (Celsius).
@@ -94,6 +96,24 @@ class TEC(LaserComponent):
 
         """
         return self.temp
+
+    @property
+    def current(self) -> float:
+        """Return the current applied to the TEC driver.
+
+        Returns:
+            float: current in mA
+        """
+        return float(self._comm.query("TEC:ITEC?"))
+
+    @property
+    def current_limit(self) -> float:
+        """The maximum current that can be applied to the TEC driver.
+
+        Returns:
+            float: maximum current in Ampere
+        """
+        return float(self._comm.query("TEC:ILIM?"))
 
     ########## Method Overloads/Aliases ##########
 
