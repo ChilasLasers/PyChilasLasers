@@ -1,4 +1,4 @@
-# Install: pre-commit install --hook-type pre-push --hook-type commit-msg --install-hooks
+# Install: pre-commit install --allow-missing-config --hook-type pre-push --hook-type commit-msg --install-hooks
 
 default_stages: [pre-push]
 
