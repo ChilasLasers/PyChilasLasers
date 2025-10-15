@@ -366,6 +366,15 @@ class Communication:
         logger.debug("[baudrate_switch] Reopening serial connection with new baudrate")
         self._serial.open()
 
+    @property
+    def port(self) -> str:
+        """Get the serial port currently used for communication.
+
+        Returns:
+            str: The name of the serial port in use.
+        """
+        return self._serial.port  # type: ignore
+
 
 def list_comports() -> list[str]:
     """List all available COM ports on the system.
