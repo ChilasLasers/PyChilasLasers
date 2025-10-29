@@ -70,7 +70,7 @@ class TuneMode(__Calibrated):
 
         # Initialize wavelength change method
         if (method := calibration.tune_settings.method) is TuneMethod.FILE:
-            self._change_method = self._pre_load
+            self._change_method = self._pre_load_from_file
         elif method is TuneMethod.CYCLER:
             # Default to cycler index method for ATLAS
             self._change_method = self._cycler_index
@@ -207,11 +207,12 @@ class TuneMode(__Calibrated):
 
     ########## Private Classes ##########
 
-    def _pre_load(self, wavelength: float) -> float:
-        """Set wavelength using preloaded calibration wavelengths.
+    def _pre_load_from_file(self, wavelength: float) -> float:
+        """Set wavelength by preloading the values from the file then updating.
 
         Loads heater values from calibration table and applies them to the laser.
-        Anti-hysteresis correction is applied only when a mode hop is detected.
+        On COMET lasers, anti-hysteresis correction is applied only when a mode hop
+        is detected.
 
         Warning:
             This method assumes self._wavelength is NOT already set to the requested
@@ -241,7 +242,11 @@ class TuneMode(__Calibrated):
         self._comm.query("DRV:U")
 
         # Check for mode hop and apply anti-hysteresis if needed
-        if self._calibration[self._wl].mode_index != entry.mode_index:
+        if (
+            # this applies to the Comet
+            self._calibration[self._wl].mode_index != entry.mode_index
+            or self._calibration.model == "ATLAS"
+        ):
             if self.anti_hyst_enabled:
                 self._antihyst()
 
