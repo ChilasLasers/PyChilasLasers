@@ -106,40 +106,49 @@ class Laser:
         """
         self._comm: Communication = Communication(com_port=com_port)
 
-        # Laser identification. Library will not work with non-Chilas lasers.
-        if "Chilas" not in (idn := self._comm.query("*IDN?")) and "LioniX" not in idn:
-            logger.critical("Laser is not a Chilas device")
-            import sys
+        try:
+            # Laser identification. Library will not work with non-Chilas lasers.
+            if (
+                "Chilas" not in (idn := self._comm.query("*IDN?"))
+                and "LioniX" not in idn
+            ):
+                logger.critical("Laser is not a Chilas device")
+                import sys
 
-            sys.exit(1)
+                sys.exit(1)
 
-        # Initialize laser components
-        self.tec: TEC = TEC(self)
-        self.diode: Diode = Diode(self)
+            # Initialize laser components
+            self.tec: TEC = TEC(self)
+            self.diode: Diode = Diode(self)
 
-        # Initialize modes
-        self._manual_mode: ManualMode = ManualMode(self)
+            # Initialize modes
+            self._manual_mode: ManualMode = ManualMode(self)
 
-        self._model: str = "Unknown"
-        self._calibration: Calibration | None = None
-        self._tune_mode: TuneMode | None = None
-        self._sweep_mode: SweepMode | None = None
+            self._model: str = "Unknown"
+            self._calibration: Calibration | None = None
+            self._tune_mode: TuneMode | None = None
+            self._sweep_mode: SweepMode | None = None
 
-        if calibration_file is not None:
-            calibration: Calibration = load_calibration(file_path=calibration_file)
-            self.calibration = calibration
-            self._model = calibration.model
-            self._tune_mode = TuneMode(self, calibration=calibration)
-            self._sweep_mode = (
-                SweepMode(self, calibration) if calibration.model == "COMET" else None
+            if calibration_file is not None:
+                calibration: Calibration = load_calibration(file_path=calibration_file)
+                self.calibration = calibration
+                self._model = calibration.model
+                self._tune_mode = TuneMode(self, calibration=calibration)
+                self._sweep_mode = (
+                    SweepMode(self, calibration)
+                    if calibration.model == "COMET"
+                    else None
+                )
+
+            self._mode: Mode = self._manual_mode
+
+            logger.debug(
+                f"Initialized laser {self._model} on {com_port} with calibration file "
+                f"{calibration_file}"
             )
-
-        self._mode: Mode = self._manual_mode
-
-        logger.debug(
-            f"Initialized laser {self._model} on {com_port} with calibration file "
-            f"{calibration_file}"
-        )
+        except Exception as e:
+            self._comm.close_connection()
+            raise e
 
     ########## Main Methods ##########
 
