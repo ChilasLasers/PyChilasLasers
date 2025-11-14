@@ -178,7 +178,8 @@ class Communication:
     def close_connection(self, signum=None, fname=None) -> None:
         """Close the serial connection to the laser driver safely.
 
-        Attempts to reset the prefix mode and  baudrate to the initial value before closing the connection.
+        Attempts to reset the prefix mode and baudrate to the initial value before
+        closing the connection.
 
         This method is registered to be called on exit or when a signal is received.
         """
@@ -273,7 +274,7 @@ class Communication:
             mode: whether to enable prefix mode (True) or disable it (False)
 
         """
-        self._prefix_mode = mode  # mode needs to be set first, otherwise the next query does not work
+        self._prefix_mode = mode  # mode needs to be set first before next query
         self.query(f"SYST:COMM:PFX {mode:d}")
         logger.info(f"Changed prefix mode to {mode}")
 
