@@ -168,7 +168,7 @@ class Communication:
         if reply[0] != "0":
             logger.error(f"Nonzero return code: {reply[2:]}")
             raise LaserError(
-                code=reply[0], message=reply[2:]
+                code=reply[2:6], message=reply[8:]
             )  # Raise a custom error with the reply message
         else:
             logger.debug(f"R {reply}")
