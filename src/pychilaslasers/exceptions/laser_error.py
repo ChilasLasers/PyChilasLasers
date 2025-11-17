@@ -18,7 +18,4 @@ class LaserError(Exception):  # noqa: D101
         self.message: str = message
 
     def __str__(self) -> str:  # noqa: D105
-        return (
-            f"LaserError {self.code}: "
-            f"The laser has responded with an error {self.message}"
-        )
+        return f"LaserError {self.code}: {self.message}"
