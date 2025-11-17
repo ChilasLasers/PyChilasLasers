@@ -192,10 +192,11 @@ class Communication:
             else:
                 logger.debug("Closing connection")
             self.prefix_mode = True
-            self.query("SYST:STAT 0")
+            self.query("DRV:CYC:ABRT")  # Aborts cycler
+            self.query("SYST:STAT 0")  # Turns off system
             self._serial.write(
                 f"SYST:SER:BAUD {Constants.TLM_INITIAL_BAUDRATE}\r\n".encode("ascii")
-            )
+            )  # Resets baud rate to initial value
             logger.debug("Resetting serial baudrate to initial value")
             self._serial.close()
 
