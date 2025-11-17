@@ -100,9 +100,13 @@ class Communication:
         self.baudrate = Constants.DEFAULT_BAUDRATE
 
         # Ensure proper closing of the serial connection on exit or signal
-        atexit.register(self.close_connection)
-        signal.signal(signal.SIGINT, self.close_connection)
-        signal.signal(signal.SIGTERM, self.close_connection)
+        try:
+            atexit.register(self.close_connection)
+            signal.signal(signal.SIGINT, self.close_connection)
+            signal.signal(signal.SIGTERM, self.close_connection)
+        except Exception:
+            # This may fail in threaded environments
+            pass
 
     def __del__(self) -> None:
         """Destructor that ensures the serial connection is closed after deletion.
