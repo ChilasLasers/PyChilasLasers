@@ -13,6 +13,7 @@ Authors: SDU
 # ⚛️ Type checking
 from __future__ import annotations
 from enum import Enum
+from itertools import pairwise
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -217,9 +218,7 @@ class Calibration:
         )
 
         try:
-            self.step_size = abs(
-                _wavelengths[0] - _wavelengths[_wavelengths.count(_wavelengths[0])]
-            )
+            self.step_size = min([x - y for x, y in pairwise(_wavelengths)])
         except IndexError:
             logging.getLogger(__name__).warning(
                 "Calibration loaded with less than 2 entries"
