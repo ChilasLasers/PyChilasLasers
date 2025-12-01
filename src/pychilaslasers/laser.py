@@ -188,7 +188,7 @@ class Laser:
 
         # Laser attributes
         if (no := calibration.serial_number) is not None and no != self.srn:
-            logging.getLogger(__name__).error(
+            logging.getLogger(__name__).critical(
                 "Calibration file is for a different laser."
                 + f"Calibration file serial number = {no} "
                 + f"Laser serial number = {self.srn}"
