@@ -187,7 +187,15 @@ class TuneMode(__Calibrated):
             ValueError: If the resulting wavelength is outside the valid range.
 
         """
+        old = self.wavelength
         self.wavelength = self.get_wl() + delta
+
+        if self.wavelength == old:
+            delta = -1 if delta <= 0 else 1
+            self.wavelength = self._calibration.entries[
+                self._calibration.entries.index(self._calibration[self.wavelength])
+                + delta
+            ].wavelength
 
         return self.wavelength
 
