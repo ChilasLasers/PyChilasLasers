@@ -125,20 +125,13 @@ class Laser:
             self._manual_mode: ManualMode = ManualMode(self)
 
             self._model: str = "Unknown"
+            self._srn: str | None = None
             self._calibration: Calibration | None = None
             self._tune_mode: TuneMode | None = None
             self._sweep_mode: SweepMode | None = None
 
             if calibration_file is not None:
-                calibration: Calibration = load_calibration(file_path=calibration_file)
-                self.calibration = calibration
-                self._model = calibration.model
-                self._tune_mode = TuneMode(self, calibration=calibration)
-                self._sweep_mode = (
-                    SweepMode(self, calibration)
-                    if calibration.model == "COMET"
-                    else None
-                )
+                self.calibrate(calibration_file=calibration_file)
 
             self._mode: Mode = self._manual_mode
 
@@ -192,12 +185,20 @@ class Laser:
             calibration = load_calibration(file_path=calibration_file)
         else:
             calibration = calibration_object
+
+        # Laser attributes
+        if (no := calibration.serial_number) is not None and no != self.srn:
+            logging.getLogger(__name__).error(
+                "Calibration file is for a different laser."
+                + f"Calibration file serial number = {no} "
+                + f"Laser serial number = {self.srn}"
+            )
         self._calibration = calibration
         self._model = calibration.model
         self._manual_mode.phase_section.calibrate(calibration=calibration, laser=self)
 
+        # Laser modes setup
         self._tune_mode = TuneMode(self, calibration)
-
         if self._model == "COMET":
             self._sweep_mode = SweepMode(self, calibration)
 
@@ -476,6 +477,13 @@ class Laser:
 
         """
         return self._model
+
+    @property
+    def srn(self) -> str:
+        """Return the serial number of the laser."""
+        if self._srn is None:
+            self._srn = self._comm.query("SYST:SRN?")
+        return self._srn
 
     @property
     def calibrated(self) -> bool:

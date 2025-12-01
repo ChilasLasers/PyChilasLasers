@@ -172,6 +172,7 @@ class Calibration:
     """
 
     model: str
+    serial_number: str | None
     _direct_access: dict[float, CalibrationEntry]
     entries: list[CalibrationEntry]
     min_wl: float
@@ -183,15 +184,18 @@ class Calibration:
 
     def __init__(
         self,
-        model: str,
         entries: list[CalibrationEntry],  # should be in original order
         tune_settings: TuneSettings,
         sweep_settings: SweepSettings | None,
+        serial_number: str | None = None,
+        model: str = "ATLAS",
     ) -> None:
         """Initialize Calibration with laser model and calibration data.
 
         Args:
             model: Laser model identifier ("ATLAS" or "COMET").
+            serial_number: of the laser. Used to correlate calibration to specific
+                laser. Can be None.
             entries: List of calibration entries in original file order.
                 Must not be empty.
             tune_settings: Settings for tune mode operation.
@@ -199,6 +203,7 @@ class Calibration:
                 None for ATLAS lasers, required for COMET lasers.
         """
         self.model = model
+        self.serial_number = serial_number
         self.entries = entries
         self.tune_settings = tune_settings
         self.sweep_settings = sweep_settings

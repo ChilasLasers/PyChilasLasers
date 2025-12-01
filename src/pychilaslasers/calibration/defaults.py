@@ -13,6 +13,7 @@ class Defaults:
     """
 
     LASER_MODEL: str = "ATLAS"
+    SERIAL_NUMBER: None = None
 
     # Tune mode defaults
     TUNE_CURRENT: float = 280.0

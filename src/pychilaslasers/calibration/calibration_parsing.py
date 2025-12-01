@@ -33,7 +33,7 @@ def _sanitize(s: str) -> str:
         Cleaned and uppercase string.
     """
     return (
-        s.strip()
+        s.strip(" ;")
         .replace("\r", "")
         .replace("\n", "")
         .replace('"', "")
@@ -42,7 +42,9 @@ def _sanitize(s: str) -> str:
     )
 
 
-def _parse_defaults_block(f: TextIO) -> tuple[str, TuneSettings, SweepSettings | None]:
+def _parse_defaults_block(
+    f: TextIO,
+) -> tuple[str, str | None, TuneSettings, SweepSettings | None]:
     """Parse the [default_settings] block from a calibration file.
 
     Reads parameter lines until encountering the [look_up_table] marker.
@@ -99,6 +101,7 @@ def _parse_defaults_block(f: TextIO) -> tuple[str, TuneSettings, SweepSettings |
 
     try:
         model = settings.pop("LASER_MODEL")[0].upper()
+        serial: str | None = settings.pop("LASER_SRN", [Defaults.SERIAL_NUMBER])[0]
         tune = TuneSettings(
             current=float(settings.pop("TUNE_DIODE_CURRENT")[0]),
             tec_temp=float(settings.pop("TUNE_TEC_TARGET")[0]),
@@ -125,7 +128,7 @@ def _parse_defaults_block(f: TextIO) -> tuple[str, TuneSettings, SweepSettings |
                 f"Invalid param {param} found in calibration data"
             )
 
-    return model, tune, sweep
+    return model, serial, tune, sweep
 
 
 def _parse_rows(f: TextIO, model: str) -> list[CalibrationEntry]:
@@ -228,16 +231,18 @@ def load_calibration(file_path: str | Path) -> Calibration:
     entries: list[CalibrationEntry] = []
 
     model: str
+    srn_no: str | None
     tune: TuneSettings
     sweep: SweepSettings | None
     with open(file_path, newline="") as f:
         first_line = f.readline()
         if "[default_settings]" in first_line:
-            model, tune, sweep = _parse_defaults_block(f)
+            model, srn_no, tune, sweep = _parse_defaults_block(f)
         else:
             # No defaults block: rewind so the first line belongs to the data table
             f.seek(0)
             model = Defaults.LASER_MODEL
+            srn_no = Defaults.SERIAL_NUMBER
             tune = TuneSettings(
                 current=Defaults.TUNE_CURRENT,
                 tec_temp=Defaults.TUNE_TEC_TEMP,
@@ -251,6 +256,7 @@ def load_calibration(file_path: str | Path) -> Calibration:
 
     return Calibration(
         model=model,
+        serial_number=srn_no,
         entries=entries,  # original order retained
         tune_settings=tune,
         sweep_settings=sweep,  # None for non-COMET

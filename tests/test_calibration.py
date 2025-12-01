@@ -196,6 +196,7 @@ class TestHelperFunctions:
     def test_parse_defaults_block_atlas(self):
         """Test _parse_defaults_block for ATLAS laser."""
         content = """laser_model = ATLAS
+laser_srn = 1234
 tune_diode_current = 280.0
 tune_tec_target = 25.0
 anti_hyst_phase_v_squared = [35.0, 0.0]
@@ -205,9 +206,10 @@ tune_method = "cycler"
 """
         f = StringIO(content)
 
-        model, tune, sweep = _parse_defaults_block(f)
+        model, srn, tune, sweep = _parse_defaults_block(f)
 
         assert model == "ATLAS"
+        assert srn == "1234"
         assert tune.current == 280.0
         assert tune.tec_temp == 25.0
         assert tune.anti_hyst_voltages == [35.0, 0.0]
@@ -229,7 +231,7 @@ sweep_interval = 100
 """
         f = StringIO(content)
 
-        model, tune, sweep = _parse_defaults_block(f)
+        model, _, tune, sweep = _parse_defaults_block(f)
 
         assert model == "COMET"
         assert tune.current == 280.0
