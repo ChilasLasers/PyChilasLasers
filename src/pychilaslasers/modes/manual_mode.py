@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from pychilaslasers.laser_components.heaters.heaters import Heater
 
 # ✅ Local imports
-from pychilaslasers.laser_components.heaters.heaters import (
+from pychilaslasers.laser_components.heaters import (
     LargeRing,
     PhaseSection,
     SmallRing,

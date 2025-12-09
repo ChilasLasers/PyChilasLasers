@@ -14,7 +14,8 @@ Classes:
 """
 
 from .heater_channels import HeaterChannel
-from .heaters import Heater, LargeRing, PhaseSection, SmallRing, TunableCoupler
+from .heaters import Heater, LargeRing, SmallRing, TunableCoupler
+from .phase_section import PhaseSection
 
 __all__: list[str] = [
     "Heater",

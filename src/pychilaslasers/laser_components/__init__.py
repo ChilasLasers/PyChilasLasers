@@ -16,7 +16,7 @@ Modules:
 
 from .diode import Diode
 from .heaters.heater_channels import HeaterChannel
-from .heaters.heaters import Heater, LargeRing, PhaseSection, SmallRing, TunableCoupler
+from .heaters import Heater, LargeRing, PhaseSection, SmallRing, TunableCoupler
 from .laser_component import LaserComponent
 from .tec import TEC
 
