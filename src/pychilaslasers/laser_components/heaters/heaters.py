@@ -196,6 +196,9 @@ class PhaseSection(Heater):
         """Set the anti-hysteresis flag."""
         if not isinstance(value, bool):
             raise ValueError("anti_hyst must be a boolean.")
+        logging.getLogger(__name__).info(
+            f"Phase Anti-Hysteresis procedure {'Enabled' if value else 'Disabled'}"
+        )
         self._anti_hyst_enabled = value
 
     def calibrate(self, laser: Laser, calibration: Calibration) -> None:
