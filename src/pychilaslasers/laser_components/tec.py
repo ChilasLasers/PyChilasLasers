@@ -50,7 +50,7 @@ class TEC(LaserComponent):
         super().__init__(laser=laser)
         self._min: float = float(self._comm.query("TEC:CFG:TMIN?"))
         self._max: float = float(self._comm.query("TEC:CFG:TMAX?"))
-        self._unit: str = "Celsius"
+        self._unit: str = "°C"
 
     ########## Properties (Getters/Setters) ##########
 
