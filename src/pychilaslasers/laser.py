@@ -355,8 +355,7 @@ class Laser:
             assert self._sweep_mode is not None
             self._sweep_mode.stop()
 
-        if previous_mode is not self._mode.mode:
-            self._mode.apply_defaults()
+        self._mode.apply_defaults()
         logging.info(f"Laser mode set to {self._mode.mode}")
 
     @property
