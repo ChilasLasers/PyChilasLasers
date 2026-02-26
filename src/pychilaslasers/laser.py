@@ -123,14 +123,13 @@ class Laser:
             self.tec: TEC = TEC(self)
             self.diode: Diode = Diode(self)
             self.enclosure: EnclosureTemp = EnclosureTemp(self)
-            self.pd1: PhotoDiode = PhotoDiode(self,0)
-            self.pd2: PhotoDiode = PhotoDiode(self,1)
+            self.pd1: PhotoDiode = PhotoDiode(self, 0)
+            self.pd2: PhotoDiode = PhotoDiode(self, 1)
 
             # Initialize modes
             self._manual_mode: ManualMode = ManualMode(self)
 
             self._model: str = "Unknown"
-            self._srn: str | None = None
             self._calibration: Calibration | None = None
             self._tune_mode: TuneMode | None = None
             self._sweep_mode: SweepMode | None = None
@@ -171,7 +170,7 @@ class Laser:
                 The path to the calibration file to be used for calibrating the laser.
                 Defaults to None.
             calibration_object (Calibration | None, optional):
-                A pre-loaded calibration object to be used for calibrating the laser.
+                A preloaded calibration object to be used for calibrating the laser.
                 Defaults to None.
 
         Raises:
@@ -192,11 +191,13 @@ class Laser:
             calibration = calibration_object
 
         # Laser attributes
-        if (no := calibration.serial_number) is not None and no != self.srn:
+        if (
+            no := calibration.serial_number
+        ) is not None and no != self.system.serial_no:
             logging.getLogger(__name__).critical(
                 "Calibration file is for a different laser."
                 + f"Calibration file serial number = {no} "
-                + f"Laser serial number = {self.srn}"
+                + f"Laser serial number = {self.system.serial_no}"
             )
         self._calibration = calibration
         self._model = calibration.model

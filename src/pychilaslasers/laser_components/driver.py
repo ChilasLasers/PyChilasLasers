@@ -46,11 +46,15 @@ class Driver(LaserComponent):
 
     ########## Properties (Getters/Setters) ##########
 
-    @LaserComponent.value.setter
+    @property
     @abstractmethod
     def value(self) -> float:
+        """Returns the current value of the driver in appropriate units."""
+
+    @value.setter
+    @abstractmethod
+    def value(self, value) -> None:
         """Sets the current value of the actuator."""
-        pass
 
     @property
     def min_value(self) -> float:

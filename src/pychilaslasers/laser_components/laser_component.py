@@ -44,7 +44,7 @@ class LaserComponent(ABC):
     @abstractmethod
     def value(self) -> float:
         """Returns the current value of the component in appropriate units."""
-        pass
+        ...
 
     @property
     def unit(self) -> str:

@@ -97,6 +97,10 @@ class TEC(Driver):
         """
         return self.temp
 
+    @value.setter
+    def value(self, value: float) -> None:
+        self.target = value
+
     @property
     def current(self) -> float:
         """Return the current applied to the TEC driver.

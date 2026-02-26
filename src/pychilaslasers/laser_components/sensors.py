@@ -41,6 +41,7 @@ class EnclosureTemp(LaserComponent):
 
 class PhotoDiodeChannel(Enum):
     """Enum representing the available photodiode channels."""
+
     PD1 = 0
     PD2 = 1
 
@@ -56,8 +57,11 @@ class PhotoDiode(LaserComponent):
             channel(int | PhotodiodeChannel): channel of photodiode
         """
         super().__init__(laser)
-        self._channel = PhotoDiodeChannel(channel) if channel in PhotoDiodeChannel \
-            else channel
+        self._channel: PhotoDiodeChannel = (
+            channel
+            if isinstance(channel, PhotoDiodeChannel)
+            else PhotoDiodeChannel(channel)
+        )
 
     @property
     @override
@@ -78,34 +82,3 @@ class PhotoDiode(LaserComponent):
     def channel(self) -> PhotoDiodeChannel:
         """Measurement channel of the photodiode."""
         return self._channel
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
