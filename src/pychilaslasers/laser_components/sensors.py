@@ -39,6 +39,26 @@ class EnclosureTemp(LaserComponent):
         return float(self._comm.query("SYST:TEMP:TEMP?"))
 
 
+class CPU(LaserComponent):
+    """Component representing the temperature sensor in the CPU of the laser module."""
+
+    def __init__(self, laser: Laser) -> None:
+        """Temp sensor in the CPU of the laser module."""
+        super().__init__(laser)
+        self._unit = "°C"
+
+    @property
+    @override
+    def value(self) -> float:
+        return self.temp
+
+    @property
+    def temp(self):
+        """Returns the current temperature readout of the sensor in the CPU."""
+        self._comm.query("SYST:TEMP:NSEL 1")
+        return float(self._comm.query("SYST:TEMP:TEMP?"))
+
+
 class PhotoDiodeChannel(Enum):
     """Enum representing the available photodiode channels."""
 

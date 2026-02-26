@@ -18,11 +18,12 @@ from .laser_component import LaserComponent
 from .driver import Driver
 from .tec import TEC
 from .diode import Diode
-from .sensors import EnclosureTemp, PhotoDiodeChannel, PhotoDiode
+from .sensors import EnclosureTemp, PhotoDiodeChannel, PhotoDiode, CPU
 from .heaters.heater_channels import HeaterChannel
 from .heaters import Heater, LargeRing, PhaseSection, SmallRing, TunableCoupler
 
 __all__: list[str] = [
+    "CPU",
     "TEC",
     "Diode",
     "Driver",

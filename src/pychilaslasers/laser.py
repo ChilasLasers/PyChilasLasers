@@ -37,7 +37,7 @@ from pychilaslasers.modes.mode import LaserMode, Mode
 from pychilaslasers.modes.tune_mode import TuneMode
 from pychilaslasers.calibration import Calibration
 from pychilaslasers.calibration.calibration_parsing import load_calibration
-from pychilaslasers.laser_components.sensors import EnclosureTemp, PhotoDiode
+from pychilaslasers.laser_components.sensors import EnclosureTemp, PhotoDiode, CPU
 from pathlib import Path
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -74,6 +74,7 @@ class Laser:
         system (System): Container for system-wide non-functional attributes of the
             laser.
         tec (TEC): The TEC component of the laser.
+        cpu (CPU): The temperature sensor in the CPU of the laser module.
         pd1 (PhotoDiode): PhotoDiode 1 of laser. (Channel 0)
         pd2 (PhotoDiode): PhotoDiode 2 of laser. (Channel 1)
         enclosure (EnclosureTemp): Temperature sensor of laser module enclosure.
@@ -123,6 +124,7 @@ class Laser:
             self.tec: TEC = TEC(self)
             self.diode: Diode = Diode(self)
             self.enclosure: EnclosureTemp = EnclosureTemp(self)
+            self.cpu: CPU = CPU(self)
             self.pd1: PhotoDiode = PhotoDiode(self, 0)
             self.pd2: PhotoDiode = PhotoDiode(self, 1)
 
