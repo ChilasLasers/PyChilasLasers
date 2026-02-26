@@ -17,12 +17,14 @@ Modules:
 from .diode import Diode
 from .heaters.heater_channels import HeaterChannel
 from .heaters import Heater, LargeRing, PhaseSection, SmallRing, TunableCoupler
+from .driver import Driver
 from .laser_component import LaserComponent
 from .tec import TEC
 
 __all__: list[str] = [
     "TEC",
     "Diode",
+    "Driver",
     "Heater",
     "HeaterChannel",
     "LargeRing",

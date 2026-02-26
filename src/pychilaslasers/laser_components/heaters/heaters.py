@@ -20,10 +20,10 @@ from abc import abstractmethod
 
 # ✅ Local imports
 from pychilaslasers.laser_components.heaters.heater_channels import HeaterChannel
-from pychilaslasers.laser_components.laser_component import LaserComponent
+from pychilaslasers.laser_components.driver import Driver
 
 
-class Heater(LaserComponent):
+class Heater(Driver):
     """Base class for laser heater components.
 
     Provides common functionality for all heater types including

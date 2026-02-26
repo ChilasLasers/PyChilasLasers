@@ -25,23 +25,13 @@ class LaserComponent(ABC):
     """Abstract base class for all laser hardware components.
 
     This class defines the common interface that all laser components must
-    implement. It provides standardized access to component values, operating
-    ranges, and units of measurement.
+    implement. It provides standardized access to the value of the sensor and it's unit.
 
     Attributes:
         value: The current value of the component (implementation-dependent).
-        min_value: The minimum allowable value for this component.
-        max_value: The maximum allowable value for this component.
         unit: The unit of measurement for this component's values.
-
-    Note:
-        Subclasses should initialize self._min, self._max and self._unit
-        during construction.
-
     """
 
-    _min: float
-    _max: float
     _unit: str
 
     def __init__(self, laser: Laser) -> None:  # noqa: D107
@@ -55,16 +45,6 @@ class LaserComponent(ABC):
     def value(self) -> float:
         """Returns the current value of the component in appropriate units."""
         pass
-
-    @property
-    def min_value(self) -> float:
-        """Returns the minimum value that can be safely set for this component."""
-        return self._min
-
-    @property
-    def max_value(self) -> float:
-        """Returns the maximum value that can be safely set for this component."""
-        return self._max
 
     @property
     def unit(self) -> str:
