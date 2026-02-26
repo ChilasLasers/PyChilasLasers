@@ -133,6 +133,7 @@ class Communication:
             data: The serial command to be sent to the laser.
 
         Returns:
+            str:
             The response from the laser. The response is stripped of any leading
                 or trailing whitespace as well as the return code. Response may be
                 empty if the command does not return a value.

@@ -22,16 +22,11 @@ laser may not achieve the desired wavelength.
 # ⚛️ Type checking
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-
-if TYPE_CHECKING:
-    pass  # noqa: TC005
-
 # ✅ Standard library imports
 import logging
 
 # ✅ Local imports
+from pychilaslasers.system import System
 from pychilaslasers.modes.sweep_mode import SweepMode
 from pychilaslasers.comm import Communication
 from pychilaslasers.exceptions.mode_error import ModeError
@@ -42,6 +37,7 @@ from pychilaslasers.modes.mode import LaserMode, Mode
 from pychilaslasers.modes.tune_mode import TuneMode
 from pychilaslasers.calibration import Calibration
 from pychilaslasers.calibration.calibration_parsing import load_calibration
+from pychilaslasers.laser_components.sensors import EnclosureTemp, PhotoDiode, CPU
 from pathlib import Path
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -75,7 +71,13 @@ class Laser:
         available in manual mode.
 
     Attributes:
+        system (System): Container for system-wide non-functional attributes of the
+            laser.
         tec (TEC): The TEC component of the laser.
+        cpu (CPU): The temperature sensor in the CPU of the laser module.
+        pd1 (PhotoDiode): PhotoDiode 1 of laser. (Channel 0)
+        pd2 (PhotoDiode): PhotoDiode 2 of laser. (Channel 1)
+        enclosure (EnclosureTemp): Temperature sensor of laser module enclosure.
         diode (Diode): The Diode component of the laser.
         mode (Mode): The current mode of the laser.
         system_state (bool): The system state of the laser (on/off).
@@ -105,6 +107,7 @@ class Laser:
 
         """
         self._comm: Communication = Communication(com_port=com_port)
+        self._system = System(self)
 
         try:
             # Laser identification. Library will not work with non-Chilas lasers.
@@ -120,12 +123,15 @@ class Laser:
             # Initialize laser components
             self.tec: TEC = TEC(self)
             self.diode: Diode = Diode(self)
+            self.enclosure: EnclosureTemp = EnclosureTemp(self)
+            self.cpu: CPU = CPU(self)
+            self.pd1: PhotoDiode = PhotoDiode(self, 0)
+            self.pd2: PhotoDiode = PhotoDiode(self, 1)
 
             # Initialize modes
             self._manual_mode: ManualMode = ManualMode(self)
 
             self._model: str = "Unknown"
-            self._srn: str | None = None
             self._calibration: Calibration | None = None
             self._tune_mode: TuneMode | None = None
             self._sweep_mode: SweepMode | None = None
@@ -166,7 +172,7 @@ class Laser:
                 The path to the calibration file to be used for calibrating the laser.
                 Defaults to None.
             calibration_object (Calibration | None, optional):
-                A pre-loaded calibration object to be used for calibrating the laser.
+                A preloaded calibration object to be used for calibrating the laser.
                 Defaults to None.
 
         Raises:
@@ -187,11 +193,13 @@ class Laser:
             calibration = calibration_object
 
         # Laser attributes
-        if (no := calibration.serial_number) is not None and no != self.srn:
+        if (
+            no := calibration.serial_number
+        ) is not None and no != self.system.serial_no:
             logging.getLogger(__name__).critical(
                 "Calibration file is for a different laser."
                 + f"Calibration file serial number = {no} "
-                + f"Laser serial number = {self.srn}"
+                + f"Laser serial number = {self.system.serial_no}"
             )
         self._calibration = calibration
         self._model = calibration.model
@@ -478,13 +486,6 @@ class Laser:
         return self._model
 
     @property
-    def srn(self) -> str:
-        """Return the serial number of the laser."""
-        if self._srn is None:
-            self._srn = self._comm.query("SYST:SRN?")
-        return self._srn
-
-    @property
     def calibrated(self) -> bool:
         """Check if the laser is calibrated.
 
@@ -527,6 +528,11 @@ class Laser:
                 f"Invalid calibration type: {type(calibration)}. "
                 "Expected str, Path, or Calibration object."
             )
+
+    @property
+    def system(self) -> System:
+        """Container for some informational attributes of the laser."""
+        return self._system
 
     ########## Method Overloads/Aliases ##########
 

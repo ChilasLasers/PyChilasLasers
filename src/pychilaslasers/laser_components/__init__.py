@@ -14,20 +14,27 @@ Modules:
 **Authors**: SDU
 """
 
+from .laser_component import LaserComponent
+from .driver import Driver
+from .tec import TEC
 from .diode import Diode
+from .sensors import EnclosureTemp, PhotoDiodeChannel, PhotoDiode, CPU
 from .heaters.heater_channels import HeaterChannel
 from .heaters import Heater, LargeRing, PhaseSection, SmallRing, TunableCoupler
-from .laser_component import LaserComponent
-from .tec import TEC
 
 __all__: list[str] = [
+    "CPU",
     "TEC",
     "Diode",
+    "Driver",
+    "EnclosureTemp",
     "Heater",
     "HeaterChannel",
     "LargeRing",
     "LaserComponent",
     "PhaseSection",
+    "PhotoDiode",
+    "PhotoDiodeChannel",
     "SmallRing",
     "TunableCoupler",
 ]

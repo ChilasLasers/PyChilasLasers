@@ -1,6 +1,6 @@
-"""Temperature control (TEC) component.
+"""Temperature control (TEC driver) component.
 
-The TEC component allows for setting target temperatures as well as
+The TEC driver component allows for setting target temperatures as well as
 monitoring current temperatures.
 
 **Authors**: SDU
@@ -15,10 +15,10 @@ if TYPE_CHECKING:
     from pychilaslasers.laser import Laser
 
 # ✅ Local imports
-from pychilaslasers.laser_components.laser_component import LaserComponent
+from pychilaslasers.laser_components.driver import Driver
 
 
-class TEC(LaserComponent):
+class TEC(Driver):
     """Temperature control component for laser thermal management.
 
     This component automatically retrieves its operating range limits from the
@@ -96,6 +96,10 @@ class TEC(LaserComponent):
 
         """
         return self.temp
+
+    @value.setter
+    def value(self, value: float) -> None:
+        self.target = value
 
     @property
     def current(self) -> float:

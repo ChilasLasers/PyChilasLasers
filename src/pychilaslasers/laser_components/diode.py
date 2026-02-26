@@ -1,6 +1,6 @@
 """Laser diode component.
 
-This module implements the laser diode component that controls the laser's
+This module implements the laser driver/diode component that controls the laser's
 emission by managing the drive current and on/off state. Handles
 laser enable/disable operations as well as current adjustments.
 
@@ -16,11 +16,11 @@ if TYPE_CHECKING:
     from pychilaslasers.laser import Laser
 
 # ✅ Local imports
-from pychilaslasers.laser_components.laser_component import LaserComponent
+from pychilaslasers.laser_components.driver import Driver
 
 
-class Diode(LaserComponent):
-    """Laser diode component for current control.
+class Diode(Driver):
+    """Laser driver diode component for current control.
 
     Args:
         laser: The laser instance to control.

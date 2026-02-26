@@ -17,13 +17,13 @@ if TYPE_CHECKING:
 # ✅ Standard library imports
 from abc import abstractmethod
 
+from pychilaslasers.laser_components.driver import Driver
 
 # ✅ Local imports
 from pychilaslasers.laser_components.heaters.heater_channels import HeaterChannel
-from pychilaslasers.laser_components.laser_component import LaserComponent
 
 
-class Heater(LaserComponent):
+class Heater(Driver):
     """Base class for laser heater components.
 
     Provides common functionality for all heater types including
@@ -100,6 +100,17 @@ class Heater(LaserComponent):
             )
 
         self._comm.query(f"DRV:D {self.channel.value:d} {value:.3f}")
+
+    @property
+    def temp(self) -> float:
+        """Returns the temperature measured by the sensor on the heater driver.
+
+        Notes:
+            This temperature is the same regardless of instance the method is called on.
+            There is only one sensor for all drivers.
+        """
+        self._comm.query("SYST:TEMP:NSEL 0")
+        return float(self._comm.query("SYST:TEMP:TEMP?"))
 
     ########## Method Overloads/Aliases ##########
 
