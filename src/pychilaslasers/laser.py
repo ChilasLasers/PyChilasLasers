@@ -37,6 +37,7 @@ from pychilaslasers.modes.mode import LaserMode, Mode
 from pychilaslasers.modes.tune_mode import TuneMode
 from pychilaslasers.calibration import Calibration
 from pychilaslasers.calibration.calibration_parsing import load_calibration
+from pychilaslasers.laser_components.sensors import EnclosureTemp, PhotoDiode
 from pathlib import Path
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -73,6 +74,9 @@ class Laser:
         system (System): Container for system-wide non-functional attributes of the
             laser.
         tec (TEC): The TEC component of the laser.
+        pd1 (PhotoDiode): PhotoDiode 1 of laser. (Channel 0)
+        pd2 (PhotoDiode): PhotoDiode 2 of laser. (Channel 1)
+        enclosure (EnclosureTemp): Temperature sensor of laser module enclosure.
         diode (Diode): The Diode component of the laser.
         mode (Mode): The current mode of the laser.
         system_state (bool): The system state of the laser (on/off).
@@ -118,6 +122,9 @@ class Laser:
             # Initialize laser components
             self.tec: TEC = TEC(self)
             self.diode: Diode = Diode(self)
+            self.enclosure: EnclosureTemp = EnclosureTemp(self)
+            self.pd1: PhotoDiode = PhotoDiode(self,0)
+            self.pd2: PhotoDiode = PhotoDiode(self,1)
 
             # Initialize modes
             self._manual_mode: ManualMode = ManualMode(self)
@@ -474,13 +481,6 @@ class Laser:
 
         """
         return self._model
-
-    @property
-    def srn(self) -> str:
-        """Return the serial number of the laser."""
-        if self._srn is None:
-            self._srn = self._comm.query("SYST:SRN?")
-        return self._srn
 
     @property
     def calibrated(self) -> bool:
