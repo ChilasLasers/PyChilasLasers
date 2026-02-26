@@ -36,7 +36,7 @@ class LaserComponent(ABC):
 
     def __init__(self, laser: Laser) -> None:  # noqa: D107
         super().__init__()
-        self._comm: Communication = laser._comm
+        self._comm: Communication = laser.comm
 
     ########## Properties (Getters/Setters) ##########
 

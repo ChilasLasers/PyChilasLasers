@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from pychilaslasers.laser import Laser
 
 # ✅ Standard library imports
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
 # ✅ Local imports
 from pychilaslasers.laser_components.laser_component import LaserComponent

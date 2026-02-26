@@ -22,16 +22,11 @@ laser may not achieve the desired wavelength.
 # ⚛️ Type checking
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-
-if TYPE_CHECKING:
-    pass  # noqa: TC005
-
 # ✅ Standard library imports
 import logging
 
 # ✅ Local imports
+from pychilaslasers.system import System
 from pychilaslasers.modes.sweep_mode import SweepMode
 from pychilaslasers.comm import Communication
 from pychilaslasers.exceptions.mode_error import ModeError
@@ -75,6 +70,8 @@ class Laser:
         available in manual mode.
 
     Attributes:
+        system (System): Container for system-wide non-functional attributes of the
+            laser.
         tec (TEC): The TEC component of the laser.
         diode (Diode): The Diode component of the laser.
         mode (Mode): The current mode of the laser.
@@ -105,6 +102,7 @@ class Laser:
 
         """
         self._comm: Communication = Communication(com_port=com_port)
+        self._system = System(self)
 
         try:
             # Laser identification. Library will not work with non-Chilas lasers.
@@ -527,6 +525,11 @@ class Laser:
                 f"Invalid calibration type: {type(calibration)}. "
                 "Expected str, Path, or Calibration object."
             )
+
+    @property
+    def system(self) -> System:
+        """Container for some informational attributes of the laser."""
+        return self._system
 
     ########## Method Overloads/Aliases ##########
 
