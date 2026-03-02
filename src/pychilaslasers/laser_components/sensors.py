@@ -91,7 +91,7 @@ class PhotoDiode(LaserComponent):
     @property
     def readout(self) -> float:
         """Returns the photodiode readout as a float."""
-        return float(self._comm.query(f"MEAS:M? {self.channel}"))
+        return float(self._comm.query(f"MEAS:M? {self.channel.value}"))
 
     @cached_property
     @override
