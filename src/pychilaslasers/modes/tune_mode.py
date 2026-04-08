@@ -249,14 +249,9 @@ class TuneMode(__Calibrated):
         # Apply the heater values
         self._comm.query("DRV:U")
 
-        # Check for mode hop and apply anti-hysteresis if needed
-        if (
-            # this applies to the Comet
-            self._calibration[self._wl].mode_index != entry.mode_index
-            or self._calibration.model == "ATLAS"
-        ):
-            if self.anti_hyst_enabled:
-                self._antihyst()
+        # Apply anti-hysteresis if needed
+        if self.anti_hyst_enabled:
+            self._antihyst()
 
         return entry.wavelength
 
@@ -287,6 +282,7 @@ class TuneMode(__Calibrated):
 
         self._comm.query(f"DRV:CYC:LOAD {entry.cycler_index}")
 
+        # Apply anti-hysteresis if needed
         if self.anti_hyst_enabled:
             self._antihyst()
 
