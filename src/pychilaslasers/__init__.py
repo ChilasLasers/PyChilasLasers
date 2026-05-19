@@ -15,11 +15,13 @@ class.
 """
 
 from .laser import Laser
+from .comm import list_comports
 
 __all__: list[str] = [
     # Main laser class
     "Laser",
     "__version__",
+    "list_comports",
 ]
 
 
