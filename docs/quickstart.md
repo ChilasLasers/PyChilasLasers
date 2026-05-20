@@ -118,7 +118,7 @@ Power the system and select [`TuneMode`][pychilaslasers.modes.TuneMode] via its 
     laser.system_state = True
 
     # Enter tune mode
-    laser.mode = mode.LaserMode.TUNE
+    laser.mode = modes.LaserMode.TUNE
     ```
 
 ### 3. Wavelength Control Examples
