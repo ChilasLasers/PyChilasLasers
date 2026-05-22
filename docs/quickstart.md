@@ -77,7 +77,7 @@ by supplying the COM port and calibration file path:
 
 ## Quick Start Using the Demo File
 
-The [demo file](https://github.com/ChilasLasers/PyChilasLasers/tree/docs/examples/basic_usage.py) file demonstrates a typical workflow for laser operation.
+The [demo file](https://github.com/ChilasLasers/PyChilasLasers/blob/main/examples/basic_usage.py) demonstrates a typical workflow for laser operation.
 
 ```mermaid
 graph LR
@@ -148,7 +148,7 @@ Access the current wavelength directly via the tune mode interface:
 
 ### 5. COMET‑Only Features (Sweep Mode)
 
-On COMET devices, the script optionally runs the [sweeping demo](https://github.com/ChilasLasers/PyChilasLasers/tree/docs/examples/basic_usage_sweeping.py) showcasing Sweep Mode.
+On COMET devices, the script optionally runs the [sweeping demo](https://github.com/ChilasLasers/PyChilasLasers/blob/main/examples/basic_usage_sweeping.py) showcasing Sweep Mode.
 
 !!! tip "Not using a COMET? You can skip this section."
 
