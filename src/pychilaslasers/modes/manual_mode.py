@@ -65,12 +65,17 @@ class ManualMode(Mode):
 
         """
         super().__init__(laser)
-        self._laser.turn_on()  # Ensure the laser is on after initializing heaters
+
+        if not tuple(int(n) for n in laser.system.fw_version.split(".")) > (1, 3, 15):
+            self._laser.turn_on()  # Ensure the laser is on after initializing heaters
+
         self._phase_section: PhaseSection = PhaseSection(laser)
         self._large_ring: LargeRing = LargeRing(laser)
         self._small_ring: SmallRing = SmallRing(laser)
         self._tunable_coupler: TunableCoupler = TunableCoupler(laser)
-        self._laser.turn_off()  # Ensure the laser is off after initializing heaters
+
+        if laser.system_state:
+            self._laser.turn_off()  # Ensure the laser is off after initializing heaters
 
         self._heaters: list[Heater] = [
             self._phase_section,
