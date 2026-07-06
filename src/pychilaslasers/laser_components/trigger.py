@@ -24,12 +24,13 @@ class Trigger(LaserComponent):
 
         _x, _y, _z = [int(n) for n in laser.system.fw_version.split(".")]
 
-        self.inverted = False
         self.new: bool = tuple(int(n) for n in laser.system.fw_version.split(".")) > (
             1,
             3,
             15,
         )
+
+        self.inverted = False
 
     def UnsupportedOperationError(self, *args, **kwargs):  # noqa: D102, N802
         raise NotImplementedError("Operation not supported on current firmware version")
