@@ -62,7 +62,7 @@ class Trigger(LaserComponent):
         if value is None:
             self.inverted = False if self.inverted else True
         else:
-            self._comm.query(f"DRV:CYC:INVT {value}")
+            self._comm.query(f"DRV:CYC:INVT {int(value)}")
 
     @property
     def mode(self) -> int:
