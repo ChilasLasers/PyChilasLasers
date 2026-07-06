@@ -24,6 +24,8 @@ from __future__ import annotations
 
 # ✅ Standard library imports
 import logging
+from warnings import deprecated
+
 
 # ✅ Local imports
 from pychilaslasers.system import System
@@ -31,6 +33,7 @@ from pychilaslasers.modes.sweep_mode import SweepMode
 from pychilaslasers.comm import Communication
 from pychilaslasers.exceptions.mode_error import ModeError
 from pychilaslasers.laser_components.diode import Diode
+from pychilaslasers.laser_components.trigger import Trigger
 from pychilaslasers.laser_components.tec import TEC
 from pychilaslasers.modes.manual_mode import ManualMode
 from pychilaslasers.modes.mode import LaserMode, Mode
@@ -127,6 +130,7 @@ class Laser:
             self.cpu: CPU = CPU(self)
             self.pd1: PhotoDiode = PhotoDiode(self, 0)
             self.pd2: PhotoDiode = PhotoDiode(self, 1)
+            self._trigger = Trigger(self)
 
             # Initialize modes
             self._manual_mode: ManualMode = ManualMode(self)
@@ -151,10 +155,10 @@ class Laser:
 
     ########## Main Methods ##########
 
+    @deprecated("Use `laser.trigger.pulse` instead")
     def trigger_pulse(self) -> None:
         """Instructs the laser to send a trigger pulse."""
-        self._comm.query(f"DRV:CYC:TRIG {int(True):d}")
-        self._comm.query(f"DRV:CYC:TRIG {int(False):d}")
+        self.trigger.pulse()
 
     def calibrate(
         self,
@@ -533,6 +537,11 @@ class Laser:
     def system(self) -> System:
         """Container for some informational attributes of the laser."""
         return self._system
+
+    @property
+    def trigger(self) -> Trigger:
+        """Container for trigger related settings of the laser."""
+        return self._trigger
 
     ########## Method Overloads/Aliases ##########
 

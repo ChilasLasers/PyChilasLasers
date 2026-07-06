@@ -126,7 +126,7 @@ class TuneMode(__Calibrated):
 
         # Trigger pulse if auto-trigger is enabled (inherited from parent)
         if self._autoTrig:
-            self._laser.trigger_pulse()
+            self._laser.trigger.pulse()
 
         return self._wl
 

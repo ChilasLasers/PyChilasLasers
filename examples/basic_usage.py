@@ -49,7 +49,7 @@ print(f"New wavelength is {laser.tune.set_wl_relative(-1.000)} nm")
 input("Press Enter to continue...")
 
 # Emit a trigger pulse for synchronization with other equipment, e.g. to indicate that the wavelength is set
-laser.trigger_pulse()
+laser.trigger.pulse()
 
 # Laser continues with sweeping example (only applies to COMET lasers)
 if laser.model == "COMET":
