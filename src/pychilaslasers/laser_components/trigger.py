@@ -39,13 +39,29 @@ class Trigger(LaserComponent):
         self._comm.query(f"DRV:CYC:TRIG {int(True):d}")
         self._comm.query(f"DRV:CYC:TRIG {int(False):d}")
 
-    def invert(self) -> bool:
-        """Invert trigger between active low and active high."""
+    @property
+    def inverted(self) -> bool:
+        """Returns if the trigger is inverted.
+
+        The trigger can be inverted between active low and active high.
+        """
+        return bool(self._comm.query("DRV:CYC:INVT?"))
+
+    @inverted.setter
+    def inverted(self, value: bool | None) -> None:
+        """Invert trigger between active low and active high.
+
+        Args:
+            value(bool|None):
+                If none it will be set to the opposite of the current value.
+        """
         if not self.new:
             self.UnsupportedOperationError()
-        self.inverted = False if self.inverted else True
-        self._comm.query(f"DRV:CYC:INVT {self.inverted}")
-        return self.inverted
+
+        if value is None:
+            self.inverted = False if self.inverted else True
+        else:
+            self._comm.query(f"DRV:CYC:INVT {value}")
 
     @property
     def mode(self) -> int:
