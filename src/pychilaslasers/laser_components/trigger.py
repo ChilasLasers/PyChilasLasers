@@ -30,8 +30,6 @@ class Trigger(LaserComponent):
             15,
         )
 
-        self.inverted = False
-
     def UnsupportedOperationError(self, *args, **kwargs):  # noqa: D102, N802
         raise NotImplementedError("Operation not supported on current firmware version")
 
