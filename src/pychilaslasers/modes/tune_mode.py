@@ -60,6 +60,10 @@ class TuneMode(__Calibrated):
         self._default_TEC = calibration.tune_settings.tec_temp
         self._default_current = calibration.tune_settings.current
 
+        # Initialize the mode-specific attributes
+        self._autoTrig: bool = False
+
+        # Set min and max wavelengths
         self.anti_hyst_enabled: bool = True  # Default to enabled
 
         self._wl: float = self._min_wl  # Default to minimum wavelength
@@ -87,6 +91,24 @@ class TuneMode(__Calibrated):
         """
         self._laser.tec.target = self._default_TEC
         self._laser.diode.current = self._default_current
+
+    def toggle_auto_trig(self, state: bool | None = None) -> None:
+        """Toggle the auto-trigger setting.
+
+        If `state` is provided, it sets the auto-trigger to that state.
+        If `state` is None, it toggles the current state of auto-trigger.
+
+        This is useful for quickly enabling or disabling the auto-trigger without
+        having to explicitly set it to True or False.
+
+        This method is an alternative to the setter for `autoTrig`.
+
+        Args:
+            state: The state to set the auto-trigger to. If None,
+                it toggles the current state.
+
+        """
+        self.auto_trig = state if state is not None else not self.auto_trig
 
     ########## Properties (Getters/Setters) ##########
 
@@ -125,7 +147,7 @@ class TuneMode(__Calibrated):
         self._wl = self._change_method(wavelength)
 
         # Trigger pulse if auto-trigger is enabled (inherited from parent)
-        if self._autoTrig:
+        if self.auto_trig:
             self._laser.trigger.pulse()
 
         return self._wl
@@ -159,6 +181,29 @@ class TuneMode(__Calibrated):
 
         """
         return LaserMode.TUNE
+
+    @property
+    def auto_trig(self) -> bool:
+        """Get the auto-trigger setting of the laser.
+
+        This property indicates whether the laser is set to automatically send
+        a trigger signal when the wavelength is changed. This is useful for
+        synchronizing the laser with other equipment or processes that depend on it.
+
+        Returns:
+            True if auto-trigger is enabled, False otherwise.
+
+        """
+        return self._autoTrig
+
+    @auto_trig.setter
+    def auto_trig(self, state: bool) -> None:
+        """Set the auto-trigger setting of the laser.
+
+        Args:
+            state: Whether to enable (True) or disable (False) auto-trigger.
+        """
+        self._autoTrig = state
 
     ########## Method Overloads/Aliases ##########
 

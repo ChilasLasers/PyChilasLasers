@@ -11,6 +11,7 @@ shared between tune and sweep mode operations.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from warnings import deprecated
 
 if TYPE_CHECKING:
     from pychilaslasers.laser import Laser
@@ -48,10 +49,6 @@ class __Calibrated(Mode):
         """
         super().__init__(laser)
 
-        # Initialize the mode-specific attributes
-        self._autoTrig: bool = False
-
-        # Set min and max wavelengths
         self._min_wl = calibration.min_wl
         self._max_wl = calibration.max_wl
 
@@ -59,6 +56,7 @@ class __Calibrated(Mode):
         self._step_size = calibration.step_size
 
     @property
+    @deprecated("Has been moved to tune mode")
     def autoTrig(self) -> bool:  # noqa: N802
         """Get the auto-trigger setting of the laser.
 
@@ -70,9 +68,10 @@ class __Calibrated(Mode):
             True if auto-trigger is enabled, False otherwise.
 
         """
-        return self._autoTrig
+        raise NotImplementedError("Function was moved to tune mode")
 
     @autoTrig.setter
+    @deprecated("Has been moved to tune mode")
     def autoTrig(self, state: bool) -> None:  # noqa: N802
         """Set the auto-trigger setting of the laser.
 
@@ -80,10 +79,11 @@ class __Calibrated(Mode):
             state: Whether to enable (True) or disable (False) auto-trigger.
 
         """
-        self._autoTrig = state
+        raise NotImplementedError("Function was moved to tune mode")
 
     ########## Main Methods ##########
 
+    @deprecated("Has been moved to tune mode")
     def toggle_autoTrig(self, state: bool | None = None) -> None:  # noqa: N802
         """Toggle the auto-trigger setting.
 
@@ -100,7 +100,7 @@ class __Calibrated(Mode):
                 it toggles the current state.
 
         """
-        self._autoTrig = state if state is not None else not self._autoTrig
+        raise NotImplementedError("Function was moved to tune mode")
 
     ########## Properties (Getters/Setters) ##########
 
