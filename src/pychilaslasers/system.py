@@ -70,3 +70,10 @@ class System:
     def uptime(self) -> int:
         """System uptime in seconds."""
         return int(self._comm.query("SYST:UPT?"))
+
+    @property
+    def pot(self) -> int:
+        """Return power-on-time in minutes, total time the device has ran."""
+        if not tuple(int(n) for n in self.fw_version.split(".")) > (1, 3, 15):
+            raise NotImplementedError("Function not available on this firmware version")
+        return int(self._comm.query("SYST:POT?"))
