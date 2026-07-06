@@ -51,7 +51,7 @@ class Heater(Driver):
         super().__init__(laser)
         self._min: float = float(self._comm.query(f"DRV:LIM:MIN? {self.channel.value}"))
         self._max: float = float(self._comm.query(f"DRV:LIM:MAX? {self.channel.value}"))
-        self._unit: str = self._comm.query(f"DRV:UNIT? {self.channel.value}").strip()
+        self._unit: str = "V"
 
     ########## Properties (Getters/Setters) ##########
 
