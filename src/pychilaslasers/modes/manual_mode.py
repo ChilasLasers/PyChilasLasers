@@ -70,8 +70,8 @@ class ManualMode(Mode):
             self._laser.turn_on()  # Ensure the laser is on after initializing heaters
 
         self._phase_section: PhaseSection = PhaseSection(laser)
-        self._large_ring: LargeRing = LargeRing(laser)
         self._small_ring: SmallRing = SmallRing(laser)
+        self._large_ring: LargeRing = LargeRing(laser)
         self._tunable_coupler: TunableCoupler = TunableCoupler(laser)
 
         if laser.system_state:

@@ -197,7 +197,8 @@ class Communication:
             else:
                 logger.debug("Closing connection")
             self.prefix_mode = True
-            self.query("DRV:CYC:ABRT")  # Aborts cycler
+            # self.query("DRV:CYC:ABRT")  # Aborts cycler / skip this step because it
+            # applies heater values of current cycler index.
             self.query("SYST:STAT 0")  # Turns off system
             self._serial.write(
                 f"SYST:SER:BAUD {Constants.TLM_INITIAL_BAUDRATE}\r\n".encode("ascii")
