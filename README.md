@@ -58,9 +58,10 @@ pip install -e .
 Basic connection & wavelength set (see full script in [examples/basic_usage.py](https://github.com/ChilasLasers/PyChilasLasers/blob/main/examples/basic_usage.py)):
 
 ```python
-#Minimal conceptual snippet: see examples for real usage
+# Minimal conceptual snippet: see examples for real usage
 from pychilaslasers import Laser
-laser = Laser("COM_PORT","path/to/calibration/file")
+
+laser = Laser("COM_PORT", "path/to/calibration/file")
 laser.mode = LaserModes.TUNE
 laser.tune.wavelength = 1550.0
 print(laser.wavelength)
