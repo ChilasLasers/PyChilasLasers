@@ -218,7 +218,9 @@ class Calibration:
         )
 
         try:
-            self.step_size = min([x - y for x, y in pairwise(_wavelengths)])
+            step_size_pairs = [abs(x - y) for x, y in pairwise(_wavelengths)]
+            step_size_most_common = max(set(step_size_pairs), key=step_size_pairs.count)
+            self.step_size = round(step_size_most_common, 6)
         except IndexError:
             logging.getLogger(__name__).warning(
                 "Calibration loaded with less than 2 entries"
