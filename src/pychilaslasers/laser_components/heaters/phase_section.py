@@ -44,8 +44,8 @@ class PhaseSection(Heater):
 
         self._anti_hyst_enabled = True
 
-        self._volts: None | list[float] = None
-        self._time_steps: None | list[float] = None
+        self._volts: list[float] | None = None
+        self._time_steps: list[float] | None = None
 
         self._anti_hyst = self.get_antihyst_method(laser=laser)
 
