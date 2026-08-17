@@ -11,14 +11,14 @@ repos:
         name: Ruff check (auto-fix)
         entry: uvx ruff check --fix --config pyproject.toml --force-exclude
         language: system
-        types: [python]
+        types_or: [python,markdown]
         pass_filenames: true
 
       - id: ruff-format
         name: Ruff format
         entry: uvx ruff format --config pyproject.toml 
         language: system
-        types: [python]
+        types_or: [python,markdown]
         pass_filenames: true
 
       - id: mypy
